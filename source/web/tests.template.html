@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+<meta name="referrer" content="no-referrer">
+<title>TimeVault Safety Tests</title>
+<style>
+:root { --bg: #eef1ef; --surface: #fff; --ink: #142019; --muted: #5a6962; --line: #d4dcd7; --ok: #1f7346; --bad: #b3261e; --brass: #946519; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0e1311; --surface: #161d1a; --ink: #e2e9e5; --muted: #95a39c; --line: #28322e; --ok: #5fcf92; --bad: #ff8a7f; --brass: #d8a656; color-scheme: dark; } }
+* { box-sizing: border-box; } [hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: calc(24px + env(safe-area-inset-top, 0px)) 48px; display: grid; gap: 16px; }
+h1 { font: 600 1.4rem "Iowan Old Style", Palatino, Georgia, serif; margin: 0; }
+p { margin: 0; color: var(--muted); max-width: 65ch; }
+button { font: 600 15px system-ui, sans-serif; padding: 11px 16px; border-radius: 9px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); cursor: pointer; width: max-content; }
+button:disabled { opacity: .5; }
+#sum { font-weight: 700; font-size: 1.1rem; } #sum.ok { color: var(--ok); } #sum.bad { color: var(--bad); }
+ul { list-style: none; margin: 0; padding: 0; font: 13px ui-monospace, Menlo, Consolas, monospace; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+li { padding: 7px 12px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+li.pass { color: var(--ok); } li.fail { color: var(--bad); }
+code { font: 12px ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main>
+  <h1>TimeVault safety tests</h1>
+  <p>Runs 49 checks on a private simulated blockchain inside this page, using fake coins: the original contract tests, 40 random locks with 14 random actions each checked against the rules, and attacks on the app's transaction guard (fake locks, wrong wallets, lying servers, a tampered deployer, the wrong network). It uses exactly the same safety code as the app. No wallet, no real money. Takes under a minute on most devices.</p>
+  <button id="run">Run all tests</button>
+  <div id="sum">Not run yet.</div>
+  <ul id="log"></ul>
+  <p>Safety core fingerprint: <code id="fp"></code></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM" crossorigin="anonymous"></script>
+<script id="coreScript">{{CORE}}</script>
+<script>{{TESTS}}</script>
+<script>{{RUNNER}}</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0f1412">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TimeVault">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>TimeVault</title>
+<style>
+/* Layout: phone-first single column "ledger": balance header, today's coach card, locks as ledger rows; bottom tab bar. */
+:root {
+  --bg: #eef1ef; --surface: #ffffff; --ink: #142019; --muted: #5a6962; --line: #d4dcd7;
+  --brass: #946519; --brass-soft: #f3e8d4; --ok: #1f7346; --ok-soft: #dff0e6; --bad: #b3261e; --bad-soft: #fbe4e1;
+  --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e1311; --surface: #161d1a; --ink: #e2e9e5; --muted: #95a39c; --line: #28322e;
+    --brass: #d8a656; --brass-soft: #2b2316; --ok: #5fcf92; --ok-soft: #13281d; --bad: #ff8a7f; --bad-soft: #2d1613; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); -webkit-text-size-adjust: 100%; }
+main { max-width: 720px; margin: 0 auto; padding-inline: 16px; padding-block: calc(16px + env(safe-area-inset-top, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 22px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.2rem; } h2 { font-size: 1.15rem; } h3 { font-size: 1rem; }
+p { margin: 0; }
+a { color: var(--brass); }
+.muted { color: var(--muted); } .small { font-size: 13px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.label { font: 600 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; }
+.ok-text { color: var(--ok); } .warn { color: var(--bad); }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand svg { width: 28px; height: 28px; }
+.pill { font: 500 12px var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; }
+.pill.ok { color: var(--ok); border-color: var(--ok); } .pill.warn { color: var(--brass); border-color: var(--brass); }
+.hero { display: grid; gap: 4px; }
+.big { font: 600 clamp(2.5rem, 11vw, 3.6rem)/1.05 var(--display); font-variant-numeric: tabular-nums; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: 6px; }
+.stats b { display: block; font: 600 1.02rem var(--mono); font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 14px; }
+section { display: grid; gap: 16px; }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+/* today card */
+#today > div { border-radius: 12px; padding: 16px; display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+#today b { display: block; font: 600 1.15rem var(--display); }
+#today span:not(.label):not(.big-check) { display: block; color: var(--muted); font-size: 14px; }
+.today-due { background: var(--brass-soft); border: 1px solid var(--brass); }
+.today-ok { background: var(--ok-soft); border: 1px solid var(--ok); justify-content: flex-start !important; }
+.today-empty { background: var(--surface); border: 1px dashed var(--line); flex-direction: column; align-items: flex-start !important; }
+.big-check { font-size: 1.6rem; color: var(--ok); }
+/* locks */
+.ledger { display: grid; gap: 12px; }
+.lock { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; }
+.lock-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.lock-amt { font: 600 1.55rem var(--display); font-variant-numeric: tabular-nums; }
+.lock-amt .of { font-size: 1rem; color: var(--muted); font-weight: 500; }
+.state { font: 600 10.5px var(--body); letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 5px; white-space: nowrap; }
+.state.locked { background: var(--brass-soft); color: var(--brass); } .state.open { background: var(--ok-soft); color: var(--ok); } .state.done { color: var(--muted); border: 1px solid var(--line); }
+.bar { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--brass); }
+.goalbar { height: 10px; } .goalbar > i { background: var(--ok); }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px 14px; font-size: 14px; }
+.kv > div { min-width: 0; }
+.note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--brass); padding-left: 10px; }
+details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+details .mono { margin-top: 8px; line-height: 1.7; }
+.rejected { font-size: 13px; color: var(--muted); }
+.rejected > div { margin-top: 8px; }
+.empty { border: 1px dashed var(--line); border-radius: 12px; padding: 22px; text-align: center; color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+/* forms */
+label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+input, select { font: 16px var(--body); padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); width: 100%; min-width: 0; }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.inline { display: flex; gap: 8px; } .inline input { flex: 1; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { font: 600 15px var(--body); padding: 11px 16px; border-radius: 9px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.small { padding: 7px 11px; font-size: 13px; }
+.btn.brass { background: var(--brass); border-color: var(--brass); color: #fff; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
+.check input { width: auto; margin-top: 4px; flex: none; }
+.seg { display: grid; gap: 10px; }
+.seg .check { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.summary { font-size: 14px; background: var(--bg); border-radius: 9px; padding: 12px; display: grid; gap: 4px; overflow-wrap: anywhere; }
+.steps { display: grid; gap: 6px; font-size: 14px; }
+.steps div::before { content: "○ "; color: var(--muted); } .steps div.doing::before { content: "◐ "; color: var(--brass); } .steps div.done::before { content: "● "; color: var(--ok); }
+.notice { border-left: 3px solid var(--brass); background: var(--brass-soft); padding: 12px 14px; border-radius: 0 9px 9px 0; font-size: 14px; }
+.notice.bad { border-color: var(--bad); background: var(--bad-soft); }
+#qr { background: #fff; padding: 10px; border-radius: 9px; width: max-content; max-width: 100%; }
+#qr img { display: block; width: 220px; height: 220px; image-rendering: pixelated; }
+.uri { font: 12px var(--mono); overflow-wrap: anywhere; color: var(--muted); }
+ul.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+ul.checks li.ok { color: var(--ok); } ul.checks li.bad { color: var(--bad); }
+pre { font: 12px/1.55 var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 12px; overflow-x: auto; margin: 8px 0 0; white-space: pre; }
+pre.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+.protect { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.protect li { display: grid; gap: 2px; font-size: 14px; }
+.protect b { font-size: 14px; }
+.streak { display: flex; align-items: baseline; gap: 10px; }
+.streak b { font: 600 2.4rem/1 var(--display); color: var(--brass); }
+ol.hist { list-style: none; margin: 0; padding: 0; display: grid; }
+ol.hist li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; align-items: baseline; }
+ol.hist b { font-family: var(--mono); color: var(--ok); }
+.lesson { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.lesson summary { font-size: 15px; color: var(--ink); font-weight: 600; }
+.lesson.read summary { color: var(--muted); }
+.lesson p { margin-top: 6px; font-size: 14px; color: var(--muted); max-width: 60ch; }
+/* bottom tabs */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
+nav.tabs > div { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; max-width: 720px; }
+nav.tabs button { background: none; border: 0; padding: 9px 2px 10px; color: var(--muted); font: 600 11px var(--body); display: grid; justify-items: center; gap: 3px; cursor: pointer; }
+nav.tabs button svg { width: 22px; height: 22px; }
+nav.tabs button[aria-current="true"] { color: var(--brass); }
+/* sheets */
+.sheet { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 20; padding: 0 0 env(safe-area-inset-bottom, 0px); }
+.sheet > .card { width: 100%; max-width: 560px; border-radius: 16px 16px 0 0; padding: 20px 16px 24px; }
+@media (min-width: 600px) { .sheet { align-items: center; } .sheet > .card { border-radius: 16px; } }
+.addr { font: 600 14px var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 10px; overflow-wrap: anywhere; }
+#waitBar { position: fixed; left: 0; right: 0; top: 0; z-index: 30; background: var(--brass); color: #fff; text-align: center; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; font-weight: 600; font-size: 14px; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 9px; font-size: 14px; width: max-content; max-width: calc(100% - 32px); z-index: 40; }
+body.broken main::before { content: "Self check failed: this copy of the app does not match the tested build. Do not use it."; display: block; background: var(--bad); color: #fff; padding: 12px; border-radius: 9px; font-weight: 600; }
+@media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .6s ease; } }
+</style>
+</head>
+<body>
+<div id="waitBar" hidden>Open your Tangem app and check the request…</div>
+<main>
+  <div class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="7" fill="var(--brass)"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="16" cy="14.2" r="2.2" fill="#fff"/><rect x="15" y="15" width="2" height="5" rx="1" fill="#fff"/></svg>
+      <h1>TimeVault</h1>
+    </div>
+    <div class="row"><span id="netPill" class="pill">Not connected</span><button id="connectBtn" class="btn small">Connect</button></div>
+  </div>
+
+  <!-- HOME -->
+  <section id="tab-home">
+    <div class="hero">
+      <span class="label">Locked savings</span>
+      <div class="big" id="totalLocked">$0.00</div>
+      <div class="stats">
+        <div><span class="label">Locks</span><b id="lockCount">0</b></div>
+        <div><span class="label">Goal progress</span><b id="nextMilestone">—</b></div>
+        <div><span class="label">In wallet</span><b id="walletTotal">—</b></div>
+      </div>
+      <p class="small muted" id="walletLine"></p>
+      <p class="small warn" id="gasHint" hidden>You need a little ETH on Arbitrum (about $1) to pay network fees.</p>
+    </div>
+    <div id="today"></div>
+    <div class="section-head"><h2>Your locks</h2><button class="btn ghost small" id="findBtn">Find my locks</button></div>
+    <div class="ledger" id="locks"></div>
+  </section>
+
+  <!-- NEW -->
+  <section id="tab-new" hidden>
+    <div class="card">
+      <h2>New lock</h2>
+      <div class="seg" role="radiogroup" aria-label="Lock type">
+        <label class="check" for="typeGoal"><input type="radio" name="lkType" id="typeGoal" checked> <span><b>Savings goal</b><br><span class="small muted">Keep adding money. It unlocks when you reach the goal, or on a backup date if you never get there.</span></span></label>
+        <label class="check" for="typeDate"><input type="radio" name="lkType" id="typeDate"> <span><b>Fixed date</b><br><span class="small muted">Locked until a date, however much is inside.</span></span></label>
+      </div>
+      <label for="lkName">Name (only on this device, optional)<input id="lkName" maxlength="40" placeholder="e.g. Emergency fund" autocomplete="off"></label>
+      <label for="lkToken">Coin<select id="lkToken"><option value="USDC">USDC</option><option value="USDT">USDT</option></select></label>
+      <label for="lkGoal" id="goalField">Goal
+        <input id="lkGoal" inputmode="decimal" placeholder="1000" autocomplete="off">
+        <div class="presets"><button type="button" class="btn ghost small" data-goal="2">$2 test</button><button type="button" class="btn ghost small" data-goal="500">$500</button><button type="button" class="btn ghost small" data-goal="1000">$1,000</button><button type="button" class="btn ghost small" data-goal="5000">$5,000</button><button type="button" class="btn ghost small" data-goal="10000">$10,000</button></div>
+      </label>
+      <label for="lkAmount"><span id="amountLabel">First deposit (optional)</span>
+        <div class="inline"><input id="lkAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="lkMax" type="button">Max</button></div>
+        <span class="small muted" id="lkBal"></span>
+      </label>
+      <label for="lkDate"><span id="dateLabel">Backup unlock date</span>
+        <input id="lkDate" type="date">
+        <div class="presets"><button type="button" class="btn ghost small" data-days="1">1 day test</button><button type="button" class="btn ghost small" data-months="6">6 months</button><button type="button" class="btn ghost small" data-months="12">1 year</button><button type="button" class="btn ghost small" data-months="24">2 years</button><button type="button" class="btn ghost small" data-months="36">3 years</button></div>
+        <span class="small muted" id="dateHint">If you never reach the goal, the lock opens on this date, so your money is never stuck forever.</span>
+      </label>
+      <div class="summary" id="lkSummary"></div>
+      <label class="check" for="lkAgree"><input type="checkbox" id="lkAgree"> <span id="lkAgreeText"></span></label>
+      <button class="btn brass" id="lkGo" disabled>Create lock</button>
+      <div class="steps" id="lkSteps" hidden>
+        <div id="st1">Create your lock (sign in Tangem)</div>
+        <div id="st2">Check its code on 4 independent servers</div>
+        <div id="st3">Send the first deposit (sign in Tangem)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COACH -->
+  <section id="tab-coach" hidden>
+    <div class="card">
+      <div class="section-head"><h2>Your streak</h2><span class="small muted">from the blockchain</span></div>
+      <div class="streak"><b id="streakNum">0</b><span class="muted">paydays in a row with a deposit</span></div>
+      <div id="history"></div>
+    </div>
+    <div class="card">
+      <h2>Payday plan</h2>
+      <label for="cPay">Take-home pay per payday<input id="cPay" inputmode="decimal" placeholder="e.g. 800" autocomplete="off"></label>
+      <div class="row">
+        <label for="cFreq" style="flex:1;min-width:150px">How often<select id="cFreq"><option value="weekly">Every week</option><option value="biweekly">Every 2 weeks</option><option value="twice">1st and 15th</option><option value="monthly">Once a month</option></select></label>
+        <label for="cNext" style="flex:1;min-width:150px">Next payday<input id="cNext" type="date"></label>
+      </div>
+      <label for="cMode">Save rule<select id="cMode"><option value="pct">A percent of my pay</option><option value="fixed">A fixed amount</option></select></label>
+      <label for="cPct" id="cPctRow">Percent to save<input id="cPct" inputmode="decimal" placeholder="20"></label>
+      <label for="cFixed" id="cFixedRow" hidden>Amount to save each payday<input id="cFixed" inputmode="decimal" placeholder="100"></label>
+      <label for="cTarget">Put it into<select id="cTarget"></select></label>
+      <div class="summary" id="cPlan"></div>
+      <div class="row"><button class="btn ghost small" id="icsBtn">Add payday reminders to my calendar</button></div>
+      <p class="small muted">Your plan stays on this phone. It never touches your money; it only suggests amounts.</p>
+    </div>
+    <div class="card">
+      <div class="section-head"><h2>Money lessons</h2><span class="small muted" id="lessonCount"></span></div>
+      <div id="lessons"></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="tab-setup" hidden>
+    <div class="card">
+      <h2>Connect Tangem</h2>
+      <p class="small muted">One-time: get a free WalletConnect Project ID at <a href="https://cloud.reown.com" target="_blank" rel="noopener noreferrer">cloud.reown.com</a>, paste it here and save. Then tap Connect at the top.</p>
+      <label for="wcId">WalletConnect Project ID<input id="wcId" autocomplete="off" placeholder="32 letters and numbers"></label>
+      <div class="row"><button class="btn small" id="wcSave">Save</button></div>
+      <div id="qrBox" hidden class="card">
+        <p><b>On another device:</b> in Tangem open WalletConnect and scan this code.<br><b>On this phone:</b> tap Copy link, open Tangem, go to WalletConnect and paste.</p>
+        <div id="qr"></div>
+        <div class="row"><button class="btn small" id="copyUri">Copy link</button><button class="btn ghost small" id="cancelWc">Cancel</button></div>
+        <p class="uri" id="uriText"></p>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Your lock list</h2>
+      <p class="small muted">Your money lives on the blockchain, not in this app. If you lose this phone, open TimeVault anywhere, connect the same wallet and tap Find my locks.</p>
+      <label for="addLock">Add a lock by address<div class="inline"><input id="addLock" class="mono" placeholder="0x…" autocomplete="off"><button class="btn ghost small" id="addLockBtn">Verify &amp; add</button></div></label>
+      <div class="row"><button class="btn ghost small" id="exportBtn">Download backup list</button></div>
+    </div>
+    <div class="card">
+      <h2>Watch a wallet</h2>
+      <p class="small muted">See a wallet's locks without connecting it. Read-only.</p>
+      <label for="watchAddr">Wallet address<div class="inline"><input id="watchAddr" class="mono" placeholder="0x…" autocomplete="off"><button class="btn ghost small" id="watchSave">Watch</button></div></label>
+    </div>
+  </section>
+
+  <!-- SAFETY -->
+  <section id="tab-safety" hidden>
+    <div class="notice bad" id="selfBanner" hidden>Self check failed. This copy of the app does not match the tested build. Do not use it.</div>
+    <div class="card">
+      <h2>How your money is protected</h2>
+      <ul class="protect">
+        <li><b>1. Audited contract code</b><span class="small muted">Fixed-date locks are OpenZeppelin's audited TokenTimelock, unchanged. Goal locks add one marked rule ("or the balance has reached the goal"). No owner, no admin, no early exit, nothing can change the goal, date or receiving wallet.</span></li>
+        <li><b>2. Tested 49 ways</b><span class="small muted">Including 560 random actions checked against the rules, and attacks on the app itself. Run them yourself on the test page.</span></li>
+        <li><b>3. One guarded door</b><span class="small muted">The app can only do three things: create a lock that pays your wallet, send coins into one of your verified locks, release a lock. It builds those transactions itself and refuses everything else.</span></li>
+        <li><b>4. Exact-code check before every deposit</b><span class="small muted">The lock's code on the blockchain must match the tested code byte for byte. A fake lock that claims to pay you is refused.</span></li>
+        <li><b>5. Four independent servers</b><span class="small muted">Every check is confirmed by several separate Arbitrum servers. If any disagree, the app stops.</span></li>
+        <li><b>6. Dry run first</b><span class="small muted">Each transaction is simulated against the live chain before Tangem is asked. If it would fail, Tangem is never asked.</span></li>
+        <li><b>7. Locked-down page</b><span class="small muted">Outside libraries are pinned to exact fingerprints and the page may only talk to Arbitrum servers and WalletConnect.</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Self check</h2>
+      <ul class="checks" id="selfList"></ul>
+      <span class="label">This app's code fingerprints</span>
+      <pre class="wrap" id="appFp"></pre>
+      <p class="small muted">Compare with the README on GitHub. If they differ, you are not running the published app.</p>
+    </div>
+    <div class="card">
+      <h2>Check my locks now</h2>
+      <p class="small muted">Re-checks every lock against 4 servers, requiring at least 3 to agree.</p>
+      <div class="row"><button class="btn small" id="liveCheck">Run check</button><a class="btn ghost small" href="tests.html" target="_blank" rel="noopener">Open the test page</a></div>
+      <pre class="wrap" id="liveOut"></pre>
+    </div>
+    <div class="card">
+      <h2>Publish the code on Arbiscan</h2>
+      <ol class="small" style="margin:0;padding-left:20px;display:grid;gap:4px">
+        <li>Download the verification file for your lock type.</li>
+        <li>On Arbiscan, open your lock address → Contract → Verify and Publish.</li>
+        <li>Choose Solidity (Standard-Json-Input), compiler v0.8.24+commit.e11b9ed9, license MIT, upload the file.</li>
+      </ol>
+      <div class="row"><button class="btn ghost small" id="dlVerifyGoal">Goal lock file</button><button class="btn ghost small" id="dlVerifyDate">Fixed-date lock file</button></div>
+      <details><summary>Read the goal lock contract</summary><pre>{{GT_SOURCE_HTML}}</pre></details>
+      <details><summary>Read the fixed-date lock contract (OpenZeppelin)</summary><pre>{{TT_SOURCE_HTML}}</pre></details>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Main">
+  <div>
+    <button data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5V3.5M16 5V3.5"/></svg>Savings</button>
+    <button data-tab="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New</button>
+    <button data-tab="coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Coach</button>
+    <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 7h12M3 7h2M15 17h6M3 17h8"/><circle cx="7" cy="7" r="2"/><circle cx="13" cy="17" r="2"/></svg>Setup</button>
+    <button data-tab="safety"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Safety</button>
+  </div>
+</nav>
+
+<div class="sheet" id="confirm" hidden role="dialog" aria-modal="true" aria-labelledby="cfTitle">
+  <div class="card">
+    <h2 id="cfTitle"></h2>
+    <p class="small muted" id="cfLead"></p>
+    <div class="addr" id="cfAddr"></div>
+    <p class="small" id="cfText"></p>
+    <p class="small muted">Check that Tangem shows the same address before you approve. If anything looks different, reject it in Tangem.</p>
+    <div class="row"><button class="btn brass" id="cfGo">Continue to Tangem</button><button class="btn ghost" id="cfNo">Cancel</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="depSheet" hidden role="dialog" aria-modal="true" aria-labelledby="depTitle">
+  <div class="card">
+    <h2 id="depTitle">Deposit</h2>
+    <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">Max</button></div><span class="small muted" id="depBal"></span></label>
+    <div class="row"><button class="btn brass" id="depGo">Deposit</button><button class="btn ghost" id="depClose">Close</button></div>
+  </div>
+</div>
+<div id="toast" hidden role="status"></div>
+
+<script>{{SHIM}}</script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js" integrity="sha384-wrWB8k7e8bdhA9YtMG1sssI6F6Q7US4WrIo2Wl4OpSOTyc9FNn4RluaQ8ezTtSar" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" integrity="sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1" crossorigin="anonymous"></script>
+<script id="sourcesScript">{{SOURCES}}</script>
+<script id="coreScript">{{CORE}}</script>
+<script id="appScript">{{APP}}</script>
+</body>
+</html>

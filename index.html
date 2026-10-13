@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-jIDAXRZuiquyC2poQ9szREYNLpMIrVx5RQ+W/EmRo/4=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0f1412">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TimeVault">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>TimeVault</title>
+<style>
+/* Layout: phone-first single column "ledger": balance header, today's coach card, locks as ledger rows; bottom tab bar. */
+:root {
+  --bg: #eef1ef; --surface: #ffffff; --ink: #142019; --muted: #5a6962; --line: #d4dcd7;
+  --brass: #946519; --brass-soft: #f3e8d4; --ok: #1f7346; --ok-soft: #dff0e6; --bad: #b3261e; --bad-soft: #fbe4e1;
+  --display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e1311; --surface: #161d1a; --ink: #e2e9e5; --muted: #95a39c; --line: #28322e;
+    --brass: #d8a656; --brass-soft: #2b2316; --ok: #5fcf92; --ok-soft: #13281d; --bad: #ff8a7f; --bad-soft: #2d1613; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); -webkit-text-size-adjust: 100%; }
+main { max-width: 720px; margin: 0 auto; padding-inline: 16px; padding-block: calc(16px + env(safe-area-inset-top, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 22px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.2rem; } h2 { font-size: 1.15rem; } h3 { font-size: 1rem; }
+p { margin: 0; }
+a { color: var(--brass); }
+.muted { color: var(--muted); } .small { font-size: 13px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.label { font: 600 10.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; }
+.ok-text { color: var(--ok); } .warn { color: var(--bad); }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand svg { width: 28px; height: 28px; }
+.pill { font: 500 12px var(--mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); white-space: nowrap; }
+.pill.ok { color: var(--ok); border-color: var(--ok); } .pill.warn { color: var(--brass); border-color: var(--brass); }
+.hero { display: grid; gap: 4px; }
+.big { font: 600 clamp(2.5rem, 11vw, 3.6rem)/1.05 var(--display); font-variant-numeric: tabular-nums; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: 6px; }
+.stats b { display: block; font: 600 1.02rem var(--mono); font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 14px; }
+section { display: grid; gap: 16px; }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+/* today card */
+#today > div { border-radius: 12px; padding: 16px; display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+#today b { display: block; font: 600 1.15rem var(--display); }
+#today span:not(.label):not(.big-check) { display: block; color: var(--muted); font-size: 14px; }
+.today-due { background: var(--brass-soft); border: 1px solid var(--brass); }
+.today-ok { background: var(--ok-soft); border: 1px solid var(--ok); justify-content: flex-start !important; }
+.today-empty { background: var(--surface); border: 1px dashed var(--line); flex-direction: column; align-items: flex-start !important; }
+.big-check { font-size: 1.6rem; color: var(--ok); }
+/* locks */
+.ledger { display: grid; gap: 12px; }
+.lock { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; }
+.lock-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.lock-amt { font: 600 1.55rem var(--display); font-variant-numeric: tabular-nums; }
+.lock-amt .of { font-size: 1rem; color: var(--muted); font-weight: 500; }
+.state { font: 600 10.5px var(--body); letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 5px; white-space: nowrap; }
+.state.locked { background: var(--brass-soft); color: var(--brass); } .state.open { background: var(--ok-soft); color: var(--ok); } .state.done { color: var(--muted); border: 1px solid var(--line); }
+.bar { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--brass); }
+.goalbar { height: 10px; } .goalbar > i { background: var(--ok); }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px 14px; font-size: 14px; }
+.kv > div { min-width: 0; }
+.note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--brass); padding-left: 10px; }
+details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+details .mono { margin-top: 8px; line-height: 1.7; }
+.rejected { font-size: 13px; color: var(--muted); }
+.rejected > div { margin-top: 8px; }
+.empty { border: 1px dashed var(--line); border-radius: 12px; padding: 22px; text-align: center; color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+/* forms */
+label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+input, select { font: 16px var(--body); padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); width: 100%; min-width: 0; }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.inline { display: flex; gap: 8px; } .inline input { flex: 1; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { font: 600 15px var(--body); padding: 11px 16px; border-radius: 9px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.small { padding: 7px 11px; font-size: 13px; }
+.btn.brass { background: var(--brass); border-color: var(--brass); color: #fff; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
+.check input { width: auto; margin-top: 4px; flex: none; }
+.seg { display: grid; gap: 10px; }
+.seg .check { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.summary { font-size: 14px; background: var(--bg); border-radius: 9px; padding: 12px; display: grid; gap: 4px; overflow-wrap: anywhere; }
+.steps { display: grid; gap: 6px; font-size: 14px; }
+.steps div::before { content: "○ "; color: var(--muted); } .steps div.doing::before { content: "◐ "; color: var(--brass); } .steps div.done::before { content: "● "; color: var(--ok); }
+.notice { border-left: 3px solid var(--brass); background: var(--brass-soft); padding: 12px 14px; border-radius: 0 9px 9px 0; font-size: 14px; }
+.notice.bad { border-color: var(--bad); background: var(--bad-soft); }
+#qr { background: #fff; padding: 10px; border-radius: 9px; width: max-content; max-width: 100%; }
+#qr img { display: block; width: 220px; height: 220px; image-rendering: pixelated; }
+.uri { font: 12px var(--mono); overflow-wrap: anywhere; color: var(--muted); }
+ul.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+ul.checks li.ok { color: var(--ok); } ul.checks li.bad { color: var(--bad); }
+pre { font: 12px/1.55 var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 12px; overflow-x: auto; margin: 8px 0 0; white-space: pre; }
+pre.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+.protect { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.protect li { display: grid; gap: 2px; font-size: 14px; }
+.protect b { font-size: 14px; }
+.streak { display: flex; align-items: baseline; gap: 10px; }
+.streak b { font: 600 2.4rem/1 var(--display); color: var(--brass); }
+ol.hist { list-style: none; margin: 0; padding: 0; display: grid; }
+ol.hist li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; align-items: baseline; }
+ol.hist b { font-family: var(--mono); color: var(--ok); }
+.lesson { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.lesson summary { font-size: 15px; color: var(--ink); font-weight: 600; }
+.lesson.read summary { color: var(--muted); }
+.lesson p { margin-top: 6px; font-size: 14px; color: var(--muted); max-width: 60ch; }
+/* bottom tabs */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
+nav.tabs > div { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; max-width: 720px; }
+nav.tabs button { background: none; border: 0; padding: 9px 2px 10px; color: var(--muted); font: 600 11px var(--body); display: grid; justify-items: center; gap: 3px; cursor: pointer; }
+nav.tabs button svg { width: 22px; height: 22px; }
+nav.tabs button[aria-current="true"] { color: var(--brass); }
+/* sheets */
+.sheet { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 20; padding: 0 0 env(safe-area-inset-bottom, 0px); }
+.sheet > .card { width: 100%; max-width: 560px; border-radius: 16px 16px 0 0; padding: 20px 16px 24px; }
+@media (min-width: 600px) { .sheet { align-items: center; } .sheet > .card { border-radius: 16px; } }
+.addr { font: 600 14px var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 10px; overflow-wrap: anywhere; }
+#waitBar { position: fixed; left: 0; right: 0; top: 0; z-index: 30; background: var(--brass); color: #fff; text-align: center; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; font-weight: 600; font-size: 14px; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 9px; font-size: 14px; width: max-content; max-width: calc(100% - 32px); z-index: 40; }
+body.broken main::before { content: "Self check failed: this copy of the app does not match the tested build. Do not use it."; display: block; background: var(--bad); color: #fff; padding: 12px; border-radius: 9px; font-weight: 600; }
+@media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .6s ease; } }
+</style>
+</head>
+<body>
+<div id="waitBar" hidden>Open your Tangem app and check the request…</div>
+<main>
+  <div class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="7" fill="var(--brass)"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="16" cy="14.2" r="2.2" fill="#fff"/><rect x="15" y="15" width="2" height="5" rx="1" fill="#fff"/></svg>
+      <h1>TimeVault</h1>
+    </div>
+    <div class="row"><span id="netPill" class="pill">Not connected</span><button id="connectBtn" class="btn small">Connect</button></div>
+  </div>
+
+  <!-- HOME -->
+  <section id="tab-home">
+    <div class="hero">
+      <span class="label">Locked savings</span>
+      <div class="big" id="totalLocked">$0.00</div>
+      <div class="stats">
+        <div><span class="label">Locks</span><b id="lockCount">0</b></div>
+        <div><span class="label">Goal progress</span><b id="nextMilestone">—</b></div>
+        <div><span class="label">In wallet</span><b id="walletTotal">—</b></div>
+      </div>
+      <p class="small muted" id="walletLine"></p>
+      <p class="small warn" id="gasHint" hidden>You need a little ETH on Arbitrum (about $1) to pay network fees.</p>
+    </div>
+    <div id="today"></div>
+    <div class="section-head"><h2>Your locks</h2><button class="btn ghost small" id="findBtn">Find my locks</button></div>
+    <div class="ledger" id="locks"></div>
+  </section>
+
+  <!-- NEW -->
+  <section id="tab-new" hidden>
+    <div class="card">
+      <h2>New lock</h2>
+      <div class="seg" role="radiogroup" aria-label="Lock type">
+        <label class="check" for="typeGoal"><input type="radio" name="lkType" id="typeGoal" checked> <span><b>Savings goal</b><br><span class="small muted">Keep adding money. It unlocks when you reach the goal, or on a backup date if you never get there.</span></span></label>
+        <label class="check" for="typeDate"><input type="radio" name="lkType" id="typeDate"> <span><b>Fixed date</b><br><span class="small muted">Locked until a date, however much is inside.</span></span></label>
+      </div>
+      <label for="lkName">Name (only on this device, optional)<input id="lkName" maxlength="40" placeholder="e.g. Emergency fund" autocomplete="off"></label>
+      <label for="lkToken">Coin<select id="lkToken"><option value="USDC">USDC</option><option value="USDT">USDT</option></select></label>
+      <label for="lkGoal" id="goalField">Goal
+        <input id="lkGoal" inputmode="decimal" placeholder="1000" autocomplete="off">
+        <div class="presets"><button type="button" class="btn ghost small" data-goal="2">$2 test</button><button type="button" class="btn ghost small" data-goal="500">$500</button><button type="button" class="btn ghost small" data-goal="1000">$1,000</button><button type="button" class="btn ghost small" data-goal="5000">$5,000</button><button type="button" class="btn ghost small" data-goal="10000">$10,000</button></div>
+      </label>
+      <label for="lkAmount"><span id="amountLabel">First deposit (optional)</span>
+        <div class="inline"><input id="lkAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="lkMax" type="button">Max</button></div>
+        <span class="small muted" id="lkBal"></span>
+      </label>
+      <label for="lkDate"><span id="dateLabel">Backup unlock date</span>
+        <input id="lkDate" type="date">
+        <div class="presets"><button type="button" class="btn ghost small" data-days="1">1 day test</button><button type="button" class="btn ghost small" data-months="6">6 months</button><button type="button" class="btn ghost small" data-months="12">1 year</button><button type="button" class="btn ghost small" data-months="24">2 years</button><button type="button" class="btn ghost small" data-months="36">3 years</button></div>
+        <span class="small muted" id="dateHint">If you never reach the goal, the lock opens on this date, so your money is never stuck forever.</span>
+      </label>
+      <div class="summary" id="lkSummary"></div>
+      <label class="check" for="lkAgree"><input type="checkbox" id="lkAgree"> <span id="lkAgreeText"></span></label>
+      <button class="btn brass" id="lkGo" disabled>Create lock</button>
+      <div class="steps" id="lkSteps" hidden>
+        <div id="st1">Create your lock (sign in Tangem)</div>
+        <div id="st2">Check its code on 4 independent servers</div>
+        <div id="st3">Send the first deposit (sign in Tangem)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COACH -->
+  <section id="tab-coach" hidden>
+    <div class="card">
+      <div class="section-head"><h2>Your streak</h2><span class="small muted">from the blockchain</span></div>
+      <div class="streak"><b id="streakNum">0</b><span class="muted">paydays in a row with a deposit</span></div>
+      <div id="history"></div>
+    </div>
+    <div class="card">
+      <h2>Payday plan</h2>
+      <label for="cPay">Take-home pay per payday<input id="cPay" inputmode="decimal" placeholder="e.g. 800" autocomplete="off"></label>
+      <div class="row">
+        <label for="cFreq" style="flex:1;min-width:150px">How often<select id="cFreq"><option value="weekly">Every week</option><option value="biweekly">Every 2 weeks</option><option value="twice">1st and 15th</option><option value="monthly">Once a month</option></select></label>
+        <label for="cNext" style="flex:1;min-width:150px">Next payday<input id="cNext" type="date"></label>
+      </div>
+      <label for="cMode">Save rule<select id="cMode"><option value="pct">A percent of my pay</option><option value="fixed">A fixed amount</option></select></label>
+      <label for="cPct" id="cPctRow">Percent to save<input id="cPct" inputmode="decimal" placeholder="20"></label>
+      <label for="cFixed" id="cFixedRow" hidden>Amount to save each payday<input id="cFixed" inputmode="decimal" placeholder="100"></label>
+      <label for="cTarget">Put it into<select id="cTarget"></select></label>
+      <div class="summary" id="cPlan"></div>
+      <div class="row"><button class="btn ghost small" id="icsBtn">Add payday reminders to my calendar</button></div>
+      <p class="small muted">Your plan stays on this phone. It never touches your money; it only suggests amounts.</p>
+    </div>
+    <div class="card">
+      <div class="section-head"><h2>Money lessons</h2><span class="small muted" id="lessonCount"></span></div>
+      <div id="lessons"></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="tab-setup" hidden>
+    <div class="card">
+      <h2>Connect Tangem</h2>
+      <p class="small muted">One-time: get a free WalletConnect Project ID at <a href="https://cloud.reown.com" target="_blank" rel="noopener noreferrer">cloud.reown.com</a>, paste it here and save. Then tap Connect at the top.</p>
+      <label for="wcId">WalletConnect Project ID<input id="wcId" autocomplete="off" placeholder="32 letters and numbers"></label>
+      <div class="row"><button class="btn small" id="wcSave">Save</button></div>
+      <div id="qrBox" hidden class="card">
+        <p><b>On another device:</b> in Tangem open WalletConnect and scan this code.<br><b>On this phone:</b> tap Copy link, open Tangem, go to WalletConnect and paste.</p>
+        <div id="qr"></div>
+        <div class="row"><button class="btn small" id="copyUri">Copy link</button><button class="btn ghost small" id="cancelWc">Cancel</button></div>
+        <p class="uri" id="uriText"></p>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Your lock list</h2>
+      <p class="small muted">Your money lives on the blockchain, not in this app. If you lose this phone, open TimeVault anywhere, connect the same wallet and tap Find my locks.</p>
+      <label for="addLock">Add a lock by address<div class="inline"><input id="addLock" class="mono" placeholder="0x…" autocomplete="off"><button class="btn ghost small" id="addLockBtn">Verify &amp; add</button></div></label>
+      <div class="row"><button class="btn ghost small" id="exportBtn">Download backup list</button></div>
+    </div>
+    <div class="card">
+      <h2>Watch a wallet</h2>
+      <p class="small muted">See a wallet's locks without connecting it. Read-only.</p>
+      <label for="watchAddr">Wallet address<div class="inline"><input id="watchAddr" class="mono" placeholder="0x…" autocomplete="off"><button class="btn ghost small" id="watchSave">Watch</button></div></label>
+    </div>
+  </section>
+
+  <!-- SAFETY -->
+  <section id="tab-safety" hidden>
+    <div class="notice bad" id="selfBanner" hidden>Self check failed. This copy of the app does not match the tested build. Do not use it.</div>
+    <div class="card">
+      <h2>How your money is protected</h2>
+      <ul class="protect">
+        <li><b>1. Audited contract code</b><span class="small muted">Fixed-date locks are OpenZeppelin's audited TokenTimelock, unchanged. Goal locks add one marked rule ("or the balance has reached the goal"). No owner, no admin, no early exit, nothing can change the goal, date or receiving wallet.</span></li>
+        <li><b>2. Tested 49 ways</b><span class="small muted">Including 560 random actions checked against the rules, and attacks on the app itself. Run them yourself on the test page.</span></li>
+        <li><b>3. One guarded door</b><span class="small muted">The app can only do three things: create a lock that pays your wallet, send coins into one of your verified locks, release a lock. It builds those transactions itself and refuses everything else.</span></li>
+        <li><b>4. Exact-code check before every deposit</b><span class="small muted">The lock's code on the blockchain must match the tested code byte for byte. A fake lock that claims to pay you is refused.</span></li>
+        <li><b>5. Four independent servers</b><span class="small muted">Every check is confirmed by several separate Arbitrum servers. If any disagree, the app stops.</span></li>
+        <li><b>6. Dry run first</b><span class="small muted">Each transaction is simulated against the live chain before Tangem is asked. If it would fail, Tangem is never asked.</span></li>
+        <li><b>7. Locked-down page</b><span class="small muted">Outside libraries are pinned to exact fingerprints and the page may only talk to Arbitrum servers and WalletConnect.</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Self check</h2>
+      <ul class="checks" id="selfList"></ul>
+      <span class="label">This app's code fingerprints</span>
+      <pre class="wrap" id="appFp"></pre>
+      <p class="small muted">Compare with the README on GitHub. If they differ, you are not running the published app.</p>
+    </div>
+    <div class="card">
+      <h2>Check my locks now</h2>
+      <p class="small muted">Re-checks every lock against 4 servers, requiring at least 3 to agree.</p>
+      <div class="row"><button class="btn small" id="liveCheck">Run check</button><a class="btn ghost small" href="tests.html" target="_blank" rel="noopener">Open the test page</a></div>
+      <pre class="wrap" id="liveOut"></pre>
+    </div>
+    <div class="card">
+      <h2>Publish the code on Arbiscan</h2>
+      <ol class="small" style="margin:0;padding-left:20px;display:grid;gap:4px">
+        <li>Download the verification file for your lock type.</li>
+        <li>On Arbiscan, open your lock address → Contract → Verify and Publish.</li>
+        <li>Choose Solidity (Standard-Json-Input), compiler v0.8.24+commit.e11b9ed9, license MIT, upload the file.</li>
+      </ol>
+      <div class="row"><button class="btn ghost small" id="dlVerifyGoal">Goal lock file</button><button class="btn ghost small" id="dlVerifyDate">Fixed-date lock file</button></div>
+      <details><summary>Read the goal lock contract</summary><pre>// SPDX-License-Identifier: MIT
+// Based on OpenZeppelin Contracts v4.9.6 (token/ERC20/utils/TokenTimelock.sol).
+// The ONLY changes from OpenZeppelin&#x27;s audited TokenTimelock are marked &quot;CHANGE&quot;.
+
+pragma solidity ^0.8.0;
+
+import &quot;@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol&quot;;
+
+/**
+ * @dev A token holder contract that will allow a beneficiary to extract the
+ * tokens once a savings goal is reached, or after a backup release time,
+ * whichever comes first.
+ */
+contract GoalTimelock {
+    using SafeERC20 for IERC20;
+
+    // ERC20 basic token contract being held
+    IERC20 private immutable _token;
+
+    // beneficiary of tokens after they are released
+    address private immutable _beneficiary;
+
+    // timestamp when token release is enabled (backup date)
+    uint256 private immutable _releaseTime;
+
+    // CHANGE: savings goal, in the token&#x27;s smallest units. Release is enabled once the balance reaches it.
+    uint256 private immutable _goal;
+
+    /**
+     * @dev Deploys a lock that holds `token_` and only releases it to `beneficiary_` when {release} is
+     * invoked after `releaseTime_` or once the balance is at least `goal_`.
+     */
+    constructor(IERC20 token_, address beneficiary_, uint256 releaseTime_, uint256 goal_) {
+        require(releaseTime_ &gt; block.timestamp, &quot;TokenTimelock: release time is before current time&quot;);
+        require(goal_ &gt; 0, &quot;GoalTimelock: goal is zero&quot;); // CHANGE
+        _token = token_;
+        _beneficiary = beneficiary_;
+        _releaseTime = releaseTime_;
+        _goal = goal_; // CHANGE
+    }
+
+    /**
+     * @dev Returns the token being held.
+     */
+    function token() public view virtual returns (IERC20) {
+        return _token;
+    }
+
+    /**
+     * @dev Returns the beneficiary that will receive the tokens.
+     */
+    function beneficiary() public view virtual returns (address) {
+        return _beneficiary;
+    }
+
+    /**
+     * @dev Returns the backup release time in seconds since Unix epoch (i.e. Unix timestamp).
+     */
+    function releaseTime() public view virtual returns (uint256) {
+        return _releaseTime;
+    }
+
+    /**
+     * @dev CHANGE: Returns the savings goal.
+     */
+    function goal() public view virtual returns (uint256) {
+        return _goal;
+    }
+
+    /**
+     * @dev Transfers tokens held by the lock to the beneficiary. Will only succeed if the goal is reached
+     * or the backup release time has passed.
+     */
+    function release() public virtual {
+        uint256 amount = token().balanceOf(address(this));
+        require(amount &gt; 0, &quot;TokenTimelock: no tokens to release&quot;);
+
+        // CHANGE: was `require(block.timestamp &gt;= releaseTime(), ...)`
+        require(
+            amount &gt;= goal() || block.timestamp &gt;= releaseTime(),
+            &quot;GoalTimelock: goal not reached and before release time&quot;
+        );
+
+        token().safeTransfer(beneficiary(), amount);
+    }
+}
+</pre></details>
+      <details><summary>Read the fixed-date lock contract (OpenZeppelin)</summary><pre>// SPDX-License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/utils/TokenTimelock.sol)
+
+pragma solidity ^0.8.0;
+
+import &quot;./SafeERC20.sol&quot;;
+
+/**
+ * @dev A token holder contract that will allow a beneficiary to extract the
+ * tokens after a given release time.
+ *
+ * Useful for simple vesting schedules like &quot;advisors get all of their tokens
+ * after 1 year&quot;.
+ */
+contract TokenTimelock {
+    using SafeERC20 for IERC20;
+
+    // ERC20 basic token contract being held
+    IERC20 private immutable _token;
+
+    // beneficiary of tokens after they are released
+    address private immutable _beneficiary;
+
+    // timestamp when token release is enabled
+    uint256 private immutable _releaseTime;
+
+    /**
+     * @dev Deploys a timelock instance that is able to hold the token specified, and will only release it to
+     * `beneficiary_` when {release} is invoked after `releaseTime_`. The release time is specified as a Unix timestamp
+     * (in seconds).
+     */
+    constructor(IERC20 token_, address beneficiary_, uint256 releaseTime_) {
+        require(releaseTime_ &gt; block.timestamp, &quot;TokenTimelock: release time is before current time&quot;);
+        _token = token_;
+        _beneficiary = beneficiary_;
+        _releaseTime = releaseTime_;
+    }
+
+    /**
+     * @dev Returns the token being held.
+     */
+    function token() public view virtual returns (IERC20) {
+        return _token;
+    }
+
+    /**
+     * @dev Returns the beneficiary that will receive the tokens.
+     */
+    function beneficiary() public view virtual returns (address) {
+        return _beneficiary;
+    }
+
+    /**
+     * @dev Returns the time when the tokens are released in seconds since Unix epoch (i.e. Unix timestamp).
+     */
+    function releaseTime() public view virtual returns (uint256) {
+        return _releaseTime;
+    }
+
+    /**
+     * @dev Transfers tokens held by the timelock to the beneficiary. Will only succeed if invoked after the release
+     * time.
+     */
+    function release() public virtual {
+        require(block.timestamp &gt;= releaseTime(), &quot;TokenTimelock: current time is before release time&quot;);
+
+        uint256 amount = token().balanceOf(address(this));
+        require(amount &gt; 0, &quot;TokenTimelock: no tokens to release&quot;);
+
+        token().safeTransfer(beneficiary(), amount);
+    }
+}
+</pre></details>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Main">
+  <div>
+    <button data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5V3.5M16 5V3.5"/></svg>Savings</button>
+    <button data-tab="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New</button>
+    <button data-tab="coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Coach</button>
+    <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 7h12M3 7h2M15 17h6M3 17h8"/><circle cx="7" cy="7" r="2"/><circle cx="13" cy="17" r="2"/></svg>Setup</button>
+    <button data-tab="safety"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Safety</button>
+  </div>
+</nav>
+
+<div class="sheet" id="confirm" hidden role="dialog" aria-modal="true" aria-labelledby="cfTitle">
+  <div class="card">
+    <h2 id="cfTitle"></h2>
+    <p class="small muted" id="cfLead"></p>
+    <div class="addr" id="cfAddr"></div>
+    <p class="small" id="cfText"></p>
+    <p class="small muted">Check that Tangem shows the same address before you approve. If anything looks different, reject it in Tangem.</p>
+    <div class="row"><button class="btn brass" id="cfGo">Continue to Tangem</button><button class="btn ghost" id="cfNo">Cancel</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="depSheet" hidden role="dialog" aria-modal="true" aria-labelledby="depTitle">
+  <div class="card">
+    <h2 id="depTitle">Deposit</h2>
+    <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">Max</button></div><span class="small muted" id="depBal"></span></label>
+    <div class="row"><button class="btn brass" id="depGo">Deposit</button><button class="btn ghost" id="depClose">Close</button></div>
+  </div>
+</div>
+<div id="toast" hidden role="status"></div>
+
+<script>window.process = { env: { NODE_ENV: 'production' } };</script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js" integrity="sha384-wrWB8k7e8bdhA9YtMG1sssI6F6Q7US4WrIo2Wl4OpSOTyc9FNn4RluaQ8ezTtSar" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" integrity="sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1" crossorigin="anonymous"></script>
+<script id="sourcesScript">window.TV_SOURCES = {"oz": {"@openzeppelin/contracts/token/ERC20/utils/TokenTimelock.sol": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/utils/TokenTimelock.sol)\n\npragma solidity ^0.8.0;\n\nimport \"./SafeERC20.sol\";\n\n/**\n * @dev A token holder contract that will allow a beneficiary to extract the\n * tokens after a given release time.\n *\n * Useful for simple vesting schedules like \"advisors get all of their tokens\n * after 1 year\".\n */\ncontract TokenTimelock {\n    using SafeERC20 for IERC20;\n\n    // ERC20 basic token contract being held\n    IERC20 private immutable _token;\n\n    // beneficiary of tokens after they are released\n    address private immutable _beneficiary;\n\n    // timestamp when token release is enabled\n    uint256 private immutable _releaseTime;\n\n    /**\n     * @dev Deploys a timelock instance that is able to hold the token specified, and will only release it to\n     * `beneficiary_` when {release} is invoked after `releaseTime_`. The release time is specified as a Unix timestamp\n     * (in seconds).\n     */\n    constructor(IERC20 token_, address beneficiary_, uint256 releaseTime_) {\n        require(releaseTime_ > block.timestamp, \"TokenTimelock: release time is before current time\");\n        _token = token_;\n        _beneficiary = beneficiary_;\n        _releaseTime = releaseTime_;\n    }\n\n    /**\n     * @dev Returns the token being held.\n     */\n    function token() public view virtual returns (IERC20) {\n        return _token;\n    }\n\n    /**\n     * @dev Returns the beneficiary that will receive the tokens.\n     */\n    function beneficiary() public view virtual returns (address) {\n        return _beneficiary;\n    }\n\n    /**\n     * @dev Returns the time when the tokens are released in seconds since Unix epoch (i.e. Unix timestamp).\n     */\n    function releaseTime() public view virtual returns (uint256) {\n        return _releaseTime;\n    }\n\n    /**\n     * @dev Transfers tokens held by the timelock to the beneficiary. Will only succeed if invoked after the release\n     * time.\n     */\n    function release() public virtual {\n        require(block.timestamp >= releaseTime(), \"TokenTimelock: current time is before release time\");\n\n        uint256 amount = token().balanceOf(address(this));\n        require(amount > 0, \"TokenTimelock: no tokens to release\");\n\n        token().safeTransfer(beneficiary(), amount);\n    }\n}\n", "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v4.9.3) (token/ERC20/utils/SafeERC20.sol)\n\npragma solidity ^0.8.0;\n\nimport \"../IERC20.sol\";\nimport \"../extensions/IERC20Permit.sol\";\nimport \"../../../utils/Address.sol\";\n\n/**\n * @title SafeERC20\n * @dev Wrappers around ERC20 operations that throw on failure (when the token\n * contract returns false). Tokens that return no value (and instead revert or\n * throw on failure) are also supported, non-reverting calls are assumed to be\n * successful.\n * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,\n * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.\n */\nlibrary SafeERC20 {\n    using Address for address;\n\n    /**\n     * @dev Transfer `value` amount of `token` from the calling contract to `to`. If `token` returns no value,\n     * non-reverting calls are assumed to be successful.\n     */\n    function safeTransfer(IERC20 token, address to, uint256 value) internal {\n        _callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));\n    }\n\n    /**\n     * @dev Transfer `value` amount of `token` from `from` to `to`, spending the approval given by `from` to the\n     * calling contract. If `token` returns no value, non-reverting calls are assumed to be successful.\n     */\n    function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {\n        _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));\n    }\n\n    /**\n     * @dev Deprecated. This function has issues similar to the ones found in\n     * {IERC20-approve}, and its usage is discouraged.\n     *\n     * Whenever possible, use {safeIncreaseAllowance} and\n     * {safeDecreaseAllowance} instead.\n     */\n    function safeApprove(IERC20 token, address spender, uint256 value) internal {\n        // safeApprove should only be called when setting an initial allowance,\n        // or when resetting it to zero. To increase and decrease it, use\n        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'\n        require(\n            (value == 0) || (token.allowance(address(this), spender) == 0),\n            \"SafeERC20: approve from non-zero to non-zero allowance\"\n        );\n        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));\n    }\n\n    /**\n     * @dev Increase the calling contract's allowance toward `spender` by `value`. If `token` returns no value,\n     * non-reverting calls are assumed to be successful.\n     */\n    function safeIncreaseAllowance(IERC20 token, address spender, uint256 value) internal {\n        uint256 oldAllowance = token.allowance(address(this), spender);\n        _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, oldAllowance + value));\n    }\n\n    /**\n     * @dev Decrease the calling contract's allowance toward `spender` by `value`. If `token` returns no value,\n     * non-reverting calls are assumed to be successful.\n     */\n    function safeDecreaseAllowance(IERC20 token, address spender, uint256 value) internal {\n        unchecked {\n            uint256 oldAllowance = token.allowance(address(this), spender);\n            require(oldAllowance >= value, \"SafeERC20: decreased allowance below zero\");\n            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, oldAllowance - value));\n        }\n    }\n\n    /**\n     * @dev Set the calling contract's allowance toward `spender` to `value`. If `token` returns no value,\n     * non-reverting calls are assumed to be successful. Meant to be used with tokens that require the approval\n     * to be set to zero before setting it to a non-zero value, such as USDT.\n     */\n    function forceApprove(IERC20 token, address spender, uint256 value) internal {\n        bytes memory approvalCall = abi.encodeWithSelector(token.approve.selector, spender, value);\n\n        if (!_callOptionalReturnBool(token, approvalCall)) {\n            _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, 0));\n            _callOptionalReturn(token, approvalCall);\n        }\n    }\n\n    /**\n     * @dev Use a ERC-2612 signature to set the `owner` approval toward `spender` on `token`.\n     * Revert on invalid signature.\n     */\n    function safePermit(\n        IERC20Permit token,\n        address owner,\n        address spender,\n        uint256 value,\n        uint256 deadline,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) internal {\n        uint256 nonceBefore = token.nonces(owner);\n        token.permit(owner, spender, value, deadline, v, r, s);\n        uint256 nonceAfter = token.nonces(owner);\n        require(nonceAfter == nonceBefore + 1, \"SafeERC20: permit did not succeed\");\n    }\n\n    /**\n     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement\n     * on the return value: the return value is optional (but if data is returned, it must not be false).\n     * @param token The token targeted by the call.\n     * @param data The call data (encoded using abi.encode or one of its variants).\n     */\n    function _callOptionalReturn(IERC20 token, bytes memory data) private {\n        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since\n        // we're implementing it ourselves. We use {Address-functionCall} to perform this call, which verifies that\n        // the target address contains contract code and also asserts for success in the low-level call.\n\n        bytes memory returndata = address(token).functionCall(data, \"SafeERC20: low-level call failed\");\n        require(returndata.length == 0 || abi.decode(returndata, (bool)), \"SafeERC20: ERC20 operation did not succeed\");\n    }\n\n    /**\n     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement\n     * on the return value: the return value is optional (but if data is returned, it must not be false).\n     * @param token The token targeted by the call.\n     * @param data The call data (encoded using abi.encode or one of its variants).\n     *\n     * This is a variant of {_callOptionalReturn} that silents catches all reverts and returns a bool instead.\n     */\n    function _callOptionalReturnBool(IERC20 token, bytes memory data) private returns (bool) {\n        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since\n        // we're implementing it ourselves. We cannot use {Address-functionCall} here since this should return false\n        // and not revert is the subcall reverts.\n\n        (bool success, bytes memory returndata) = address(token).call(data);\n        return\n            success && (returndata.length == 0 || abi.decode(returndata, (bool))) && Address.isContract(address(token));\n    }\n}\n", "@openzeppelin/contracts/token/ERC20/IERC20.sol": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v4.9.0) (token/ERC20/IERC20.sol)\n\npragma solidity ^0.8.0;\n\n/**\n * @dev Interface of the ERC20 standard as defined in the EIP.\n */\ninterface IERC20 {\n    /**\n     * @dev Emitted when `value` tokens are moved from one account (`from`) to\n     * another (`to`).\n     *\n     * Note that `value` may be zero.\n     */\n    event Transfer(address indexed from, address indexed to, uint256 value);\n\n    /**\n     * @dev Emitted when the allowance of a `spender` for an `owner` is set by\n     * a call to {approve}. `value` is the new allowance.\n     */\n    event Approval(address indexed owner, address indexed spender, uint256 value);\n\n    /**\n     * @dev Returns the amount of tokens in existence.\n     */\n    function totalSupply() external view returns (uint256);\n\n    /**\n     * @dev Returns the amount of tokens owned by `account`.\n     */\n    function balanceOf(address account) external view returns (uint256);\n\n    /**\n     * @dev Moves `amount` tokens from the caller's account to `to`.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * Emits a {Transfer} event.\n     */\n    function transfer(address to, uint256 amount) external returns (bool);\n\n    /**\n     * @dev Returns the remaining number of tokens that `spender` will be\n     * allowed to spend on behalf of `owner` through {transferFrom}. This is\n     * zero by default.\n     *\n     * This value changes when {approve} or {transferFrom} are called.\n     */\n    function allowance(address owner, address spender) external view returns (uint256);\n\n    /**\n     * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * IMPORTANT: Beware that changing an allowance with this method brings the risk\n     * that someone may use both the old and the new allowance by unfortunate\n     * transaction ordering. One possible solution to mitigate this race\n     * condition is to first reduce the spender's allowance to 0 and set the\n     * desired value afterwards:\n     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729\n     *\n     * Emits an {Approval} event.\n     */\n    function approve(address spender, uint256 amount) external returns (bool);\n\n    /**\n     * @dev Moves `amount` tokens from `from` to `to` using the\n     * allowance mechanism. `amount` is then deducted from the caller's\n     * allowance.\n     *\n     * Returns a boolean value indicating whether the operation succeeded.\n     *\n     * Emits a {Transfer} event.\n     */\n    function transferFrom(address from, address to, uint256 amount) external returns (bool);\n}\n", "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v4.9.4) (token/ERC20/extensions/IERC20Permit.sol)\n\npragma solidity ^0.8.0;\n\n/**\n * @dev Interface of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in\n * https://eips.ethereum.org/EIPS/eip-2612[EIP-2612].\n *\n * Adds the {permit} method, which can be used to change an account's ERC20 allowance (see {IERC20-allowance}) by\n * presenting a message signed by the account. By not relying on {IERC20-approve}, the token holder account doesn't\n * need to send a transaction, and thus is not required to hold Ether at all.\n *\n * ==== Security Considerations\n *\n * There are two important considerations concerning the use of `permit`. The first is that a valid permit signature\n * expresses an allowance, and it should not be assumed to convey additional meaning. In particular, it should not be\n * considered as an intention to spend the allowance in any specific way. The second is that because permits have\n * built-in replay protection and can be submitted by anyone, they can be frontrun. A protocol that uses permits should\n * take this into consideration and allow a `permit` call to fail. Combining these two aspects, a pattern that may be\n * generally recommended is:\n *\n * ```solidity\n * function doThingWithPermit(..., uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public {\n *     try token.permit(msg.sender, address(this), value, deadline, v, r, s) {} catch {}\n *     doThing(..., value);\n * }\n *\n * function doThing(..., uint256 value) public {\n *     token.safeTransferFrom(msg.sender, address(this), value);\n *     ...\n * }\n * ```\n *\n * Observe that: 1) `msg.sender` is used as the owner, leaving no ambiguity as to the signer intent, and 2) the use of\n * `try/catch` allows the permit to fail and makes the code tolerant to frontrunning. (See also\n * {SafeERC20-safeTransferFrom}).\n *\n * Additionally, note that smart contract wallets (such as Argent or Safe) are not able to produce permit signatures, so\n * contracts should have entry points that don't rely on permit.\n */\ninterface IERC20Permit {\n    /**\n     * @dev Sets `value` as the allowance of `spender` over ``owner``'s tokens,\n     * given ``owner``'s signed approval.\n     *\n     * IMPORTANT: The same issues {IERC20-approve} has related to transaction\n     * ordering also apply here.\n     *\n     * Emits an {Approval} event.\n     *\n     * Requirements:\n     *\n     * - `spender` cannot be the zero address.\n     * - `deadline` must be a timestamp in the future.\n     * - `v`, `r` and `s` must be a valid `secp256k1` signature from `owner`\n     * over the EIP712-formatted function arguments.\n     * - the signature must use ``owner``'s current nonce (see {nonces}).\n     *\n     * For more information on the signature format, see the\n     * https://eips.ethereum.org/EIPS/eip-2612#specification[relevant EIP\n     * section].\n     *\n     * CAUTION: See Security Considerations above.\n     */\n    function permit(\n        address owner,\n        address spender,\n        uint256 value,\n        uint256 deadline,\n        uint8 v,\n        bytes32 r,\n        bytes32 s\n    ) external;\n\n    /**\n     * @dev Returns the current nonce for `owner`. This value must be\n     * included whenever a signature is generated for {permit}.\n     *\n     * Every successful call to {permit} increases ``owner``'s nonce by one. This\n     * prevents a signature from being used multiple times.\n     */\n    function nonces(address owner) external view returns (uint256);\n\n    /**\n     * @dev Returns the domain separator used in the encoding of the signature for {permit}, as defined by {EIP712}.\n     */\n    // solhint-disable-next-line func-name-mixedcase\n    function DOMAIN_SEPARATOR() external view returns (bytes32);\n}\n", "@openzeppelin/contracts/utils/Address.sol": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v4.9.0) (utils/Address.sol)\n\npragma solidity ^0.8.1;\n\n/**\n * @dev Collection of functions related to the address type\n */\nlibrary Address {\n    /**\n     * @dev Returns true if `account` is a contract.\n     *\n     * [IMPORTANT]\n     * ====\n     * It is unsafe to assume that an address for which this function returns\n     * false is an externally-owned account (EOA) and not a contract.\n     *\n     * Among others, `isContract` will return false for the following\n     * types of addresses:\n     *\n     *  - an externally-owned account\n     *  - a contract in construction\n     *  - an address where a contract will be created\n     *  - an address where a contract lived, but was destroyed\n     *\n     * Furthermore, `isContract` will also return true if the target contract within\n     * the same transaction is already scheduled for destruction by `SELFDESTRUCT`,\n     * which only has an effect at the end of a transaction.\n     * ====\n     *\n     * [IMPORTANT]\n     * ====\n     * You shouldn't rely on `isContract` to protect against flash loan attacks!\n     *\n     * Preventing calls from contracts is highly discouraged. It breaks composability, breaks support for smart wallets\n     * like Gnosis Safe, and does not provide security since it can be circumvented by calling from a contract\n     * constructor.\n     * ====\n     */\n    function isContract(address account) internal view returns (bool) {\n        // This method relies on extcodesize/address.code.length, which returns 0\n        // for contracts in construction, since the code is only stored at the end\n        // of the constructor execution.\n\n        return account.code.length > 0;\n    }\n\n    /**\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\n     * `recipient`, forwarding all available gas and reverting on errors.\n     *\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\n     * imposed by `transfer`, making them unable to receive funds via\n     * `transfer`. {sendValue} removes this limitation.\n     *\n     * https://consensys.net/diligence/blog/2019/09/stop-using-soliditys-transfer-now/[Learn more].\n     *\n     * IMPORTANT: because control is transferred to `recipient`, care must be\n     * taken to not create reentrancy vulnerabilities. Consider using\n     * {ReentrancyGuard} or the\n     * https://solidity.readthedocs.io/en/v0.8.0/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\n     */\n    function sendValue(address payable recipient, uint256 amount) internal {\n        require(address(this).balance >= amount, \"Address: insufficient balance\");\n\n        (bool success, ) = recipient.call{value: amount}(\"\");\n        require(success, \"Address: unable to send value, recipient may have reverted\");\n    }\n\n    /**\n     * @dev Performs a Solidity function call using a low level `call`. A\n     * plain `call` is an unsafe replacement for a function call: use this\n     * function instead.\n     *\n     * If `target` reverts with a revert reason, it is bubbled up by this\n     * function (like regular Solidity function calls).\n     *\n     * Returns the raw returned data. To convert to the expected return value,\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\n     *\n     * Requirements:\n     *\n     * - `target` must be a contract.\n     * - calling `target` with `data` must not revert.\n     *\n     * _Available since v3.1._\n     */\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\n        return functionCallWithValue(target, data, 0, \"Address: low-level call failed\");\n    }\n\n    /**\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\n     * `errorMessage` as a fallback revert reason when `target` reverts.\n     *\n     * _Available since v3.1._\n     */\n    function functionCall(\n        address target,\n        bytes memory data,\n        string memory errorMessage\n    ) internal returns (bytes memory) {\n        return functionCallWithValue(target, data, 0, errorMessage);\n    }\n\n    /**\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\n     * but also transferring `value` wei to `target`.\n     *\n     * Requirements:\n     *\n     * - the calling contract must have an ETH balance of at least `value`.\n     * - the called Solidity function must be `payable`.\n     *\n     * _Available since v3.1._\n     */\n    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {\n        return functionCallWithValue(target, data, value, \"Address: low-level call with value failed\");\n    }\n\n    /**\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\n     *\n     * _Available since v3.1._\n     */\n    function functionCallWithValue(\n        address target,\n        bytes memory data,\n        uint256 value,\n        string memory errorMessage\n    ) internal returns (bytes memory) {\n        require(address(this).balance >= value, \"Address: insufficient balance for call\");\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\n        return verifyCallResultFromTarget(target, success, returndata, errorMessage);\n    }\n\n    /**\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\n     * but performing a static call.\n     *\n     * _Available since v3.3._\n     */\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\n        return functionStaticCall(target, data, \"Address: low-level static call failed\");\n    }\n\n    /**\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\n     * but performing a static call.\n     *\n     * _Available since v3.3._\n     */\n    function functionStaticCall(\n        address target,\n        bytes memory data,\n        string memory errorMessage\n    ) internal view returns (bytes memory) {\n        (bool success, bytes memory returndata) = target.staticcall(data);\n        return verifyCallResultFromTarget(target, success, returndata, errorMessage);\n    }\n\n    /**\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\n     * but performing a delegate call.\n     *\n     * _Available since v3.4._\n     */\n    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {\n        return functionDelegateCall(target, data, \"Address: low-level delegate call failed\");\n    }\n\n    /**\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\n     * but performing a delegate call.\n     *\n     * _Available since v3.4._\n     */\n    function functionDelegateCall(\n        address target,\n        bytes memory data,\n        string memory errorMessage\n    ) internal returns (bytes memory) {\n        (bool success, bytes memory returndata) = target.delegatecall(data);\n        return verifyCallResultFromTarget(target, success, returndata, errorMessage);\n    }\n\n    /**\n     * @dev Tool to verify that a low level call to smart-contract was successful, and revert (either by bubbling\n     * the revert reason or using the provided one) in case of unsuccessful call or if target was not a contract.\n     *\n     * _Available since v4.8._\n     */\n    function verifyCallResultFromTarget(\n        address target,\n        bool success,\n        bytes memory returndata,\n        string memory errorMessage\n    ) internal view returns (bytes memory) {\n        if (success) {\n            if (returndata.length == 0) {\n                // only check isContract if the call was successful and the return data is empty\n                // otherwise we already know that it was a contract\n                require(isContract(target), \"Address: call to non-contract\");\n            }\n            return returndata;\n        } else {\n            _revert(returndata, errorMessage);\n        }\n    }\n\n    /**\n     * @dev Tool to verify that a low level call was successful, and revert if it wasn't, either by bubbling the\n     * revert reason or using the provided one.\n     *\n     * _Available since v4.3._\n     */\n    function verifyCallResult(\n        bool success,\n        bytes memory returndata,\n        string memory errorMessage\n    ) internal pure returns (bytes memory) {\n        if (success) {\n            return returndata;\n        } else {\n            _revert(returndata, errorMessage);\n        }\n    }\n\n    function _revert(bytes memory returndata, string memory errorMessage) private pure {\n        // Look for revert reason and bubble it up if present\n        if (returndata.length > 0) {\n            // The easiest way to bubble the revert reason is using memory via assembly\n            /// @solidity memory-safe-assembly\n            assembly {\n                let returndata_size := mload(returndata)\n                revert(add(32, returndata), returndata_size)\n            }\n        } else {\n            revert(errorMessage);\n        }\n    }\n}\n"}, "goal": "// SPDX-License-Identifier: MIT\n// Based on OpenZeppelin Contracts v4.9.6 (token/ERC20/utils/TokenTimelock.sol).\n// The ONLY changes from OpenZeppelin's audited TokenTimelock are marked \"CHANGE\".\n\npragma solidity ^0.8.0;\n\nimport \"@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol\";\n\n/**\n * @dev A token holder contract that will allow a beneficiary to extract the\n * tokens once a savings goal is reached, or after a backup release time,\n * whichever comes first.\n */\ncontract GoalTimelock {\n    using SafeERC20 for IERC20;\n\n    // ERC20 basic token contract being held\n    IERC20 private immutable _token;\n\n    // beneficiary of tokens after they are released\n    address private immutable _beneficiary;\n\n    // timestamp when token release is enabled (backup date)\n    uint256 private immutable _releaseTime;\n\n    // CHANGE: savings goal, in the token's smallest units. Release is enabled once the balance reaches it.\n    uint256 private immutable _goal;\n\n    /**\n     * @dev Deploys a lock that holds `token_` and only releases it to `beneficiary_` when {release} is\n     * invoked after `releaseTime_` or once the balance is at least `goal_`.\n     */\n    constructor(IERC20 token_, address beneficiary_, uint256 releaseTime_, uint256 goal_) {\n        require(releaseTime_ > block.timestamp, \"TokenTimelock: release time is before current time\");\n        require(goal_ > 0, \"GoalTimelock: goal is zero\"); // CHANGE\n        _token = token_;\n        _beneficiary = beneficiary_;\n        _releaseTime = releaseTime_;\n        _goal = goal_; // CHANGE\n    }\n\n    /**\n     * @dev Returns the token being held.\n     */\n    function token() public view virtual returns (IERC20) {\n        return _token;\n    }\n\n    /**\n     * @dev Returns the beneficiary that will receive the tokens.\n     */\n    function beneficiary() public view virtual returns (address) {\n        return _beneficiary;\n    }\n\n    /**\n     * @dev Returns the backup release time in seconds since Unix epoch (i.e. Unix timestamp).\n     */\n    function releaseTime() public view virtual returns (uint256) {\n        return _releaseTime;\n    }\n\n    /**\n     * @dev CHANGE: Returns the savings goal.\n     */\n    function goal() public view virtual returns (uint256) {\n        return _goal;\n    }\n\n    /**\n     * @dev Transfers tokens held by the lock to the beneficiary. Will only succeed if the goal is reached\n     * or the backup release time has passed.\n     */\n    function release() public virtual {\n        uint256 amount = token().balanceOf(address(this));\n        require(amount > 0, \"TokenTimelock: no tokens to release\");\n\n        // CHANGE: was `require(block.timestamp >= releaseTime(), ...)`\n        require(\n            amount >= goal() || block.timestamp >= releaseTime(),\n            \"GoalTimelock: goal not reached and before release time\"\n        );\n\n        token().safeTransfer(beneficiary(), amount);\n    }\n}\n"};</script>
+<script id="coreScript">// =====================================================================================================
+// TimeVault core. Contract code, exact-code lock verification, and the transaction guard.
+// This exact file is inlined into both the app (index.html) and the test page (tests.html).
+//
+// THE RULE: the app never builds or sends a transaction anywhere except through TV.makeGuard().
+// The guard only knows three actions, and it builds the transaction bytes itself:
+//   create  : call the standard CREATE2 deployer with one of the two tested lock contracts, paying YOUR wallet
+//   deposit : USDC/USDT transfer() into a lock whose on-chain code is byte-for-byte a tested lock paying YOU
+//   release : release() on such a lock
+// No approve(), no ETH value, no other address, no other function. Anything else is refused before the wallet
+// is ever asked to sign.
+// =====================================================================================================
+const TV = (() => {
+  'use strict';
+
+  // Arbitrum's standard deterministic deployment proxy (the same one Foundry uses). Its code is checked before use.
+  const DEPLOYER = '0x4e59b44847b379578588920cA78FbF26c0B4956C';
+  const DEPLOYER_CODEHASH = '0x2fa86add0aed31f33a762c9d88e807c475bd51d0f52bd0955754b2608f7e4989';
+  const DEPLOYER_RUNTIME = '0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3';
+
+  // Both contracts: solc 0.8.24, optimizer on (200 runs), evmVersion paris, OpenZeppelin Contracts 4.9.6.
+  // creation = full deploy code. The runtime code (what lives on chain) is the tail of it, starting at runtimeOffset.
+  // slots = byte offsets inside the runtime code where the per-lock settings (immutables) are written.
+  const CONTRACTS = {
+    date: {
+      name: 'TokenTimelock (OpenZeppelin 4.9.6, unmodified)',
+      creation: '0x60e060405234801561001057600080fd5b506040516107c13803806107c183398101604081905261002f916100d0565b42811161009d5760405162461bcd60e51b815260206004820152603260248201527f546f6b656e54696d656c6f636b3a2072656c656173652074696d65206973206260448201527165666f72652063757272656e742074696d6560701b606482015260840160405180910390fd5b6001600160a01b03928316608052911660a05260c052610113565b6001600160a01b03811681146100cd57600080fd5b50565b6000806000606084860312156100e557600080fd5b83516100f0816100b8565b6020850151909350610101816100b8565b80925050604084015190509250925092565b60805160a05160c05161066761015a60003960008181609f015260f00152600081816053015261029801526000818160ca01528181610182015261027601526106676000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806338af3eed1461005157806386d1a69f14610090578063b91d40011461009a578063fc0c546a146100c8575b600080fd5b7f00000000000000000000000000000000000000000000000000000000000000005b6040516001600160a01b0390911681526020015b60405180910390f35b6100986100ee565b005b6040517f00000000000000000000000000000000000000000000000000000000000000008152602001610087565b7f0000000000000000000000000000000000000000000000000000000000000000610073565b7f000000000000000000000000000000000000000000000000000000000000000042101561017e5760405162461bcd60e51b815260206004820152603260248201527f546f6b656e54696d656c6f636b3a2063757272656e742074696d65206973206260448201527165666f72652072656c656173652074696d6560701b60648201526084015b60405180910390fd5b60007f00000000000000000000000000000000000000000000000000000000000000006040516370a0823160e01b81523060048201526001600160a01b0391909116906370a0823190602401602060405180830381865afa1580156101e7573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061020b919061057c565b9050600081116102695760405162461bcd60e51b815260206004820152602360248201527f546f6b656e54696d656c6f636b3a206e6f20746f6b656e7320746f2072656c6560448201526261736560e81b6064820152608401610175565b6102bd6001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000167f0000000000000000000000000000000000000000000000000000000000000000836102c0565b50565b604080516001600160a01b038416602482015260448082018490528251808303909101815260649091019091526020810180516001600160e01b031663a9059cbb60e01b179052610312908490610317565b505050565b600061036c826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b03166103ec9092919063ffffffff16565b905080516000148061038d57508080602001905181019061038d9190610595565b6103125760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e6044820152691bdd081cdd58d8d9595960b21b6064820152608401610175565b60606103fb8484600085610403565b949350505050565b6060824710156104645760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f6044820152651c8818d85b1b60d21b6064820152608401610175565b600080866001600160a01b0316858760405161048091906105e2565b60006040518083038185875af1925050503d80600081146104bd576040519150601f19603f3d011682016040523d82523d6000602084013e6104c2565b606091505b50915091506104d3878383876104de565b979650505050505050565b6060831561054d578251600003610546576001600160a01b0385163b6105465760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e74726163740000006044820152606401610175565b50816103fb565b6103fb83838151156105625781518083602001fd5b8060405162461bcd60e51b815260040161017591906105fe565b60006020828403121561058e57600080fd5b5051919050565b6000602082840312156105a757600080fd5b815180151581146105b757600080fd5b9392505050565b60005b838110156105d95781810151838201526020016105c1565b50506000910152565b600082516105f48184602087016105be565b9190910192915050565b602081526000825180602084015261061d8160408501602087016105be565b601f01601f1916919091016040019291505056fea2646970667358221220158df7771e33c89f2d4a32b0a0e5b49c0cf5a9ab1c334bfc874a4605ef2311bf64736f6c63430008180033',
+      fingerprint: '0x29b075c113591090dc177f4c04c75fa4d97f33dcb4b479e05fc78c7138b43d07',
+      runtimeOffset: 346,
+      runtimeFingerprint: '0x69f0c9f615b257aa3be46f848f50fb67c4450d8eee3ec8a05bfd207cab988ec7',
+      runtimeLength: 1639,
+      slots: { token: [202, 386, 630], beneficiary: [83, 664], releaseTime: [159, 240] },
+      ctor: ['address', 'address', 'uint256'],
+    },
+    goal: {
+      name: 'GoalTimelock (TokenTimelock + "or balance >= goal")',
+      creation: '0x61010060405234801561001157600080fd5b506040516108933803806108938339810160408190526100309161012a565b42821161009f5760405162461bcd60e51b815260206004820152603260248201527f546f6b656e54696d656c6f636b3a2072656c656173652074696d65206973206260448201527165666f72652063757272656e742074696d6560701b60648201526084015b60405180910390fd5b600081116100ef5760405162461bcd60e51b815260206004820152601a60248201527f476f616c54696d656c6f636b3a20676f616c206973207a65726f0000000000006044820152606401610096565b6001600160a01b039384166080529190921660a05260c09190915260e052610172565b6001600160a01b038116811461012757600080fd5b50565b6000806000806080858703121561014057600080fd5b845161014b81610112565b602086015190945061015c81610112565b6040860151606090960151949790965092505050565b60805160a05160c05160e0516106c96101ca60003960008181609d015261021301526000818160d7015261023d015260008181605e01526102fa01526000818160fd0152818161012501526102d801526106c96000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c806338af3eed1461005c578063401938831461009b57806386d1a69f146100cb578063b91d4001146100d5578063fc0c546a146100fb575b600080fd5b7f00000000000000000000000000000000000000000000000000000000000000005b6040516001600160a01b0390911681526020015b60405180910390f35b7f00000000000000000000000000000000000000000000000000000000000000005b604051908152602001610092565b6100d3610121565b005b7f00000000000000000000000000000000000000000000000000000000000000006100bd565b7f000000000000000000000000000000000000000000000000000000000000000061007e565b60007f00000000000000000000000000000000000000000000000000000000000000006040516370a0823160e01b81523060048201526001600160a01b0391909116906370a0823190602401602060405180830381865afa15801561018a573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101ae91906105de565b9050600081116102115760405162461bcd60e51b815260206004820152602360248201527f546f6b656e54696d656c6f636b3a206e6f20746f6b656e7320746f2072656c6560448201526261736560e81b60648201526084015b60405180910390fd5b7f00000000000000000000000000000000000000000000000000000000000000008110158061026057507f00000000000000000000000000000000000000000000000000000000000000004210155b6102cb5760405162461bcd60e51b815260206004820152603660248201527f476f616c54696d656c6f636b3a20676f616c206e6f74207265616368656420616044820152756e64206265666f72652072656c656173652074696d6560501b6064820152608401610208565b61031f6001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000167f000000000000000000000000000000000000000000000000000000000000000083610322565b50565b604080516001600160a01b038416602482015260448082018490528251808303909101815260649091019091526020810180516001600160e01b031663a9059cbb60e01b179052610374908490610379565b505050565b60006103ce826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b031661044e9092919063ffffffff16565b90508051600014806103ef5750808060200190518101906103ef91906105f7565b6103745760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e6044820152691bdd081cdd58d8d9595960b21b6064820152608401610208565b606061045d8484600085610465565b949350505050565b6060824710156104c65760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f6044820152651c8818d85b1b60d21b6064820152608401610208565b600080866001600160a01b031685876040516104e29190610644565b60006040518083038185875af1925050503d806000811461051f576040519150601f19603f3d011682016040523d82523d6000602084013e610524565b606091505b509150915061053587838387610540565b979650505050505050565b606083156105af5782516000036105a8576001600160a01b0385163b6105a85760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e74726163740000006044820152606401610208565b508161045d565b61045d83838151156105c45781518083602001fd5b8060405162461bcd60e51b81526004016102089190610660565b6000602082840312156105f057600080fd5b5051919050565b60006020828403121561060957600080fd5b8151801515811461061957600080fd5b9392505050565b60005b8381101561063b578181015183820152602001610623565b50506000910152565b60008251610656818460208701610620565b9190910192915050565b602081526000825180602084015261067f816040850160208701610620565b601f01601f1916919091016040019291505056fea2646970667358221220c77724764fe9a5af46da9295a9319d5db66327aeecfc6d93118e5a4fce904f5a64736f6c63430008180033',
+      fingerprint: '0x9ea0a457432e78e589fdb1dffa3bd2c2e67b2fec599fb539b9de8b81b27e9bca',
+      runtimeOffset: 458,
+      runtimeFingerprint: '0x821e3155e7b9b5cc0f5994c677c85ca3b72bb3e6861aec878c125f3b55331056',
+      runtimeLength: 1737,
+      slots: { token: [253, 293, 728], beneficiary: [94, 762], releaseTime: [215, 573], goal: [157, 531] },
+      ctor: ['address', 'address', 'uint256', 'uint256'],
+    },
+  };
+
+  const LOCK_ABI = [
+    'function token() view returns (address)', 'function beneficiary() view returns (address)',
+    'function releaseTime() view returns (uint256)', 'function goal() view returns (uint256)', 'function release()',
+  ];
+  const ERC20_ABI = ['function balanceOf(address) view returns (uint256)', 'function transfer(address,uint256) returns (bool)'];
+  const SEL_TRANSFER = '0xa9059cbb', SEL_RELEASE = '0x86d1a69f';
+  const MAX_LOCK_SECONDS = 10 * 365 * 86400;
+
+  class Refused extends Error { constructor(msg) { super(msg); this.name = 'Refused'; this.refused = true; } }
+  const refuse = (msg) => { throw new Refused(msg); };
+  const lc = (s) => String(s).toLowerCase();
+
+  // ------------------------------------------------------------------------------------------- self check
+  // Proves the embedded contract code is exactly the tested build, before anything else runs.
+  function selfCheck(ethers) {
+    const out = { ok: true, items: [] };
+    const add = (label, ok) => { out.items.push({ label, ok }); if (!ok) out.ok = false; };
+    for (const [kind, c] of Object.entries(CONTRACTS)) {
+      add(kind + ' contract code fingerprint', ethers.keccak256(c.creation) === c.fingerprint);
+      const rt = '0x' + c.creation.slice(2 + c.runtimeOffset * 2);
+      add(kind + ' on-chain code template fingerprint', rt.length === 2 + c.runtimeLength * 2 && ethers.keccak256(rt) === c.runtimeFingerprint);
+    }
+    add('deployer code fingerprint', ethers.keccak256(DEPLOYER_RUNTIME) === DEPLOYER_CODEHASH);
+    return out;
+  }
+
+  // ------------------------------------------------------------------------------------------- exact code
+  function runtimeTemplate(kind) { const c = CONTRACTS[kind]; return c.creation.slice(2 + c.runtimeOffset * 2); }
+
+  // The exact bytes a lock with these settings must have on chain.
+  function expectedRuntime(ethers, kind, p) {
+    const c = CONTRACTS[kind]; let h = runtimeTemplate(kind);
+    const put = (starts, word) => { for (const s of starts) h = h.slice(0, s * 2) + word + h.slice(s * 2 + 64); };
+    put(c.slots.token, ethers.zeroPadValue(p.token, 32).slice(2).toLowerCase());
+    put(c.slots.beneficiary, ethers.zeroPadValue(p.beneficiary, 32).slice(2).toLowerCase());
+    put(c.slots.releaseTime, ethers.toBeHex(p.releaseTime, 32).slice(2));
+    if (kind === 'goal') put(c.slots.goal, ethers.toBeHex(p.goal, 32).slice(2));
+    return '0x' + h;
+  }
+
+  function initcode(ethers, kind, p) {
+    const c = CONTRACTS[kind];
+    const args = kind === 'goal' ? [p.token, p.beneficiary, p.releaseTime, p.goal] : [p.token, p.beneficiary, p.releaseTime];
+    return c.creation + ethers.AbiCoder.defaultAbiCoder().encode(c.ctor, args).slice(2);
+  }
+
+  // Ask several independent servers. Every server that answers must return the same thing, and at least
+  // `need` must answer. A server that lies cannot make a fake lock look real unless ALL of them lie.
+  async function quorum(providers, fn, need, label) {
+    const res = await Promise.allSettled(providers.map((p) => fn(p)));
+    const ok = res.filter((r) => r.status === 'fulfilled').map((r) => r.value);
+    if (ok.length < need) refuse('Could not reach enough Arbitrum servers to double-check ' + label + ' (' + ok.length + ' of ' + need + '). Nothing was sent. Try again in a minute.');
+    const first = JSON.stringify(ok[0], (k, v) => (typeof v === 'bigint' ? v.toString() : v));
+    for (const v of ok) if (JSON.stringify(v, (k, x) => (typeof x === 'bigint' ? x.toString() : x)) !== first) refuse('Arbitrum servers disagree about ' + label + '. Stopping to be safe. Nothing was sent.');
+    return ok[0];
+  }
+
+  // Verify that `addr` is a genuine TimeVault lock. Returns its kind and settings.
+  // Reads the settings, rebuilds the exact code those settings must produce, and compares byte for byte
+  // with what every server reports is on chain.
+  async function verifyLock(ethers, cfg, addr, expect = {}) {
+    if (!ethers.isAddress(addr)) refuse('Not a valid address.');
+    addr = ethers.getAddress(addr);
+    const code = lc(await quorum(cfg.providers, (p) => p.getCode(addr), cfg.need, 'the lock code'));
+    let kind = null;
+    if (code.length === 2 + CONTRACTS.goal.runtimeLength * 2) kind = 'goal';
+    else if (code.length === 2 + CONTRACTS.date.runtimeLength * 2) kind = 'date';
+    else refuse('This address is not a TimeVault lock (its code does not match). Nothing was sent.');
+    const p = await quorum(cfg.providers, async (prov) => {
+      const c = new ethers.Contract(addr, LOCK_ABI, prov);
+      const [token, beneficiary, releaseTime] = await Promise.all([c.token(), c.beneficiary(), c.releaseTime()]);
+      const goal = kind === 'goal' ? await c.goal() : 0n;
+      return { token: ethers.getAddress(token), beneficiary: ethers.getAddress(beneficiary), releaseTime, goal };
+    }, cfg.need, 'the lock settings');
+    if (code !== lc(expectedRuntime(ethers, kind, p))) refuse('This address is not a genuine TimeVault lock: its code differs from the tested code. Nothing was sent.');
+    const sym = Object.keys(cfg.tokens).find((k) => lc(cfg.tokens[k].address) === lc(p.token));
+    if (!sym) refuse('This lock holds a coin the app does not support. Nothing was sent.');
+    if (expect.beneficiary && lc(p.beneficiary) !== lc(expect.beneficiary)) refuse('This lock pays a different wallet, not yours. Nothing was sent.');
+    return { addr, kind, sym, token: p.token, beneficiary: p.beneficiary, releaseTime: Number(p.releaseTime), goal: p.goal };
+  }
+
+  // ------------------------------------------------------------------------------------------- the guard
+  // cfg: { providers: [read providers, 2+ independent], need: how many must agree, tokens: {SYM:{address,decimals}},
+  //        chainId, getSigner: async () => ethers Signer, getAccount: () => address, maxBaseFee (wei),
+  //        onAsk(summary) -> Promise<bool> user confirmation shown BEFORE the wallet is asked }
+  function makeGuard(ethers, cfg) {
+    const main = cfg.providers[0];
+    const now = async () => Number((await main.getBlock('latest')).timestamp);
+
+    async function fees() {
+      const blk = await main.getBlock('latest');
+      const base = blk.baseFeePerGas ?? 0n;
+      if (cfg.maxBaseFee && base > cfg.maxBaseFee) refuse('Network fees look abnormally high right now. Nothing was sent. Try again later.');
+      let cap = base * 3n; const floor = ethers.parseUnits('0.1', 'gwei'); if (cap < floor) cap = floor;
+      return { maxFeePerGas: cap, maxPriorityFeePerGas: 0n };
+    }
+
+    async function walletChecks() {
+      const account = cfg.getAccount(); if (!account) refuse('Connect your wallet first.');
+      const signer = await cfg.getSigner();
+      if (lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
+      const chain = Number(await signer.provider.send('eth_chainId', []));
+      if (chain !== cfg.chainId) refuse('Your wallet is not on Arbitrum One. Switch networks and try again. Nothing was sent.');
+      return { account: ethers.getAddress(account), signer };
+    }
+
+    // The single place a transaction is handed to the wallet. Final structural check on the exact bytes.
+    async function sendTx(signer, account, tx, allowedTo, summary) {
+      if (tx.value !== undefined && BigInt(tx.value) !== 0n) refuse('Internal check failed: a transaction tried to send ETH. Stopped.');
+      if (!allowedTo.some((a) => lc(a) === lc(tx.to))) refuse('Internal check failed: unexpected destination. Stopped.');
+      // Dry run with the exact bytes, from your address, against the live chain. If it would fail, do not ask the wallet.
+      try { await main.call({ from: account, to: tx.to, data: tx.data, value: 0n }); }
+      catch (e) { refuse('Dry run failed, so nothing was sent: ' + (e.reason || e.shortMessage || e.message || e).toString().slice(0, 160)); }
+      let gasLimit;
+      try { gasLimit = (await main.estimateGas({ from: account, to: tx.to, data: tx.data, value: 0n })) * 13n / 10n; }
+      catch { gasLimit = 3_000_000n; }
+      if (gasLimit > 5_000_000n) refuse('Unexpected gas use. Stopped.');
+      if (cfg.onAsk && !(await cfg.onAsk(summary))) refuse('Cancelled.');
+      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, ...(await fees()) });
+      const rc = await waitReceipt(sent.hash);
+      if (!rc || rc.status !== 1) throw new Error('The transaction failed on chain. ' + (summary.failNote || ''));
+      return rc;
+    }
+
+    // Poll for the receipt (included in a block). Up to 5 minutes.
+    async function waitReceipt(hash) {
+      for (let i = 0; i < 300; i++) {
+        const rc = await main.getTransactionReceipt(hash).catch(() => null);
+        if (rc) return rc;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      throw new Error('Timed out waiting for the transaction. Check your wallet history before trying again.');
+    }
+
+    async function create({ kind, sym, releaseTime, goal, onStep }) {
+      if (!CONTRACTS[kind]) refuse('Unknown lock type.');
+      const t = cfg.tokens[sym]; if (!t) refuse('Unsupported coin.');
+      const { account, signer } = await walletChecks();
+      const chainNow = await now();
+      releaseTime = Number(releaseTime);
+      if (!(releaseTime > chainNow + 3600)) refuse('The date must be at least an hour from now.');
+      if (releaseTime > chainNow + MAX_LOCK_SECONDS) refuse('The date can be at most 10 years away.');
+      if (kind === 'goal') { goal = BigInt(goal); if (goal <= 0n) refuse('The goal must be more than zero.'); }
+      const deployerCode = lc(await quorum(cfg.providers, (p) => p.getCode(DEPLOYER), cfg.need, 'the deployer'));
+      if (ethers.keccak256(deployerCode) !== DEPLOYER_CODEHASH) refuse('The standard deployer on this network looks wrong. Nothing was sent.');
+      const params = { token: t.address, beneficiary: account, releaseTime, goal: goal ?? 0n };
+      const init = initcode(ethers, kind, params);
+      const salt = ethers.hexlify(ethers.randomBytes(32));
+      const predicted = ethers.getCreate2Address(DEPLOYER, salt, ethers.keccak256(init));
+      if ((await main.getCode(predicted)).length > 2) refuse('Address collision. Try again.');
+      const data = salt + init.slice(2);
+      onStep && onStep('create');
+      await sendTx(signer, account, { to: DEPLOYER, data }, [DEPLOYER], {
+        action: 'create', to: DEPLOYER, toLabel: 'Arbitrum standard contract deployer',
+        text: 'Create your ' + (kind === 'goal' ? 'goal' : 'fixed-date') + ' lock. No coins move in this step.',
+        failNote: 'No coins were moved.',
+      });
+      onStep && onStep('verify');
+      const L = await retry(() => verifyLock(ethers, cfg, predicted, { beneficiary: account }));
+      if (L.kind !== kind || lc(L.token) !== lc(t.address) || L.releaseTime !== releaseTime || (kind === 'goal' && L.goal !== goal))
+        refuse('The new lock does not match what you asked for. No coins were moved.');
+      return L;
+    }
+
+    async function deposit({ lock, amount, onStep }) {
+      amount = BigInt(amount); if (amount <= 0n) refuse('Enter an amount.');
+      const { account, signer } = await walletChecks();
+      onStep && onStep('verify');
+      const L = await verifyLock(ethers, cfg, lock, { beneficiary: account });
+      if ((await now()) >= L.releaseTime) refuse('This lock\'s date has passed, so it no longer holds money back. Start a new lock instead. Nothing was sent.');
+      const tok = cfg.tokens[L.sym];
+      const erc = new ethers.Contract(tok.address, ERC20_ABI, main);
+      const bal = await erc.balanceOf(account);
+      if (amount > bal) refuse('That is more ' + L.sym + ' than your wallet has.');
+      const before = await erc.balanceOf(L.addr);
+      const data = SEL_TRANSFER + ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [L.addr, amount]).slice(2);
+      onStep && onStep('send');
+      await sendTx(signer, account, { to: tok.address, data }, [tok.address], {
+        action: 'deposit', to: tok.address, toLabel: L.sym + ' token contract', recipient: L.addr,
+        text: 'Send ' + ethers.formatUnits(amount, tok.decimals) + ' ' + L.sym + ' into your lock ' + L.addr + '.',
+        failNote: 'Your coins are still in your wallet.',
+      });
+      const after = await retry(async () => { const a = await erc.balanceOf(L.addr); if (a < before + amount) throw new Error('not yet'); return a; });
+      return { ...L, balance: after };
+    }
+
+    async function release({ lock, onStep }) {
+      const { account, signer } = await walletChecks();
+      onStep && onStep('verify');
+      const L = await verifyLock(ethers, cfg, lock, { beneficiary: account });
+      onStep && onStep('send');
+      await sendTx(signer, account, { to: L.addr, data: SEL_RELEASE }, [L.addr], {
+        action: 'release', to: L.addr, toLabel: 'your lock',
+        text: 'Release everything in lock ' + L.addr + ' to your wallet ' + account + '.',
+        failNote: 'The coins are still in the lock.',
+      });
+      return L;
+    }
+
+    // Servers can lag a few seconds behind a brand-new transaction, so post-transaction checks retry for ~20s.
+    async function retry(fn, tries = 12) {
+      for (let i = 0; ; i++) { try { return await fn(); } catch (e) { if (i >= tries) throw e; await new Promise((r) => setTimeout(r, 1700)); } }
+    }
+
+    return Object.freeze({ create, deposit, release });
+  }
+
+  return Object.freeze({
+    DEPLOYER, DEPLOYER_CODEHASH, DEPLOYER_RUNTIME, CONTRACTS, LOCK_ABI, ERC20_ABI,
+    selfCheck, expectedRuntime, initcode, verifyLock, makeGuard, Refused,
+  });
+})();
+</script>
+<script id="appScript">// TimeVault app. All transactions go through TV.makeGuard (core.js). This file only builds the screens.
+(() => {
+  'use strict';
+  const CHAIN_ID = 42161;
+  const RPCS = ['https://arb1.arbitrum.io/rpc', 'https://arbitrum-one-rpc.publicnode.com', 'https://arbitrum.drpc.org', 'https://arbitrum.meowrpc.com'];
+  // Coin addresses: Circle's native USDC and Tether's USDT on Arbitrum One.
+  const TOKENS = { USDC: { address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', decimals: 6 }, USDT: { address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', decimals: 6 } };
+  const SYMBOL = Object.fromEntries(Object.entries(TOKENS).map(([k, v]) => [v.address.toLowerCase(), k]));
+  const ERC20 = ['function balanceOf(address) view returns (uint256)'];
+  const DAY = 86400;
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const short = (a) => (a ? a.slice(0, 6) + '…' + a.slice(-4) : '');
+  const fmt = (x) => Number(ethers.formatUnits(x, 6));
+  const money = (n) => '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const num = (n, d = 2) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
+  const dateStr = (s) => new Date(Number(s) * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  const dayStr = (d) => d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  const store = {
+    get(k, d = '') { try { const v = localStorage.getItem('tv3.' + k); return v === null ? d : v; } catch { return d; } },
+    set(k, v) { try { v === '' || v == null ? localStorage.removeItem('tv3.' + k) : localStorage.setItem('tv3.' + k, v); } catch {} },
+    json(k, d) { try { return JSON.parse(this.get(k, '')) ?? d; } catch { return d; } },
+    setJson(k, v) { this.set(k, JSON.stringify(v)); },
+  };
+
+  // ------------------------------------------------------------------ startup self check (blocks money actions if it fails)
+  const SELF = TV.selfCheck(ethers);
+  if (!SELF.ok) document.body.classList.add('broken');
+
+  // ------------------------------------------------------------------ read-only blockchain access: 4 independent servers
+  const providers = RPCS.map((u) => {
+    const req = new ethers.FetchRequest(u); req.timeout = 9000;
+    return new ethers.JsonRpcProvider(req, CHAIN_ID, { staticNetwork: ethers.Network.from(CHAIN_ID), cacheTimeout: -1, batchMaxCount: 1 });
+  });
+  const main = providers[0];
+  const verifyCfg = { providers, need: 2, tokens: TOKENS };
+
+  // ------------------------------------------------------------------ wallet
+  let wc = null, eip = null, account = '', chainId = 0;
+  const viewer = () => account || store.get('watch');
+
+  const guard = TV.makeGuard(ethers, {
+    providers, need: 2, tokens: TOKENS, chainId: CHAIN_ID, maxBaseFee: ethers.parseUnits('2', 'gwei'),
+    getAccount: () => account,
+    getSigner: async () => { if (!eip) throw new TV.Refused('Connect your wallet first.'); return new ethers.BrowserProvider(eip).getSigner(account); },
+    onAsk: confirmScreen,
+  });
+
+  function setAccount(a, c) {
+    account = a ? ethers.getAddress(a) : ''; chainId = Number(c || 0);
+    const p = $('netPill');
+    if (!account) { p.textContent = store.get('watch') ? 'Watching ' + short(store.get('watch')) : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect'; }
+    else if (chainId !== CHAIN_ID) { p.textContent = short(account) + ' · wrong network'; p.className = 'pill warn'; $('connectBtn').textContent = 'Disconnect'; }
+    else { p.textContent = short(account) + ' · Arbitrum'; p.className = 'pill ok'; $('connectBtn').textContent = 'Disconnect'; }
+    refresh();
+  }
+  async function ensureArbitrum() {
+    if (!eip) throw new TV.Refused('Connect your wallet first.');
+    const c = Number(await eip.request({ method: 'eth_chainId' }));
+    if (c === CHAIN_ID) return;
+    try { await eip.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xa4b1' }] }); chainId = CHAIN_ID; }
+    catch { throw new TV.Refused('Switch your wallet to Arbitrum One, then try again.'); }
+  }
+  async function initWc(connectNow) {
+    const projectId = store.get('wcid');
+    if (!projectId) { if (connectNow) { show('setup'); $('wcId').focus(); toast('Add your WalletConnect Project ID first (one-time).'); } return; }
+    if (!wc) {
+      const { EthereumProvider } = window['@walletconnect/ethereum-provider'];
+      wc = await EthereumProvider.init({
+        projectId, optionalChains: [CHAIN_ID], showQrModal: false, rpcMap: { [CHAIN_ID]: RPCS[0] },
+        optionalMethods: ['eth_sendTransaction', 'personal_sign', 'wallet_switchEthereumChain'],
+        metadata: { name: 'TimeVault', description: 'Personal savings locks', url: location.origin.startsWith('http') ? location.origin : 'https://timevault.local', icons: [] },
+      });
+      wc.on('display_uri', (uri) => {
+        show('setup'); $('qrBox').hidden = false; $('uriText').textContent = uri; $('copyUri').dataset.uri = uri;
+        try { const q = qrcode(0, 'M'); q.addData(uri); q.make(); $('qr').innerHTML = q.createImgTag(5, 8); } catch { $('qr').textContent = 'Use Copy link instead.'; }
+      });
+      wc.on('accountsChanged', (a) => setAccount(a[0], wc.chainId));
+      wc.on('chainChanged', (c) => setAccount(account, c));
+      wc.on('disconnect', () => { eip = null; setAccount(''); });
+    }
+    if (wc.session && wc.accounts?.length) { eip = wc; setAccount(wc.accounts[0], wc.chainId); return; }
+    if (connectNow) {
+      try { await wc.connect(); eip = wc; $('qrBox').hidden = true; setAccount(wc.accounts[0], wc.chainId); toast('Wallet connected.'); show('home'); }
+      catch (e) { $('qrBox').hidden = true; toast(nice(e)); }
+    }
+  }
+  $('connectBtn').addEventListener('click', async () => {
+    if (account) { try { if (eip === wc) await wc.disconnect(); } catch {} eip = null; setAccount(''); return; }
+    try { await initWc(true); } catch (e) { toast('Could not start WalletConnect: ' + nice(e)); }
+  });
+  $('wcSave').addEventListener('click', () => { store.set('wcid', $('wcId').value.trim()); wc = null; toast($('wcId').value.trim() ? 'Saved. Now tap Connect.' : 'Cleared.'); });
+  $('copyUri').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('copyUri').dataset.uri); toast('Copied. In Tangem: WalletConnect → paste.'); } catch { toast('Select the link text and copy it.'); } });
+  $('cancelWc').addEventListener('click', () => { $('qrBox').hidden = true; });
+  $('watchSave').addEventListener('click', () => {
+    const v = $('watchAddr').value.trim();
+    if (v && !ethers.isAddress(v)) return toast('That is not a valid address.');
+    store.set('watch', v ? ethers.getAddress(v) : ''); setAccount(account, chainId);
+  });
+
+  function nice(e) {
+    const m = String(e?.shortMessage || e?.reason || e?.message || e);
+    if (e?.refused) return m;
+    if (e?.code === 'ACTION_REJECTED' || /reject|denied|cancel/i.test(m)) return 'Cancelled in your wallet. Nothing was sent.';
+    if (/insufficient funds/i.test(m)) return 'Not enough ETH on Arbitrum for the network fee.';
+    return m.slice(0, 220);
+  }
+
+  // ------------------------------------------------------------------ confirm screen (shown BEFORE the wallet is asked)
+  function confirmScreen(s) {
+    return new Promise((resolve) => {
+      const lines = {
+        create: ['Create your lock', 'Tangem will ask you to sign a contract interaction with:', s.to, 'Arbitrum\'s standard contract deployer. No coins move in this step. Fee: a few cents of ETH.'],
+        deposit: ['Deposit into your lock', 'Tangem will show a token transfer to:', s.recipient, s.text],
+        release: ['Release to your wallet', 'Tangem will ask you to sign a contract interaction with:', s.to, s.text],
+      }[s.action];
+      $('cfTitle').textContent = lines[0]; $('cfLead').textContent = lines[1];
+      $('cfAddr').textContent = lines[2]; $('cfText').textContent = lines[3];
+      $('confirm').hidden = false; $('cfGo').focus();
+      const done = (v) => { $('confirm').hidden = true; $('cfGo').onclick = $('cfNo').onclick = null; if (v) waiting(true); resolve(v); };
+      $('cfGo').onclick = () => done(true); $('cfNo').onclick = () => done(false);
+    });
+  }
+  function waiting(on) { $('waitBar').hidden = !on; }
+
+  // ------------------------------------------------------------------ locks: list, verification, balances
+  const listKey = (w) => 'locks.' + w.toLowerCase();
+  const getList = (w) => store.json(listKey(w), []);
+  const addLock = (w, entry) => { const l = getList(w).filter((x) => x.addr.toLowerCase() !== entry.addr.toLowerCase()); l.push(entry); store.setJson(listKey(w), l); };
+  const verified = new Map();   // addr -> verified lock info (this session)
+  const rejected = new Map();   // addr -> reason
+
+  async function verifyCached(addr, who) {
+    if (verified.has(addr)) return verified.get(addr);
+    const L = await TV.verifyLock(ethers, verifyCfg, addr, { beneficiary: who });
+    verified.set(addr, L); rejected.delete(addr); return L;
+  }
+
+  let LOCKS = []; let WALLET = {};
+  async function refresh() {
+    const who = viewer();
+    renderSelf();
+    if (!who) { LOCKS = []; render(); return; }
+    try {
+      const [eth, ...bals] = await Promise.all([main.getBalance(who), ...Object.values(TOKENS).map((t) => new ethers.Contract(t.address, ERC20, main).balanceOf(who))]);
+      WALLET = { ETH: eth, ...Object.fromEntries(Object.keys(TOKENS).map((k, i) => [k, bals[i]])) };
+    } catch { WALLET = {}; }
+    const list = getList(who);
+    const out = [];
+    await Promise.all(list.map(async (e) => {
+      try {
+        const L = await verifyCached(ethers.getAddress(e.addr), who);
+        const balance = await new ethers.Contract(L.token, ERC20, main).balanceOf(L.addr);
+        out.push({ ...L, balance, created: e.created || 0, block: e.block || 0, name: e.name || '' });
+      } catch (err) { if (err.refused) rejected.set(e.addr, err.message); }
+    }));
+    LOCKS = out.sort((a, b) => (a.kind === b.kind ? a.releaseTime - b.releaseTime : a.kind === 'goal' ? -1 : 1));
+    render();
+    loadHistory();
+  }
+
+  // ------------------------------------------------------------------ screens
+  const TABS = ['home', 'new', 'coach', 'setup', 'safety'];
+  document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab)));
+  function show(t) {
+    TABS.forEach((x) => { $('tab-' + x).hidden = x !== t; });
+    document.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.tab === t)));
+    store.set('tab', t); window.scrollTo(0, 0);
+  }
+  let toastT;
+  function toast(m, ms = 5000) { const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), ms); }
+
+  function render() {
+    const now = Date.now() / 1000;
+    const total = LOCKS.reduce((s, l) => s + fmt(l.balance), 0);
+    $('totalLocked').textContent = money(total);
+    const active = LOCKS.filter((l) => l.balance > 0n || now < l.releaseTime);
+    $('lockCount').textContent = String(active.length);
+    const goal = LOCKS.find((l) => l.kind === 'goal' && now < l.releaseTime && l.balance < l.goal);
+    $('nextMilestone').textContent = goal ? Math.floor(100 * fmt(goal.balance) / fmt(goal.goal)) + '% of ' + money(fmt(goal.goal)) : '—';
+    $('walletTotal').textContent = WALLET.USDC !== undefined ? money(fmt(WALLET.USDC) + fmt(WALLET.USDT)) : '—';
+    $('walletLine').textContent = WALLET.USDC !== undefined
+      ? num(fmt(WALLET.USDC)) + ' USDC · ' + num(fmt(WALLET.USDT)) + ' USDT · ' + Number(ethers.formatEther(WALLET.ETH)).toFixed(5) + ' ETH for fees'
+      : (viewer() ? 'Loading balances…' : '');
+    $('gasHint').hidden = !(WALLET.ETH !== undefined && WALLET.ETH < ethers.parseEther('0.0002'));
+    renderLocks(); renderToday(); renderCoach(); updateSummary();
+    const tgt = $('cTarget'); const cur = store.get('plan.target');
+    tgt.innerHTML = '<option value="">Choose a goal lock</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
+  }
+
+  function lockState(l) {
+    const now = Date.now() / 1000, timeUp = now >= l.releaseTime, goalHit = l.kind === 'goal' && l.balance >= l.goal, empty = l.balance === 0n;
+    const ready = !empty && (timeUp || goalHit);
+    let label, cls;
+    if (l.kind === 'goal') {
+      if (empty && timeUp) { label = 'Finished'; cls = 'done'; }
+      else if (goalHit) { label = 'Goal reached'; cls = 'open'; }
+      else if (timeUp) { label = 'Backup date passed'; cls = 'open'; }
+      else { label = 'Saving · ' + Math.floor(100 * fmt(l.balance) / fmt(l.goal)) + '%'; cls = 'locked'; }
+    } else {
+      if (empty && timeUp) { label = 'Finished'; cls = 'done'; }
+      else if (timeUp) { label = 'Ready'; cls = 'open'; }
+      else { const d = Math.ceil((l.releaseTime - now) / DAY); label = 'Locked · ' + d + (d === 1 ? ' day' : ' days') + ' left'; cls = 'locked'; }
+    }
+    return { ready, timeUp, goalHit, empty, label, cls };
+  }
+
+  function renderLocks() {
+    const box = $('locks'); const who = viewer();
+    if (!who) { box.innerHTML = '<div class="empty">Connect your wallet to see your savings, or track an address in Setup.</div>'; return; }
+    const rej = [...rejected.entries()];
+    if (!LOCKS.length) {
+      box.innerHTML = '<div class="empty">No locks on this device yet.<br>Make one in <b>New</b>, or tap <b>Find my locks</b> to recover locks you made before.</div>';
+    } else box.innerHTML = '';
+    const now = Date.now() / 1000;
+    for (const l of LOCKS) {
+      const s = lockState(l); const g = l.kind === 'goal';
+      const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
+      const el = document.createElement('article'); el.className = 'lock';
+      el.innerHTML =
+        '<div class="lock-top"><div><div class="label">' + (g ? 'Savings goal' : 'Fixed date') + (l.name ? ' · ' + esc(l.name) : '') + '</div>' +
+        '<div class="lock-amt">' + num(fmt(l.balance)) + (g ? '<span class="of"> / ' + num(fmt(l.goal)) + '</span>' : '') + ' ' + l.sym + '</div></div>' +
+        '<span class="state ' + s.cls + '">' + s.label + '</span></div>' +
+        (s.empty && s.timeUp ? '' : '<div class="bar' + (g ? ' goalbar' : '') + '" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div>') +
+        '<div class="kv">' +
+          (g ? '<div><span class="label">To go</span>' + (s.goalHit ? 'Done' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym) + '</div><div><span class="label">Backup unlock</span>' + dateStr(l.releaseTime) + '</div>'
+             : '<div><span class="label">Unlocks</span>' + dateStr(l.releaseTime) + '</div>') +
+          '<div><span class="label">Pays to</span><span class="mono">' + short(l.beneficiary) + '</span></div>' +
+          '<div><span class="label">Verified</span><span class="ok-text">✓ exact tested code</span></div>' +
+        '</div>' +
+        (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this lock no longer holds money back. Release it and start a new goal.</p>' : '') +
+        '<details><summary>Details</summary><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div></details>';
+      if (account && account === l.beneficiary) {
+        const row = document.createElement('div'); row.className = 'row';
+        if (s.ready) {
+          const r = document.createElement('button'); r.className = 'btn'; r.textContent = 'Release ' + num(fmt(l.balance)) + ' ' + l.sym + ' to my wallet';
+          r.onclick = () => run(r, async () => { await ensureArbitrum(); await guard.release({ lock: l.addr }); toast(g ? 'Goal complete! Sent to your wallet.' : 'Sent to your wallet.'); });
+          row.appendChild(r);
+        }
+        if (!s.timeUp) {
+          const d = document.createElement('button'); d.className = g ? 'btn brass' : 'btn ghost'; d.textContent = 'Deposit';
+          d.onclick = () => openDeposit(l); row.appendChild(d);
+        }
+        if (row.children.length) el.appendChild(row);
+      }
+      box.appendChild(el);
+    }
+    if (rej.length) {
+      const r = document.createElement('details'); r.className = 'rejected';
+      r.innerHTML = '<summary>' + rej.length + ' address' + (rej.length > 1 ? 'es' : '') + ' ignored (not genuine locks for this wallet)</summary>' + rej.map(([a, why]) => '<div class="small"><span class="mono">' + esc(a) + '</span><br>' + esc(why) + '</div>').join('');
+      box.appendChild(r);
+    }
+  }
+
+  async function run(btn, fn) {
+    const t = btn.textContent; btn.disabled = true; btn.textContent = 'Working…';
+    try { await fn(); } catch (e) { toast(nice(e), 9000); } finally { waiting(false); btn.disabled = false; btn.textContent = t; refresh(); }
+  }
+
+  // ------------------------------------------------------------------ deposit sheet
+  let depLock = null;
+  function openDeposit(l, amount) {
+    depLock = l; $('depTitle').textContent = 'Deposit into ' + (l.name || (l.kind === 'goal' ? num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'lock'));
+    $('depAmount').value = amount || ''; $('depBal').textContent = WALLET[l.sym] !== undefined ? 'In wallet: ' + num(fmt(WALLET[l.sym]), 6) + ' ' + l.sym : '';
+    $('depSheet').hidden = false; $('depAmount').focus();
+  }
+  $('depClose').addEventListener('click', () => { $('depSheet').hidden = true; });
+  $('depMax').addEventListener('click', () => { if (depLock && WALLET[depLock.sym] !== undefined) $('depAmount').value = ethers.formatUnits(WALLET[depLock.sym], 6); });
+  $('depGo').addEventListener('click', () => {
+    const l = depLock; const raw = $('depAmount').value.trim();
+    let amt; try { amt = ethers.parseUnits(raw || '0', 6); } catch { return toast('Enter an amount like 25 or 25.50'); }
+    if (amt <= 0n) return toast('Enter an amount.');
+    run($('depGo'), async () => {
+      await ensureArbitrum();
+      const after = await guard.deposit({ lock: l.addr, amount: amt });
+      $('depSheet').hidden = true;
+      toast(after.kind === 'goal' && after.balance >= after.goal ? 'Goal reached! You can release it now.' : 'Deposited ' + raw + ' ' + l.sym + '.');
+      history = null;
+    });
+  });
+
+  // ------------------------------------------------------------------ new lock
+  const lockType = () => ($('typeGoal').checked ? 'goal' : 'date');
+  function setDate(d) { $('lkDate').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); updateSummary(); }
+  document.querySelectorAll('[data-months]').forEach((b) => b.addEventListener('click', () => { const d = new Date(); d.setMonth(d.getMonth() + Number(b.dataset.months)); setDate(d); }));
+  document.querySelectorAll('[data-days]').forEach((b) => b.addEventListener('click', () => { const d = new Date(); d.setDate(d.getDate() + Number(b.dataset.days)); setDate(d); }));
+  document.querySelectorAll('[data-goal]').forEach((b) => b.addEventListener('click', () => { $('lkGoal').value = b.dataset.goal; updateSummary(); }));
+  ['typeGoal', 'typeDate'].forEach((id) => $(id).addEventListener('change', applyType));
+  ['lkName', 'lkToken', 'lkAmount', 'lkDate', 'lkAgree', 'lkGoal'].forEach((id) => $(id).addEventListener('input', updateSummary));
+  $('lkMax').addEventListener('click', () => { const b = WALLET[$('lkToken').value]; if (b !== undefined) { $('lkAmount').value = ethers.formatUnits(b, 6); updateSummary(); } });
+  function applyType() {
+    const g = lockType() === 'goal';
+    $('goalField').hidden = !g; $('amountLabel').textContent = g ? 'First deposit (optional)' : 'Amount';
+    $('dateLabel').textContent = g ? 'Backup unlock date' : 'Unlock date'; $('dateHint').hidden = !g;
+    if (!$('lkDate').value) { const d = new Date(); d.setMonth(d.getMonth() + (g ? 24 : 6)); setDate(d); }
+    updateSummary();
+  }
+  function unlockTs() {
+    const v = $('lkDate').value; if (!v) return 0;
+    const [y, mo, d] = v.split('-').map(Number); const n = new Date();
+    return Math.floor(new Date(y, mo - 1, d, n.getHours(), n.getMinutes() + 5, 0).getTime() / 1000);
+  }
+  function parse6(v) { try { return v.trim() ? ethers.parseUnits(v.trim(), 6) : 0n; } catch { return null; } }
+  function updateSummary() {
+    const g = lockType() === 'goal', sym = $('lkToken').value;
+    const amt = parse6($('lkAmount').value), goal = parse6($('lkGoal').value), ts = unlockTs();
+    const bal = WALLET[sym];
+    $('lkBal').textContent = bal !== undefined ? 'In wallet: ' + num(fmt(bal), 6) + ' ' + sym : '';
+    const days = ts ? (ts - Date.now() / 1000) / DAY : 0;
+    const warn = [];
+    if (amt === null) warn.push('Amount: use a number like 25 or 25.50.');
+    if (g && goal === null) warn.push('Goal: use a number like 1000.');
+    if (!g && amt === 0n) warn.push('Enter an amount.');
+    if (g && goal === 0n) warn.push('Pick a goal.');
+    if (ts && days < 0.9) warn.push('Pick a date at least a day away.');
+    if (days > 3650) warn.push('The date can be at most 10 years away.');
+    if (bal !== undefined && amt && amt > bal) warn.push('More than you have in your wallet.');
+    if (g && goal && amt && amt >= goal) warn.push('Your first deposit already reaches the goal, so it would unlock right away.');
+    if (!account) warn.push('Connect your wallet first.');
+    if (!SELF.ok) warn.push('Self check failed. Do not use this copy of the app.');
+    const ok = !warn.length && ts && $('lkAgree').checked;
+    const goalTxt = goal ? num(fmt(goal)) + ' ' + sym : 'your goal';
+    $('lkSummary').innerHTML = [
+      g ? '<b>Goal:</b> ' + goalTxt : '<b>Lock:</b> ' + (amt ? num(fmt(amt), 6) : '—') + ' ' + sym,
+      g ? '<b>First deposit:</b> ' + (amt ? num(fmt(amt), 6) + ' ' + sym : 'none, add later') : '',
+      ts ? (g ? '<b>Unlocks:</b> when it holds ' + goalTxt + ', or on ' + dateStr(ts) + ', whichever comes first' : '<b>Unlocks:</b> ' + dateStr(ts) + ' (' + Math.round(days) + ' days)') : '',
+      '<b>Pays to:</b> <span class="mono">' + (account || 'your wallet') + '</span>',
+      ...warn.map((w) => '<span class="warn">⚠ ' + esc(w) + '</span>'),
+    ].filter(Boolean).map((x) => '<div>' + x + '</div>').join('');
+    $('lkAgreeText').textContent = g
+      ? 'I understand nobody, including me, can take this money out until the lock holds ' + goalTxt + (ts ? ' or ' + dateStr(ts) + ' arrives' : '') + '.'
+      : 'I understand nobody, including me, can take this money out before ' + (ts ? dateStr(ts) : 'the unlock date') + '.';
+    $('lkGo').disabled = !ok;
+  }
+  const step = (n, s) => { $('st' + n).className = s; };
+  $('lkGo').addEventListener('click', () => {
+    const g = lockType() === 'goal', sym = $('lkToken').value;
+    const amt = parse6($('lkAmount').value) || 0n, goal = g ? parse6($('lkGoal').value) : undefined, ts = unlockTs();
+    const name = $('lkName').value.trim().slice(0, 40);
+    $('lkSteps').hidden = false; [1, 2, 3].forEach((n) => step(n, ''));
+    $('st3').textContent = amt > 0n ? 'Send ' + num(fmt(amt), 6) + ' ' + sym + ' into the lock (sign in wallet)' : 'No first deposit. Add money any time with Deposit.';
+    run($('lkGo'), async () => {
+      await ensureArbitrum();
+      const startBlock = await main.getBlockNumber().catch(() => 0);
+      step(1, 'doing');
+      const L = await guard.create({ kind: g ? 'goal' : 'date', sym, releaseTime: ts, goal, onStep: (s) => { if (s === 'verify') { step(1, 'done'); step(2, 'doing'); waiting(false); } } });
+      addLock(account, { addr: L.addr, created: Math.floor(Date.now() / 1000), block: startBlock, name });
+      verified.set(L.addr, L); step(2, 'done');
+      if (amt > 0n) { step(3, 'doing'); await guard.deposit({ lock: L.addr, amount: amt }); }
+      step(3, 'done');
+      toast(g ? 'Goal lock created.' : 'Locked until ' + dateStr(ts) + '.', 8000);
+      $('lkAmount').value = ''; $('lkAgree').checked = false; $('lkName').value = '';
+      if (g && !store.get('plan.target')) store.set('plan.target', L.addr);
+      show('home');
+    });
+  });
+
+  // ------------------------------------------------------------------ find my locks (deposit history from this wallet)
+  async function transferLogs(from, toList, windows, progress) {
+    const head = await main.getBlockNumber(); const WIN = 9_900_000; const out = [];
+    const topic0 = ethers.id('Transfer(address,address,uint256)'), fromT = ethers.zeroPadValue(from, 32);
+    const toT = toList ? toList.map((a) => ethers.zeroPadValue(a, 32)) : null;
+    for (let w = 0; w < windows; w++) {
+      const to = head - w * WIN, fromB = Math.max(0, to - WIN + 1); if (to <= 0) break;
+      for (const t of Object.values(TOKENS)) {
+        const logs = await main.send('eth_getLogs', [{ address: t.address, topics: toT ? [topic0, fromT, toT] : [topic0, fromT], fromBlock: ethers.toQuantity(fromB), toBlock: ethers.toQuantity(to) }]).catch(() => []);
+        out.push(...logs);
+      }
+      if (progress) $('findBtn').textContent = 'Searching ' + Math.round((w + 1) / windows * 100) + '%…';
+    }
+    return out;
+  }
+  $('findBtn').addEventListener('click', async () => {
+    const who = viewer(); if (!who) return toast('Connect or track a wallet first.');
+    const b = $('findBtn'); b.disabled = true;
+    try {
+      const logs = await transferLogs(who, null, 28, true);
+      const cands = [...new Set(logs.map((l) => ethers.getAddress('0x' + l.topics[2].slice(26))))];
+      let found = 0;
+      for (const a of cands) {
+        if (getList(who).some((e) => e.addr.toLowerCase() === a.toLowerCase())) continue;
+        const code = await main.getCode(a).catch(() => '0x');
+        if (code.length !== 2 + 1737 * 2 && code.length !== 2 + 1639 * 2) continue;
+        try { await verifyCached(a, who); addLock(who, { addr: a }); found++; } catch {}
+      }
+      toast(found ? 'Found ' + found + ' lock' + (found > 1 ? 's' : '') + '.' : 'No new locks found. (Only locks you deposited into can be found this way. Use Setup → Add a lock by address for others.)', 8000);
+      refresh();
+    } catch (e) { toast('Search failed: ' + nice(e)); } finally { b.disabled = false; b.textContent = 'Find my locks'; }
+  });
+  $('addLockBtn').addEventListener('click', async () => {
+    const who = viewer(), v = $('addLock').value.trim();
+    if (!who) return toast('Connect or track a wallet first.');
+    try { const L = await TV.verifyLock(ethers, verifyCfg, v, { beneficiary: who }); verified.set(L.addr, L); addLock(who, { addr: L.addr }); $('addLock').value = ''; toast('Verified and added.'); refresh(); }
+    catch (e) { toast(nice(e), 8000); }
+  });
+  $('exportBtn').addEventListener('click', () => {
+    const who = viewer(); if (!who) return toast('Connect or track a wallet first.');
+    const data = { app: 'TimeVault', wallet: who, network: 'Arbitrum One', exported: new Date().toISOString(), locks: LOCKS.map((l) => ({ address: l.addr, type: l.kind, coin: l.sym, goal: l.kind === 'goal' ? ethers.formatUnits(l.goal, 6) : null, unlock: new Date(l.releaseTime * 1000).toISOString(), name: l.name })) };
+    download('timevault-backup.json', JSON.stringify(data, null, 2), 'application/json');
+  });
+
+  // ------------------------------------------------------------------ coach: payday plan
+  const PLAN = () => ({ pay: Number(store.get('plan.pay', '0')), freq: store.get('plan.freq', 'monthly'), next: store.get('plan.next', ''), mode: store.get('plan.mode', 'pct'), pct: Number(store.get('plan.pct', '20')), fixed: Number(store.get('plan.fixed', '0')), target: store.get('plan.target', '') });
+  function saveAmount(p) { return p.mode === 'pct' ? Math.round(p.pay * p.pct) / 100 : p.fixed; }
+  // Paydays as Date objects (local midnight)
+  function payday(p, k) { // k-th payday relative to the anchor (k can be negative)
+    const [y, m, d] = p.next.split('-').map(Number); const a = new Date(y, m - 1, d);
+    if (p.freq === 'weekly' || p.freq === 'biweekly') { const step = p.freq === 'weekly' ? 7 : 14; const r = new Date(a); r.setDate(a.getDate() + k * step); return r; }
+    if (p.freq === 'monthly') { const r = new Date(a.getFullYear(), a.getMonth() + k, 1); r.setDate(Math.min(d, new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate())); return r; }
+    // twice a month: 1st and 15th, k counts half-months from the anchor's half
+    const half = a.getDate() >= 15 ? 1 : 0; const idx = a.getMonth() * 2 + half + k + a.getFullYear() * 24;
+    const yy = Math.floor(idx / 24), mm = Math.floor((idx % 24) / 2), hh = idx % 2;
+    return new Date(yy, mm, hh ? 15 : 1);
+  }
+  function lastAndNext(p) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let k = 0; while (payday(p, k) > today) k--; while (payday(p, k + 1) <= today) k++;
+    return { last: payday(p, k), next: payday(p, k + 1), k };
+  }
+  ['cPay', 'cFreq', 'cNext', 'cMode', 'cPct', 'cFixed', 'cTarget'].forEach((id) => $(id).addEventListener('input', () => {
+    store.set('plan.pay', $('cPay').value); store.set('plan.freq', $('cFreq').value); store.set('plan.next', $('cNext').value);
+    store.set('plan.mode', $('cMode').value); store.set('plan.pct', $('cPct').value); store.set('plan.fixed', $('cFixed').value); store.set('plan.target', $('cTarget').value);
+    renderCoach(); renderToday();
+  }));
+  function planReady(p) { return p.next && saveAmount(p) > 0; }
+  function renderCoach() {
+    const p = PLAN();
+    $('cPctRow').hidden = p.mode !== 'pct'; $('cFixedRow').hidden = p.mode !== 'fixed';
+    const out = $('cPlan');
+    if (!planReady(p)) { out.innerHTML = '<p class="muted">Fill in your pay and next payday to get a plan.</p>'; return; }
+    const S = saveAmount(p); const L = LOCKS.find((l) => l.addr === p.target);
+    const rows = ['<div><b>Each payday:</b> lock ' + money(S) + (p.mode === 'pct' ? ' (' + p.pct + '% of ' + money(p.pay) + ')' : '') + '</div>'];
+    const perYear = { weekly: 52, biweekly: 26, twice: 24, monthly: 12 }[p.freq];
+    rows.push('<div><b>In a year:</b> ' + money(S * perYear) + '</div>');
+    if (L) {
+      const left = Math.max(0, fmt(L.goal) - fmt(L.balance));
+      if (left === 0) rows.push('<div class="ok-text"><b>Goal reached.</b> Release it, then start your next goal.</div>');
+      else {
+        const n = Math.ceil(left / S); const { k } = lastAndNext(p); const when = payday(p, k + n);
+        rows.push('<div><b>' + money(left) + ' to go:</b> about ' + n + ' more payday' + (n > 1 ? 's' : '') + ', around ' + dayStr(when) + '</div>');
+        const backup = new Date(L.releaseTime * 1000); let m = 0; while (payday(p, k + m + 1) < backup && m < 2000) m++;
+        if (m > 0 && when > backup) rows.push('<div class="warn">⚠ At this pace you will not reach it before the backup date (' + dateStr(L.releaseTime) + '). To make it, lock about ' + money(Math.ceil(left / m * 100) / 100) + ' each payday.</div>');
+      }
+    } else rows.push('<div class="muted">Pick a goal lock above to see when you will reach it.</div>');
+    out.innerHTML = rows.join('');
+  }
+  function renderToday() {
+    const p = PLAN(); const box = $('today');
+    if (!viewer() || !planReady(p)) { box.innerHTML = '<div class="today-empty"><b>Set up your payday plan</b><span>Tell the coach when you get paid and how much to save. It will tell you exactly what to lock each payday.</span><button class="btn ghost small" data-go="coach">Open coach</button></div>'; bindGo(box); return; }
+    const { last, next } = lastAndNext(p); const S = saveAmount(p);
+    const L = LOCKS.find((l) => l.addr === p.target);
+    const since = history ? history.filter((h) => h.time * 1000 >= last.getTime() && (!p.target || h.to === p.target)) : null;
+    const done = since && since.length > 0;
+    const isToday = last.toDateString() === new Date().toDateString();
+    let html;
+    if (done) html = '<div class="today-ok"><span class="big-check">✓</span><div><b>Saved this pay period.</b><span>Next payday: ' + dayStr(next) + '. ' + streakText() + '</span></div></div>';
+    else html = '<div class="today-due"><div><span class="label">' + (isToday ? 'Payday today' : 'Since payday ' + dayStr(last)) + '</span><b>Lock ' + money(S) + (L ? ' into your ' + num(fmt(L.goal)) + ' ' + L.sym + ' goal' : '') + '</b><span>' + streakText() + '</span></div>' +
+      (L && account ? '<button class="btn brass" id="todayGo">Lock ' + money(S) + '</button>' : '') + '</div>';
+    box.innerHTML = html;
+    const go = $('todayGo'); if (go) go.onclick = () => openDeposit(L, String(S));
+  }
+  function bindGo(root) { root.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => show(b.dataset.go))); }
+  $('icsBtn').addEventListener('click', () => {
+    const p = PLAN(); if (!planReady(p)) return toast('Fill in your payday plan first.');
+    const [y, m, d] = p.next.split('-');
+    const rule = { weekly: 'FREQ=WEEKLY', biweekly: 'FREQ=WEEKLY;INTERVAL=2', twice: 'FREQ=MONTHLY;BYMONTHDAY=1,15', monthly: 'FREQ=MONTHLY;BYMONTHDAY=' + Number(d) }[p.freq];
+    const start = p.freq === 'twice' ? (Number(d) >= 15 ? y + m + '15' : y + m + '01') : y + m + d;
+    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TimeVault//Coach//EN', 'BEGIN:VEVENT', 'UID:timevault-payday-' + Date.now() + '@timevault',
+      'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', 'DTSTART:' + start + 'T090000', 'RRULE:' + rule,
+      'SUMMARY:Payday: lock ' + money(saveAmount(p)) + ' in TimeVault', 'DESCRIPTION:Open TimeVault and tap Lock on the home screen.',
+      'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:Payday: lock your savings', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+    download('timevault-payday.ics', ics, 'text/calendar');
+    toast('Open the downloaded file to add the reminders to your calendar.');
+  });
+  function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+
+  // ------------------------------------------------------------------ coach: history + streak (from the blockchain, not this device)
+  let history = null, historyFor = '';
+  async function loadHistory() {
+    const who = viewer(); if (!who || !LOCKS.length) { history = []; renderHistory(); return; }
+    const key = who + LOCKS.map((l) => l.addr).join();
+    if (history && historyFor === key) { renderHistory(); return; }
+    historyFor = key;
+    try {
+      const logs = await transferLogs(who, LOCKS.map((l) => l.addr), 13);
+      const blocks = {}; for (const lg of logs) blocks[lg.blockNumber] = 0;
+      await Promise.all(Object.keys(blocks).map(async (b) => { const blk = await main.getBlock(Number(b)).catch(() => null); blocks[b] = blk ? blk.timestamp : 0; }));
+      history = logs.map((lg) => ({ to: ethers.getAddress('0x' + lg.topics[2].slice(26)), sym: SYMBOL[lg.address.toLowerCase()], amount: BigInt(lg.data), time: blocks[lg.blockNumber], tx: lg.transactionHash }))
+        .sort((a, b) => b.time - a.time);
+    } catch { history = []; }
+    renderHistory(); renderToday();
+  }
+  function streak() {
+    const p = PLAN(); if (!history || !planReady(p)) return 0;
+    const { k } = lastAndNext(p); let s = 0;
+    for (let i = 0; i < 200; i++) {
+      const a = payday(p, k - i), b = payday(p, k - i + 1);
+      const hit = history.some((h) => h.time * 1000 >= a.getTime() && h.time * 1000 < b.getTime());
+      if (hit) s++; else if (i === 0) continue; else break;
+    }
+    return s;
+  }
+  function streakText() { const s = streak(); return s ? 'Streak: ' + s + ' payday' + (s > 1 ? 's' : '') + ' in a row.' : 'Start your streak this payday.'; }
+  function renderHistory() {
+    const box = $('history');
+    if (!history) { box.innerHTML = '<p class="muted">Loading your deposits from the blockchain…</p>'; return; }
+    if (!history.length) { box.innerHTML = '<p class="muted">No deposits yet. Your first one starts the streak.</p>'; return; }
+    const total = history.reduce((s, h) => s + fmt(h.amount), 0);
+    $('streakNum').textContent = String(streak());
+    box.innerHTML = '<div class="small muted">' + history.length + ' deposits · ' + money(total) + ' saved in the last year</div>' +
+      '<ol class="hist">' + history.slice(0, 12).map((h) => '<li><span>' + dateStr(h.time) + '</span><b>+' + num(fmt(h.amount)) + ' ' + h.sym + '</b><a class="mono small" target="_blank" rel="noopener noreferrer" href="https://arbiscan.io/tx/' + h.tx + '">view</a></li>').join('') + '</ol>';
+  }
+
+  // ------------------------------------------------------------------ coach: lessons
+  const LESSONS = [
+    ['Pay yourself first', 'Lock your savings the day you get paid, before you spend anything. Saving what is left at the end of the month usually means saving nothing.'],
+    ['Start with an emergency fund', 'Aim for about 3 months of living costs that you can reach quickly. Keep that part flexible, not in a long lock. Lock the money beyond it.'],
+    ['Small and steady beats big and rare', 'Locking a fixed amount every payday builds the habit. The streak counter is here to help you keep going.'],
+    ['The 24-hour rule', 'Want to buy something you did not plan for? Wait a day. Most urges pass. If you still want it tomorrow, decide then.'],
+    ['Why a lock helps', 'Willpower runs out. A lock removes the choice, so the decision you made calmly is the one that sticks.'],
+    ['Stablecoins are not a bank account', 'USDC and USDT aim to stay at $1, but they are run by companies (Circle, Tether) that can freeze addresses. Spread large savings across more than one place.'],
+    ['Scams to watch for', 'No real app will ask for your recovery phrase. Only open TimeVault from your saved home-screen icon, never from a link someone sends you.'],
+    ['Pick realistic goals', 'A goal you can reach in 3 to 6 months keeps you motivated. When you hit it, set the next one a bit higher.'],
+  ];
+  function renderLessons() {
+    const read = new Set(store.json('lessons.read', []));
+    $('lessons').innerHTML = LESSONS.map(([t, b], i) => '<details class="lesson' + (read.has(i) ? ' read' : '') + '" data-i="' + i + '"><summary>' + (read.has(i) ? '✓ ' : '') + esc(t) + '</summary><p>' + esc(b) + '</p></details>').join('');
+    $('lessons').querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => { if (d.open) { const r = new Set(store.json('lessons.read', [])); r.add(Number(d.dataset.i)); store.setJson('lessons.read', [...r]); } }));
+    $('lessonCount').textContent = read.size + ' / ' + LESSONS.length + ' read';
+  }
+
+  // ------------------------------------------------------------------ safety screen
+  async function renderSelf() {
+    $('selfList').innerHTML = SELF.items.map((i) => '<li class="' + (i.ok ? 'ok' : 'bad') + '">' + (i.ok ? '✓ ' : '✗ ') + esc(i.label) + '</li>').join('');
+    $('selfBanner').hidden = SELF.ok;
+  }
+  async function codeFingerprints() {
+    const out = [];
+    for (const id of ['coreScript', 'appScript']) {
+      const t = $(id).textContent; const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+      out.push((id === 'coreScript' ? 'Safety core' : 'App screens') + ': sha256-' + btoa(String.fromCharCode(...new Uint8Array(h))));
+    }
+    $('appFp').textContent = out.join('\n');
+  }
+  $('liveCheck').addEventListener('click', async () => {
+    const who = viewer(); const box = $('liveOut');
+    if (!who || !LOCKS.length) { box.textContent = 'No locks to check yet.'; return; }
+    box.textContent = 'Checking every lock on 4 independent servers…';
+    const lines = [];
+    for (const l of LOCKS) {
+      try { await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, l.addr, { beneficiary: who }); lines.push('✓ ' + short(l.addr) + ' · exact tested code · pays ' + short(who)); }
+      catch (e) { lines.push('✗ ' + short(l.addr) + ' · ' + e.message); }
+    }
+    box.textContent = lines.join('\n');
+  });
+  $('dlVerifyGoal').addEventListener('click', () => verifyFile('goal'));
+  $('dlVerifyDate').addEventListener('click', () => verifyFile('date'));
+  function verifyFile(kind) {
+    const settings = { optimizer: { enabled: true, runs: 200 }, evmVersion: 'paris', outputSelection: { '*': { '*': ['abi', 'evm.bytecode', 'evm.deployedBytecode', 'metadata'] } } };
+    const oz = window.TV_SOURCES.oz; const sources = {};
+    if (kind === 'goal') { sources['GoalTimelock.sol'] = { content: window.TV_SOURCES.goal }; for (const [k, v] of Object.entries(oz)) if (!k.endsWith('TokenTimelock.sol')) sources[k] = { content: v }; }
+    else for (const [k, v] of Object.entries(oz)) sources[k] = { content: v };
+    const json = JSON.stringify({ language: 'Solidity', sources, settings });
+    const want = kind === 'goal' ? '0x6e241b46e0bb9f680568d5e76ff304d15a465f872012b2787379c8b3b9c53f54' : '0x7055f9455e96e667fec83ab5536c27b6a68f072245b55f70a47fbabdac332838';
+    if (ethers.keccak256(ethers.toUtf8Bytes(json)) !== want) return toast('Source fingerprint mismatch. Not saving.');
+    download((kind === 'goal' ? 'GoalTimelock' : 'TokenTimelock') + '-verify.json', json, 'application/json');
+  }
+
+  // ------------------------------------------------------------------ boot
+  bindGo(document);
+  $('wcId').value = store.get('wcid');
+  const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
+  if (!p0.next) { const d = new Date(); d.setDate(d.getDate() + 1); $('cNext').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); }
+  renderLessons(); codeFingerprints(); applyType();
+  show(TABS.includes(store.get('tab')) ? store.get('tab') : 'home');
+  setAccount('');
+  initWc(false).catch(() => {});
+  setInterval(() => { if (!document.hidden) refresh(); }, 60000);
+})();
+</script>
+</body>
+</html>

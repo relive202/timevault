@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-JrLZiP1aepYXk1fSRa+7AAxSL2F6+HelzcyUg1eBzq8=' 'sha256-2bACf9/+Uf2ysoSKKSE/PFauDg0Nv4/Vu2kgGmouR0w=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/ganache@7.9.2/dist/web/ganache.min.js 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'unsafe-inline'; connect-src 'none'; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<title>TimeVault Safety Tests</title>
+<style>
+:root { --bg: #eef1ef; --surface: #fff; --ink: #142019; --muted: #5a6962; --line: #d4dcd7; --ok: #1f7346; --bad: #b3261e; --brass: #946519; color-scheme: light; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0e1311; --surface: #161d1a; --ink: #e2e9e5; --muted: #95a39c; --line: #28322e; --ok: #5fcf92; --bad: #ff8a7f; --brass: #d8a656; color-scheme: dark; } }
+* { box-sizing: border-box; } [hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: calc(24px + env(safe-area-inset-top, 0px)) 48px; display: grid; gap: 16px; }
+h1 { font: 600 1.4rem "Iowan Old Style", Palatino, Georgia, serif; margin: 0; }
+p { margin: 0; color: var(--muted); max-width: 65ch; }
+button { font: 600 15px system-ui, sans-serif; padding: 11px 16px; border-radius: 9px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); cursor: pointer; width: max-content; }
+button:disabled { opacity: .5; }
+#sum { font-weight: 700; font-size: 1.1rem; } #sum.ok { color: var(--ok); } #sum.bad { color: var(--bad); }
+ul { list-style: none; margin: 0; padding: 0; font: 13px ui-monospace, Menlo, Consolas, monospace; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+li { padding: 7px 12px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+li.pass { color: var(--ok); } li.fail { color: var(--bad); }
+code { font: 12px ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main>
+  <h1>TimeVault safety tests</h1>
+  <p>Runs 49 checks on a private simulated blockchain inside this page, using fake coins: the original contract tests, 40 random locks with 14 random actions each checked against the rules, and attacks on the app's transaction guard (fake locks, wrong wallets, lying servers, a tampered deployer, the wrong network). It uses exactly the same safety code as the app. No wallet, no real money. Takes under a minute on most devices.</p>
+  <button id="run">Run all tests</button>
+  <div id="sum">Not run yet.</div>
+  <ul id="log"></ul>
+  <p>Safety core fingerprint: <code id="fp"></code></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js" integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM" crossorigin="anonymous"></script>
+<script id="coreScript">// =====================================================================================================
+// TimeVault core. Contract code, exact-code lock verification, and the transaction guard.
+// This exact file is inlined into both the app (index.html) and the test page (tests.html).
+//
+// THE RULE: the app never builds or sends a transaction anywhere except through TV.makeGuard().
+// The guard only knows three actions, and it builds the transaction bytes itself:
+//   create  : call the standard CREATE2 deployer with one of the two tested lock contracts, paying YOUR wallet
+//   deposit : USDC/USDT transfer() into a lock whose on-chain code is byte-for-byte a tested lock paying YOU
+//   release : release() on such a lock
+// No approve(), no ETH value, no other address, no other function. Anything else is refused before the wallet
+// is ever asked to sign.
+// =====================================================================================================
+const TV = (() => {
+  'use strict';
+
+  // Arbitrum's standard deterministic deployment proxy (the same one Foundry uses). Its code is checked before use.
+  const DEPLOYER = '0x4e59b44847b379578588920cA78FbF26c0B4956C';
+  const DEPLOYER_CODEHASH = '0x2fa86add0aed31f33a762c9d88e807c475bd51d0f52bd0955754b2608f7e4989';
+  const DEPLOYER_RUNTIME = '0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3';
+
+  // Both contracts: solc 0.8.24, optimizer on (200 runs), evmVersion paris, OpenZeppelin Contracts 4.9.6.
+  // creation = full deploy code. The runtime code (what lives on chain) is the tail of it, starting at runtimeOffset.
+  // slots = byte offsets inside the runtime code where the per-lock settings (immutables) are written.
+  const CONTRACTS = {
+    date: {
+      name: 'TokenTimelock (OpenZeppelin 4.9.6, unmodified)',
+      creation: '0x60e060405234801561001057600080fd5b506040516107c13803806107c183398101604081905261002f916100d0565b42811161009d5760405162461bcd60e51b815260206004820152603260248201527f546f6b656e54696d656c6f636b3a2072656c656173652074696d65206973206260448201527165666f72652063757272656e742074696d6560701b606482015260840160405180910390fd5b6001600160a01b03928316608052911660a05260c052610113565b6001600160a01b03811681146100cd57600080fd5b50565b6000806000606084860312156100e557600080fd5b83516100f0816100b8565b6020850151909350610101816100b8565b80925050604084015190509250925092565b60805160a05160c05161066761015a60003960008181609f015260f00152600081816053015261029801526000818160ca01528181610182015261027601526106676000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806338af3eed1461005157806386d1a69f14610090578063b91d40011461009a578063fc0c546a146100c8575b600080fd5b7f00000000000000000000000000000000000000000000000000000000000000005b6040516001600160a01b0390911681526020015b60405180910390f35b6100986100ee565b005b6040517f00000000000000000000000000000000000000000000000000000000000000008152602001610087565b7f0000000000000000000000000000000000000000000000000000000000000000610073565b7f000000000000000000000000000000000000000000000000000000000000000042101561017e5760405162461bcd60e51b815260206004820152603260248201527f546f6b656e54696d656c6f636b3a2063757272656e742074696d65206973206260448201527165666f72652072656c656173652074696d6560701b60648201526084015b60405180910390fd5b60007f00000000000000000000000000000000000000000000000000000000000000006040516370a0823160e01b81523060048201526001600160a01b0391909116906370a0823190602401602060405180830381865afa1580156101e7573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061020b919061057c565b9050600081116102695760405162461bcd60e51b815260206004820152602360248201527f546f6b656e54696d656c6f636b3a206e6f20746f6b656e7320746f2072656c6560448201526261736560e81b6064820152608401610175565b6102bd6001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000167f0000000000000000000000000000000000000000000000000000000000000000836102c0565b50565b604080516001600160a01b038416602482015260448082018490528251808303909101815260649091019091526020810180516001600160e01b031663a9059cbb60e01b179052610312908490610317565b505050565b600061036c826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b03166103ec9092919063ffffffff16565b905080516000148061038d57508080602001905181019061038d9190610595565b6103125760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e6044820152691bdd081cdd58d8d9595960b21b6064820152608401610175565b60606103fb8484600085610403565b949350505050565b6060824710156104645760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f6044820152651c8818d85b1b60d21b6064820152608401610175565b600080866001600160a01b0316858760405161048091906105e2565b60006040518083038185875af1925050503d80600081146104bd576040519150601f19603f3d011682016040523d82523d6000602084013e6104c2565b606091505b50915091506104d3878383876104de565b979650505050505050565b6060831561054d578251600003610546576001600160a01b0385163b6105465760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e74726163740000006044820152606401610175565b50816103fb565b6103fb83838151156105625781518083602001fd5b8060405162461bcd60e51b815260040161017591906105fe565b60006020828403121561058e57600080fd5b5051919050565b6000602082840312156105a757600080fd5b815180151581146105b757600080fd5b9392505050565b60005b838110156105d95781810151838201526020016105c1565b50506000910152565b600082516105f48184602087016105be565b9190910192915050565b602081526000825180602084015261061d8160408501602087016105be565b601f01601f1916919091016040019291505056fea2646970667358221220158df7771e33c89f2d4a32b0a0e5b49c0cf5a9ab1c334bfc874a4605ef2311bf64736f6c63430008180033',
+      fingerprint: '0x29b075c113591090dc177f4c04c75fa4d97f33dcb4b479e05fc78c7138b43d07',
+      runtimeOffset: 346,
+      runtimeFingerprint: '0x69f0c9f615b257aa3be46f848f50fb67c4450d8eee3ec8a05bfd207cab988ec7',
+      runtimeLength: 1639,
+      slots: { token: [202, 386, 630], beneficiary: [83, 664], releaseTime: [159, 240] },
+      ctor: ['address', 'address', 'uint256'],
+    },
+    goal: {
+      name: 'GoalTimelock (TokenTimelock + "or balance >= goal")',
+      creation: '0x61010060405234801561001157600080fd5b506040516108933803806108938339810160408190526100309161012a565b42821161009f5760405162461bcd60e51b815260206004820152603260248201527f546f6b656e54696d656c6f636b3a2072656c656173652074696d65206973206260448201527165666f72652063757272656e742074696d6560701b60648201526084015b60405180910390fd5b600081116100ef5760405162461bcd60e51b815260206004820152601a60248201527f476f616c54696d656c6f636b3a20676f616c206973207a65726f0000000000006044820152606401610096565b6001600160a01b039384166080529190921660a05260c09190915260e052610172565b6001600160a01b038116811461012757600080fd5b50565b6000806000806080858703121561014057600080fd5b845161014b81610112565b602086015190945061015c81610112565b6040860151606090960151949790965092505050565b60805160a05160c05160e0516106c96101ca60003960008181609d015261021301526000818160d7015261023d015260008181605e01526102fa01526000818160fd0152818161012501526102d801526106c96000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c806338af3eed1461005c578063401938831461009b57806386d1a69f146100cb578063b91d4001146100d5578063fc0c546a146100fb575b600080fd5b7f00000000000000000000000000000000000000000000000000000000000000005b6040516001600160a01b0390911681526020015b60405180910390f35b7f00000000000000000000000000000000000000000000000000000000000000005b604051908152602001610092565b6100d3610121565b005b7f00000000000000000000000000000000000000000000000000000000000000006100bd565b7f000000000000000000000000000000000000000000000000000000000000000061007e565b60007f00000000000000000000000000000000000000000000000000000000000000006040516370a0823160e01b81523060048201526001600160a01b0391909116906370a0823190602401602060405180830381865afa15801561018a573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101ae91906105de565b9050600081116102115760405162461bcd60e51b815260206004820152602360248201527f546f6b656e54696d656c6f636b3a206e6f20746f6b656e7320746f2072656c6560448201526261736560e81b60648201526084015b60405180910390fd5b7f00000000000000000000000000000000000000000000000000000000000000008110158061026057507f00000000000000000000000000000000000000000000000000000000000000004210155b6102cb5760405162461bcd60e51b815260206004820152603660248201527f476f616c54696d656c6f636b3a20676f616c206e6f74207265616368656420616044820152756e64206265666f72652072656c656173652074696d6560501b6064820152608401610208565b61031f6001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000167f000000000000000000000000000000000000000000000000000000000000000083610322565b50565b604080516001600160a01b038416602482015260448082018490528251808303909101815260649091019091526020810180516001600160e01b031663a9059cbb60e01b179052610374908490610379565b505050565b60006103ce826040518060400160405280602081526020017f5361666545524332303a206c6f772d6c6576656c2063616c6c206661696c6564815250856001600160a01b031661044e9092919063ffffffff16565b90508051600014806103ef5750808060200190518101906103ef91906105f7565b6103745760405162461bcd60e51b815260206004820152602a60248201527f5361666545524332303a204552433230206f7065726174696f6e20646964206e6044820152691bdd081cdd58d8d9595960b21b6064820152608401610208565b606061045d8484600085610465565b949350505050565b6060824710156104c65760405162461bcd60e51b815260206004820152602660248201527f416464726573733a20696e73756666696369656e742062616c616e636520666f6044820152651c8818d85b1b60d21b6064820152608401610208565b600080866001600160a01b031685876040516104e29190610644565b60006040518083038185875af1925050503d806000811461051f576040519150601f19603f3d011682016040523d82523d6000602084013e610524565b606091505b509150915061053587838387610540565b979650505050505050565b606083156105af5782516000036105a8576001600160a01b0385163b6105a85760405162461bcd60e51b815260206004820152601d60248201527f416464726573733a2063616c6c20746f206e6f6e2d636f6e74726163740000006044820152606401610208565b508161045d565b61045d83838151156105c45781518083602001fd5b8060405162461bcd60e51b81526004016102089190610660565b6000602082840312156105f057600080fd5b5051919050565b60006020828403121561060957600080fd5b8151801515811461061957600080fd5b9392505050565b60005b8381101561063b578181015183820152602001610623565b50506000910152565b60008251610656818460208701610620565b9190910192915050565b602081526000825180602084015261067f816040850160208701610620565b601f01601f1916919091016040019291505056fea2646970667358221220c77724764fe9a5af46da9295a9319d5db66327aeecfc6d93118e5a4fce904f5a64736f6c63430008180033',
+      fingerprint: '0x9ea0a457432e78e589fdb1dffa3bd2c2e67b2fec599fb539b9de8b81b27e9bca',
+      runtimeOffset: 458,
+      runtimeFingerprint: '0x821e3155e7b9b5cc0f5994c677c85ca3b72bb3e6861aec878c125f3b55331056',
+      runtimeLength: 1737,
+      slots: { token: [253, 293, 728], beneficiary: [94, 762], releaseTime: [215, 573], goal: [157, 531] },
+      ctor: ['address', 'address', 'uint256', 'uint256'],
+    },
+  };
+
+  const LOCK_ABI = [
+    'function token() view returns (address)', 'function beneficiary() view returns (address)',
+    'function releaseTime() view returns (uint256)', 'function goal() view returns (uint256)', 'function release()',
+  ];
+  const ERC20_ABI = ['function balanceOf(address) view returns (uint256)', 'function transfer(address,uint256) returns (bool)'];
+  const SEL_TRANSFER = '0xa9059cbb', SEL_RELEASE = '0x86d1a69f';
+  const MAX_LOCK_SECONDS = 10 * 365 * 86400;
+
+  class Refused extends Error { constructor(msg) { super(msg); this.name = 'Refused'; this.refused = true; } }
+  const refuse = (msg) => { throw new Refused(msg); };
+  const lc = (s) => String(s).toLowerCase();
+
+  // ------------------------------------------------------------------------------------------- self check
+  // Proves the embedded contract code is exactly the tested build, before anything else runs.
+  function selfCheck(ethers) {
+    const out = { ok: true, items: [] };
+    const add = (label, ok) => { out.items.push({ label, ok }); if (!ok) out.ok = false; };
+    for (const [kind, c] of Object.entries(CONTRACTS)) {
+      add(kind + ' contract code fingerprint', ethers.keccak256(c.creation) === c.fingerprint);
+      const rt = '0x' + c.creation.slice(2 + c.runtimeOffset * 2);
+      add(kind + ' on-chain code template fingerprint', rt.length === 2 + c.runtimeLength * 2 && ethers.keccak256(rt) === c.runtimeFingerprint);
+    }
+    add('deployer code fingerprint', ethers.keccak256(DEPLOYER_RUNTIME) === DEPLOYER_CODEHASH);
+    return out;
+  }
+
+  // ------------------------------------------------------------------------------------------- exact code
+  function runtimeTemplate(kind) { const c = CONTRACTS[kind]; return c.creation.slice(2 + c.runtimeOffset * 2); }
+
+  // The exact bytes a lock with these settings must have on chain.
+  function expectedRuntime(ethers, kind, p) {
+    const c = CONTRACTS[kind]; let h = runtimeTemplate(kind);
+    const put = (starts, word) => { for (const s of starts) h = h.slice(0, s * 2) + word + h.slice(s * 2 + 64); };
+    put(c.slots.token, ethers.zeroPadValue(p.token, 32).slice(2).toLowerCase());
+    put(c.slots.beneficiary, ethers.zeroPadValue(p.beneficiary, 32).slice(2).toLowerCase());
+    put(c.slots.releaseTime, ethers.toBeHex(p.releaseTime, 32).slice(2));
+    if (kind === 'goal') put(c.slots.goal, ethers.toBeHex(p.goal, 32).slice(2));
+    return '0x' + h;
+  }
+
+  function initcode(ethers, kind, p) {
+    const c = CONTRACTS[kind];
+    const args = kind === 'goal' ? [p.token, p.beneficiary, p.releaseTime, p.goal] : [p.token, p.beneficiary, p.releaseTime];
+    return c.creation + ethers.AbiCoder.defaultAbiCoder().encode(c.ctor, args).slice(2);
+  }
+
+  // Ask several independent servers. Every server that answers must return the same thing, and at least
+  // `need` must answer. A server that lies cannot make a fake lock look real unless ALL of them lie.
+  async function quorum(providers, fn, need, label) {
+    const res = await Promise.allSettled(providers.map((p) => fn(p)));
+    const ok = res.filter((r) => r.status === 'fulfilled').map((r) => r.value);
+    if (ok.length < need) refuse('Could not reach enough Arbitrum servers to double-check ' + label + ' (' + ok.length + ' of ' + need + '). Nothing was sent. Try again in a minute.');
+    const first = JSON.stringify(ok[0], (k, v) => (typeof v === 'bigint' ? v.toString() : v));
+    for (const v of ok) if (JSON.stringify(v, (k, x) => (typeof x === 'bigint' ? x.toString() : x)) !== first) refuse('Arbitrum servers disagree about ' + label + '. Stopping to be safe. Nothing was sent.');
+    return ok[0];
+  }
+
+  // Verify that `addr` is a genuine TimeVault lock. Returns its kind and settings.
+  // Reads the settings, rebuilds the exact code those settings must produce, and compares byte for byte
+  // with what every server reports is on chain.
+  async function verifyLock(ethers, cfg, addr, expect = {}) {
+    if (!ethers.isAddress(addr)) refuse('Not a valid address.');
+    addr = ethers.getAddress(addr);
+    const code = lc(await quorum(cfg.providers, (p) => p.getCode(addr), cfg.need, 'the lock code'));
+    let kind = null;
+    if (code.length === 2 + CONTRACTS.goal.runtimeLength * 2) kind = 'goal';
+    else if (code.length === 2 + CONTRACTS.date.runtimeLength * 2) kind = 'date';
+    else refuse('This address is not a TimeVault lock (its code does not match). Nothing was sent.');
+    const p = await quorum(cfg.providers, async (prov) => {
+      const c = new ethers.Contract(addr, LOCK_ABI, prov);
+      const [token, beneficiary, releaseTime] = await Promise.all([c.token(), c.beneficiary(), c.releaseTime()]);
+      const goal = kind === 'goal' ? await c.goal() : 0n;
+      return { token: ethers.getAddress(token), beneficiary: ethers.getAddress(beneficiary), releaseTime, goal };
+    }, cfg.need, 'the lock settings');
+    if (code !== lc(expectedRuntime(ethers, kind, p))) refuse('This address is not a genuine TimeVault lock: its code differs from the tested code. Nothing was sent.');
+    const sym = Object.keys(cfg.tokens).find((k) => lc(cfg.tokens[k].address) === lc(p.token));
+    if (!sym) refuse('This lock holds a coin the app does not support. Nothing was sent.');
+    if (expect.beneficiary && lc(p.beneficiary) !== lc(expect.beneficiary)) refuse('This lock pays a different wallet, not yours. Nothing was sent.');
+    return { addr, kind, sym, token: p.token, beneficiary: p.beneficiary, releaseTime: Number(p.releaseTime), goal: p.goal };
+  }
+
+  // ------------------------------------------------------------------------------------------- the guard
+  // cfg: { providers: [read providers, 2+ independent], need: how many must agree, tokens: {SYM:{address,decimals}},
+  //        chainId, getSigner: async () => ethers Signer, getAccount: () => address, maxBaseFee (wei),
+  //        onAsk(summary) -> Promise<bool> user confirmation shown BEFORE the wallet is asked }
+  function makeGuard(ethers, cfg) {
+    const main = cfg.providers[0];
+    const now = async () => Number((await main.getBlock('latest')).timestamp);
+
+    async function fees() {
+      const blk = await main.getBlock('latest');
+      const base = blk.baseFeePerGas ?? 0n;
+      if (cfg.maxBaseFee && base > cfg.maxBaseFee) refuse('Network fees look abnormally high right now. Nothing was sent. Try again later.');
+      let cap = base * 3n; const floor = ethers.parseUnits('0.1', 'gwei'); if (cap < floor) cap = floor;
+      return { maxFeePerGas: cap, maxPriorityFeePerGas: 0n };
+    }
+
+    async function walletChecks() {
+      const account = cfg.getAccount(); if (!account) refuse('Connect your wallet first.');
+      const signer = await cfg.getSigner();
+      if (lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
+      const chain = Number(await signer.provider.send('eth_chainId', []));
+      if (chain !== cfg.chainId) refuse('Your wallet is not on Arbitrum One. Switch networks and try again. Nothing was sent.');
+      return { account: ethers.getAddress(account), signer };
+    }
+
+    // The single place a transaction is handed to the wallet. Final structural check on the exact bytes.
+    async function sendTx(signer, account, tx, allowedTo, summary) {
+      if (tx.value !== undefined && BigInt(tx.value) !== 0n) refuse('Internal check failed: a transaction tried to send ETH. Stopped.');
+      if (!allowedTo.some((a) => lc(a) === lc(tx.to))) refuse('Internal check failed: unexpected destination. Stopped.');
+      // Dry run with the exact bytes, from your address, against the live chain. If it would fail, do not ask the wallet.
+      try { await main.call({ from: account, to: tx.to, data: tx.data, value: 0n }); }
+      catch (e) { refuse('Dry run failed, so nothing was sent: ' + (e.reason || e.shortMessage || e.message || e).toString().slice(0, 160)); }
+      let gasLimit;
+      try { gasLimit = (await main.estimateGas({ from: account, to: tx.to, data: tx.data, value: 0n })) * 13n / 10n; }
+      catch { gasLimit = 3_000_000n; }
+      if (gasLimit > 5_000_000n) refuse('Unexpected gas use. Stopped.');
+      if (cfg.onAsk && !(await cfg.onAsk(summary))) refuse('Cancelled.');
+      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, ...(await fees()) });
+      const rc = await waitReceipt(sent.hash);
+      if (!rc || rc.status !== 1) throw new Error('The transaction failed on chain. ' + (summary.failNote || ''));
+      return rc;
+    }
+
+    // Poll for the receipt (included in a block). Up to 5 minutes.
+    async function waitReceipt(hash) {
+      for (let i = 0; i < 300; i++) {
+        const rc = await main.getTransactionReceipt(hash).catch(() => null);
+        if (rc) return rc;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      throw new Error('Timed out waiting for the transaction. Check your wallet history before trying again.');
+    }
+
+    async function create({ kind, sym, releaseTime, goal, onStep }) {
+      if (!CONTRACTS[kind]) refuse('Unknown lock type.');
+      const t = cfg.tokens[sym]; if (!t) refuse('Unsupported coin.');
+      const { account, signer } = await walletChecks();
+      const chainNow = await now();
+      releaseTime = Number(releaseTime);
+      if (!(releaseTime > chainNow + 3600)) refuse('The date must be at least an hour from now.');
+      if (releaseTime > chainNow + MAX_LOCK_SECONDS) refuse('The date can be at most 10 years away.');
+      if (kind === 'goal') { goal = BigInt(goal); if (goal <= 0n) refuse('The goal must be more than zero.'); }
+      const deployerCode = lc(await quorum(cfg.providers, (p) => p.getCode(DEPLOYER), cfg.need, 'the deployer'));
+      if (ethers.keccak256(deployerCode) !== DEPLOYER_CODEHASH) refuse('The standard deployer on this network looks wrong. Nothing was sent.');
+      const params = { token: t.address, beneficiary: account, releaseTime, goal: goal ?? 0n };
+      const init = initcode(ethers, kind, params);
+      const salt = ethers.hexlify(ethers.randomBytes(32));
+      const predicted = ethers.getCreate2Address(DEPLOYER, salt, ethers.keccak256(init));
+      if ((await main.getCode(predicted)).length > 2) refuse('Address collision. Try again.');
+      const data = salt + init.slice(2);
+      onStep && onStep('create');
+      await sendTx(signer, account, { to: DEPLOYER, data }, [DEPLOYER], {
+        action: 'create', to: DEPLOYER, toLabel: 'Arbitrum standard contract deployer',
+        text: 'Create your ' + (kind === 'goal' ? 'goal' : 'fixed-date') + ' lock. No coins move in this step.',
+        failNote: 'No coins were moved.',
+      });
+      onStep && onStep('verify');
+      const L = await retry(() => verifyLock(ethers, cfg, predicted, { beneficiary: account }));
+      if (L.kind !== kind || lc(L.token) !== lc(t.address) || L.releaseTime !== releaseTime || (kind === 'goal' && L.goal !== goal))
+        refuse('The new lock does not match what you asked for. No coins were moved.');
+      return L;
+    }
+
+    async function deposit({ lock, amount, onStep }) {
+      amount = BigInt(amount); if (amount <= 0n) refuse('Enter an amount.');
+      const { account, signer } = await walletChecks();
+      onStep && onStep('verify');
+      const L = await verifyLock(ethers, cfg, lock, { beneficiary: account });
+      if ((await now()) >= L.releaseTime) refuse('This lock\'s date has passed, so it no longer holds money back. Start a new lock instead. Nothing was sent.');
+      const tok = cfg.tokens[L.sym];
+      const erc = new ethers.Contract(tok.address, ERC20_ABI, main);
+      const bal = await erc.balanceOf(account);
+      if (amount > bal) refuse('That is more ' + L.sym + ' than your wallet has.');
+      const before = await erc.balanceOf(L.addr);
+      const data = SEL_TRANSFER + ethers.AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [L.addr, amount]).slice(2);
+      onStep && onStep('send');
+      await sendTx(signer, account, { to: tok.address, data }, [tok.address], {
+        action: 'deposit', to: tok.address, toLabel: L.sym + ' token contract', recipient: L.addr,
+        text: 'Send ' + ethers.formatUnits(amount, tok.decimals) + ' ' + L.sym + ' into your lock ' + L.addr + '.',
+        failNote: 'Your coins are still in your wallet.',
+      });
+      const after = await retry(async () => { const a = await erc.balanceOf(L.addr); if (a < before + amount) throw new Error('not yet'); return a; });
+      return { ...L, balance: after };
+    }
+
+    async function release({ lock, onStep }) {
+      const { account, signer } = await walletChecks();
+      onStep && onStep('verify');
+      const L = await verifyLock(ethers, cfg, lock, { beneficiary: account });
+      onStep && onStep('send');
+      await sendTx(signer, account, { to: L.addr, data: SEL_RELEASE }, [L.addr], {
+        action: 'release', to: L.addr, toLabel: 'your lock',
+        text: 'Release everything in lock ' + L.addr + ' to your wallet ' + account + '.',
+        failNote: 'The coins are still in the lock.',
+      });
+      return L;
+    }
+
+    // Servers can lag a few seconds behind a brand-new transaction, so post-transaction checks retry for ~20s.
+    async function retry(fn, tries = 12) {
+      for (let i = 0; ; i++) { try { return await fn(); } catch (e) { if (i >= tries) throw e; await new Promise((r) => setTimeout(r, 1700)); } }
+    }
+
+    return Object.freeze({ create, deposit, release });
+  }
+
+  return Object.freeze({
+    DEPLOYER, DEPLOYER_CODEHASH, DEPLOYER_RUNTIME, CONTRACTS, LOCK_ABI, ERC20_ABI,
+    selfCheck, expectedRuntime, initcode, verifyLock, makeGuard, Refused,
+  });
+})();
+</script>
+<script>// TimeVault test suite. Runs entirely on a private simulated blockchain (Ganache) inside the page.
+// Uses the exact same TV core (contract bytes, verification, guard) as the app.
+async function runTimeVaultTests(ethers, Ganache, MOCK_BYTECODE, FAKE_BYTECODE, out, opts = {}) {
+  const t0 = Date.now();
+  const gp = Ganache.provider({ logging: { quiet: true }, wallet: { totalAccounts: 4 }, chain: { vmErrorsOnRPCResponse: true } });
+  const send = (m, p = []) => gp.request({ method: m, params: p });
+  const [me, stranger, attacker] = (await send('eth_accounts')).map((a) => ethers.getAddress(a));
+  // cacheTimeout -1: never reuse a previous answer; every read is fresh (the app does the same)
+  const prov = new ethers.BrowserProvider(gp, undefined, { cacheTimeout: -1 }); prov.pollingInterval = 100;
+  const prov2 = new ethers.BrowserProvider(gp, undefined, { cacheTimeout: -1 }); prov2.pollingInterval = 100;
+  const coder = ethers.AbiCoder.defaultAbiCoder();
+  const LOCK = new ethers.Interface(TV.LOCK_ABI);
+  const TOK = new ethers.Interface(['constructor(string n, bool usdtStyle_)', 'function mint(address,uint256)', 'function transfer(address,uint256) returns (bool)', 'function balanceOf(address) view returns (uint256)']);
+  const FAKE = ['constructor(address t, address b, uint256 r, uint256 g, address a)'];
+  const U = (n) => ethers.parseUnits(String(n), 6), DAY = 86400;
+  const now = async () => parseInt((await send('eth_getBlockByNumber', ['latest', false])).timestamp, 16);
+  const warp = async (s) => { await send('evm_increaseTime', [s]); await send('evm_mine'); };
+  const tx = async (from, to, data, value) => {
+    const p = { from, data, gas: '0x2dc6c0' }; if (to) p.to = to; if (value) p.value = ethers.toQuantity(value);
+    try { const h = await send('eth_sendTransaction', [p]); const rc = await send('eth_getTransactionReceipt', [h]); return { ok: rc.status === '0x1', rc }; }
+    catch (e) { return { ok: false, reason: e.message }; }
+  };
+  const call = async (to, fn, args = []) => LOCK.decodeFunctionResult(fn, await send('eth_call', [{ to, data: LOCK.encodeFunctionData(fn, args) }, 'latest']))[0];
+  const deployRaw = async (bytecode, types, args) => { const r = await tx(me, null, bytecode + coder.encode(types, args).slice(2)); if (!r.ok) throw new Error('deploy failed: ' + r.reason); return ethers.getAddress(r.rc.contractAddress); };
+  const tryDeploy = (bytecode, types, args) => tx(me, null, bytecode + coder.encode(types, args).slice(2));
+  const bal = async (tok, who) => TOK.decodeFunctionResult('balanceOf', await send('eth_call', [{ to: tok, data: TOK.encodeFunctionData('balanceOf', [who]) }, 'latest']))[0];
+  const give = (tok, from, to, amt) => tx(from, tok, TOK.encodeFunctionData('transfer', [to, amt]));
+  const release = (from, lock) => tx(from, lock, LOCK.encodeFunctionData('release'));
+  const must = (c, m) => { if (!c) throw new Error(m); };
+  const mustFail = (r, msg) => { must(!r.ok, 'expected failure but it succeeded'); if (msg) must((r.reason || '').includes(msg), 'wrong reason: ' + r.reason); };
+  const eq = (a, b, m) => must(BigInt(a) === BigInt(b), m + ': got ' + a + ', want ' + b);
+  let pass = 0, total = 0;
+  const test = async (group, name, fn) => {
+    if (opts.only && !opts.only.includes(group)) return;
+    total++;
+    try { await fn(); pass++; out(true, group + ' · ' + name); } catch (e) { out(false, group + ' · ' + name + ' — ' + (e.message || e)); }
+  };
+
+  // ---- setup: coins, the standard deployer
+  const usdc = await deployRaw(MOCK_BYTECODE, ['string', 'bool'], ['USDC', false]);
+  const usdt = await deployRaw(MOCK_BYTECODE, ['string', 'bool'], ['USDT', true]);
+  const junk = await deployRaw(MOCK_BYTECODE, ['string', 'bool'], ['JUNK', false]);
+  for (const t of [usdc, usdt, junk]) for (const who of [me, stranger, attacker]) await tx(me, t, TOK.encodeFunctionData('mint', [who, U(1_000_000)]));
+  await send('evm_setAccountCode', [TV.DEPLOYER, TV.DEPLOYER_RUNTIME]); await send('evm_mine');
+  const TT =TV.CONTRACTS.date.creation, GT = TV.CONTRACTS.goal.creation;
+  const newDate = (tok, secs, ben = me) => now().then((n) => deployRaw(TT, TV.CONTRACTS.date.ctor, [tok, ben, n + secs]));
+  const newGoal = (tok, goal, secs, ben = me) => now().then((n) => deployRaw(GT, TV.CONTRACTS.goal.ctor, [tok, ben, n + secs, goal]));
+  const DLOCK = 'current time is before release time', GLOCK = 'goal not reached and before release time';
+
+  // ================================================================ 1. self check
+  await test('Self check', 'embedded contract code matches the tested fingerprints', async () => {
+    const r = TV.selfCheck(ethers); must(r.ok, r.items.filter((i) => !i.ok).map((i) => i.label).join(', '));
+  });
+  await test('Self check', 'deployed locks have exactly the code the app expects', async () => {
+    const n = await now();
+    const a = await deployRaw(GT, TV.CONTRACTS.goal.ctor, [usdc, me, n + DAY, U(5)]);
+    must((await send('eth_getCode', [a, 'latest'])).toLowerCase() === TV.expectedRuntime(ethers, 'goal', { token: usdc, beneficiary: me, releaseTime: n + DAY, goal: U(5) }).toLowerCase(), 'goal lock code differs');
+    const b = await deployRaw(TT, TV.CONTRACTS.date.ctor, [usdt, me, n + DAY]);
+    must((await send('eth_getCode', [b, 'latest'])).toLowerCase() === TV.expectedRuntime(ethers, 'date', { token: usdt, beneficiary: me, releaseTime: n + DAY }).toLowerCase(), 'date lock code differs');
+  });
+
+  // ================================================================ 2. fixed-date lock (OpenZeppelin TokenTimelock)
+  let L;
+  await test('Fixed date', 'create a 30-day lock and deposit 1,000', async () => {
+    L = await newDate(usdc, 30 * DAY); must((await give(usdc, me, L, U(1000))).ok, 'deposit failed');
+    eq(await bal(usdc, L), U(1000), 'lock balance'); must((await call(L, 'beneficiary')) === me, 'beneficiary');
+  });
+  await test('Fixed date', 'you cannot release early', async () => mustFail(await release(me, L), DLOCK));
+  await test('Fixed date', 'a stranger cannot release early', async () => mustFail(await release(stranger, L), DLOCK));
+  await test('Fixed date', 'still locked 1 minute before the date', async () => { await warp(30 * DAY - 60); mustFail(await release(me, L), DLOCK); });
+  await test('Fixed date', 'after the date a stranger can press release, but the money goes only to you', async () => {
+    await warp(120); const b = await bal(usdc, me), bs = await bal(usdc, stranger);
+    must((await release(stranger, L)).ok, 'release failed');
+    eq((await bal(usdc, me)) - b, U(1000), 'you received'); eq(await bal(usdc, stranger), bs, 'stranger received'); eq(await bal(usdc, L), 0, 'not empty');
+  });
+  await test('Fixed date', 'releasing an empty lock fails cleanly', async () => mustFail(await release(me, L), 'no tokens to release'));
+  await test('Fixed date', 'cannot be created with a date in the past', async () => mustFail(await tryDeploy(TT, TV.CONTRACTS.date.ctor, [usdc, me, (await now()) - 1]), 'release time is before current time'));
+  await test('Fixed date', 'topping up keeps the same date', async () => {
+    const a = await newDate(usdc, 10 * DAY); await give(usdc, me, a, U(200)); await give(usdc, me, a, U(50));
+    mustFail(await release(me, a), DLOCK); await warp(10 * DAY + 5); const b = await bal(usdc, me);
+    must((await release(me, a)).ok, 'release failed'); eq((await bal(usdc, me)) - b, U(250), 'received');
+  });
+  await test('Fixed date', 'USDT-style coin works', async () => {
+    const a = await newDate(usdt, DAY); must((await give(usdt, me, a, U(300))).ok, 'deposit');
+    mustFail(await release(me, a), DLOCK); await warp(DAY + 5); const b = await bal(usdt, me);
+    must((await release(me, a)).ok, 'release'); eq((await bal(usdt, me)) - b, U(300), 'received');
+  });
+  await test('Fixed date', '2-year lock blocked all the way, then pays only you', async () => {
+    const a = await newDate(usdc, 730 * DAY); await give(usdc, me, a, U(5000));
+    for (const d of [1, 99, 265, 363]) { await warp(d * DAY); mustFail(await release(stranger, a), DLOCK); }
+    await warp(2 * DAY + 1); const b = await bal(usdc, me);
+    must((await release(stranger, a)).ok, 'release'); eq((await bal(usdc, me)) - b, U(5000), 'received');
+  });
+  await test('Fixed date', 'only its 4 functions exist', async () => {
+    const a = await newDate(usdc, DAY); const code = (await send('eth_getCode', [a, 'latest'])).toLowerCase();
+    must([...code.matchAll(/8063([0-9a-f]{8})14/g)].map((m) => m[1]).sort().join(',') === '38af3eed,86d1a69f,b91d4001,fc0c546a', 'function list');
+  });
+  await test('Fixed date', 'random calls or ETH cannot move anything', async () => {
+    const a = await newDate(usdc, 5 * DAY); await give(usdc, me, a, U(10));
+    mustFail(await tx(stranger, a, '0xdeadbeef')); mustFail(await tx(stranger, a, '0x', 1n)); eq(await bal(usdc, a), U(10), 'balance changed');
+  });
+
+  // ================================================================ 3. goal lock
+  let G;
+  await test('Goal', 'create a $1,000 goal (2-year backup) and deposit $300', async () => {
+    G = await newGoal(usdc, U(1000), 730 * DAY); must((await give(usdc, me, G, U(300))).ok, 'deposit'); eq(await call(G, 'goal'), U(1000), 'goal');
+  });
+  await test('Goal', 'below the goal you cannot withdraw', async () => mustFail(await release(me, G), GLOCK));
+  await test('Goal', 'below the goal a stranger cannot withdraw', async () => mustFail(await release(stranger, G), GLOCK));
+  await test('Goal', 'deposits over months, still blocked 1 cent below the goal', async () => {
+    for (const amt of ['200', '250', '249.99']) { await warp(30 * DAY); must((await give(usdc, me, G, U(amt))).ok, 'deposit'); mustFail(await release(me, G), GLOCK); }
+    eq(await bal(usdc, G), U('999.99'), 'balance');
+  });
+  await test('Goal', 'at exactly the goal it unlocks and pays only you', async () => {
+    must((await give(usdc, me, G, U('0.01'))).ok, 'deposit'); const b = await bal(usdc, me), bs = await bal(usdc, stranger);
+    must((await release(stranger, G)).ok, 'release'); eq((await bal(usdc, me)) - b, U(1000), 'you received'); eq(await bal(usdc, stranger), bs, 'stranger');
+  });
+  await test('Goal', 'releasing an empty lock fails cleanly', async () => mustFail(await release(me, G), 'no tokens to release'));
+  await test('Goal', 'depositing again after release locks it again', async () => { must((await give(usdc, me, G, U(100))).ok, 'deposit'); mustFail(await release(me, G), GLOCK); });
+  await test('Goal', 'going over the goal releases the full amount', async () => {
+    const a = await newGoal(usdc, U(500), 365 * DAY); await give(usdc, me, a, U(750)); const b = await bal(usdc, me);
+    must((await release(me, a)).ok, 'release'); eq((await bal(usdc, me)) - b, U(750), 'received');
+  });
+  await test('Goal', 'backup date: never reached $10,000, blocked the day before, open after', async () => {
+    const a = await newGoal(usdc, U(10000), 365 * DAY); await give(usdc, me, a, U(3000));
+    await warp(364 * DAY); mustFail(await release(stranger, a), GLOCK); await warp(DAY + 5); const b = await bal(usdc, me);
+    must((await release(stranger, a)).ok, 'release'); eq((await bal(usdc, me)) - b, U(3000), 'received');
+  });
+  await test('Goal', 'USDT-style coin works', async () => {
+    const a = await newGoal(usdt, U(200), 365 * DAY); await give(usdt, me, a, U(150)); mustFail(await release(me, a), GLOCK);
+    await give(usdt, me, a, U(50)); const b = await bal(usdt, me); must((await release(me, a)).ok, 'release'); eq((await bal(usdt, me)) - b, U(200), 'received');
+  });
+  await test('Goal', 'coins someone else sends in can only help you', async () => {
+    const a = await newGoal(usdc, U(100), 365 * DAY); await give(usdc, me, a, U(60)); await give(usdc, stranger, a, U(40));
+    const b = await bal(usdc, me); must((await release(stranger, a)).ok, 'release'); eq((await bal(usdc, me)) - b, U(100), 'received');
+  });
+  await test('Goal', 'cannot be created with a zero goal or a past date', async () => {
+    mustFail(await tryDeploy(GT, TV.CONTRACTS.goal.ctor, [usdc, me, (await now()) + DAY, 0]), 'goal is zero');
+    mustFail(await tryDeploy(GT, TV.CONTRACTS.goal.ctor, [usdc, me, (await now()) - 1, U(10)]), 'release time is before current time');
+  });
+  await test('Goal', 'only its 5 functions exist', async () => {
+    const a = await newGoal(usdc, U(1), DAY); const code = (await send('eth_getCode', [a, 'latest'])).toLowerCase();
+    const want = ['token()', 'beneficiary()', 'releaseTime()', 'goal()', 'release()'].map((x) => ethers.id(x).slice(2, 10)).sort().join(',');
+    must([...code.matchAll(/8063([0-9a-f]{8})14/g)].map((m) => m[1]).sort().join(',') === want, 'function list');
+  });
+  await test('Goal', 'random calls or ETH cannot move anything', async () => {
+    const a = await newGoal(usdc, U(1000), DAY); await give(usdc, me, a, U(10));
+    mustFail(await tx(stranger, a, '0xdeadbeef')); mustFail(await tx(stranger, a, '0x', 1n)); eq(await bal(usdc, a), U(10), 'balance changed');
+  });
+
+  // ================================================================ 4. stress test: random sequences vs. a model
+  await test('Stress', (opts.rounds || 40) + ' random locks × 14 random actions each, money only ever goes where the rules say', async () => {
+    let seed = opts.seed || ((Date.now() % 1e9) | 0); const seed0 = seed;
+    const rnd = () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const pick = (a) => a[Math.floor(rnd() * a.length)];
+    const holders = [me, stranger, attacker];
+    let ops = 0;
+    for (let r = 0; r < (opts.rounds || 40); r++) {
+      const kind = rnd() < 0.6 ? 'goal' : 'date', tok = pick([usdc, usdt]);
+      const goal = U(1 + Math.floor(rnd() * 500));
+      const start = await now(); const T = start + (1 + Math.floor(rnd() * 120)) * DAY + DAY / 2;
+      const lock = kind === 'goal' ? await deployRaw(GT, TV.CONTRACTS.goal.ctor, [tok, me, T, goal]) : await deployRaw(TT, TV.CONTRACTS.date.ctor, [tok, me, T]);
+      let model = 0n;
+      const total0 = (await Promise.all(holders.map((h) => bal(tok, h)))).reduce((a, b) => a + b, 0n);
+      for (let k = 0; k < 14; k++) {
+        const op = pick(['deposit', 'deposit', 'warp', 'release', 'release']); ops++;
+        if (op === 'deposit') {
+          const from = pick([me, me, stranger, attacker]), amt = U(1 + Math.floor(rnd() * 300));
+          must((await give(tok, from, lock, amt)).ok, 'deposit failed'); model += amt;
+        } else if (op === 'warp') {
+          await warp(Math.floor(rnd() * 40) * DAY);
+        } else {
+          const caller = pick(holders); const t = (await now()) + 1;
+          const expectOk = model > 0n && (t >= T || (kind === 'goal' && model >= goal));
+          const before = await Promise.all(holders.map((h) => bal(tok, h)));
+          const r2 = await release(caller, lock);
+          must(r2.ok === expectOk, `round ${r} op ${k}: release by ${caller === me ? 'owner' : 'other'} ${r2.ok ? 'succeeded' : 'failed'} but rules say it should ${expectOk ? 'succeed' : 'fail'} (seed ${seed0})`);
+          const after = await Promise.all(holders.map((h) => bal(tok, h)));
+          if (r2.ok) { eq(after[0] - before[0], model, 'owner must receive everything'); eq(after[1], before[1], 'stranger got money'); eq(after[2], before[2], 'attacker got money'); model = 0n; }
+          else for (let i = 0; i < 3; i++) eq(after[i], before[i], 'balances changed on a failed release');
+        }
+        eq(await bal(tok, lock), model, 'lock balance differs from model (seed ' + seed0 + ')');
+        const tot = (await Promise.all(holders.map((h) => bal(tok, h)))).reduce((a, b) => a + b, 0n) + model;
+        eq(tot, total0, 'coins appeared or vanished');
+      }
+    }
+    out(true, 'Stress · ran ' + ops + ' random actions (seed ' + seed0 + ')', true);
+  });
+
+  // ================================================================ 5. the guard (the app's only way to send)
+  let sends = 0; const asked = [];
+  const signer = await prov.getSigner(me);
+  const origSend = signer.sendTransaction.bind(signer);
+  signer.sendTransaction = (t) => { sends++; return origSend(t); };
+  const tokens = { USDC: { address: usdc, decimals: 6 }, USDT: { address: usdt, decimals: 6 } };
+  const baseCfg = { providers: [prov, prov2], need: 2, tokens, chainId: Number((await prov.getNetwork()).chainId), getSigner: async () => signer, getAccount: () => me, onAsk: async (s) => { asked.push(s); return true; } };
+  const guard = TV.makeGuard(ethers, baseCfg);
+  const noSend = async (fn, msg) => {
+    const s0 = sends;
+    try { await fn(); } catch (e) { must(e.refused, 'failed but not refused by the guard: ' + e.message); if (msg) must(e.message.includes(msg), 'wrong refusal: ' + e.message); must(sends === s0, 'the wallet was asked to sign'); return; }
+    throw new Error('the guard allowed it');
+  };
+  let GL;
+  await test('Guard', 'only three actions exist: create, deposit, release', async () => must(Object.keys(guard).sort().join() === 'create,deposit,release', Object.keys(guard).join()));
+  await test('Guard', 'create a goal lock: lands at the predicted address, pays you, exact tested code', async () => {
+    const n = await now();
+    GL = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 400 * DAY, goal: U(100) });
+    must(GL.beneficiary === me && GL.kind === 'goal' && GL.goal === U(100), 'bad lock');
+    must(asked.at(-1).to === TV.DEPLOYER, 'wallet was asked to send somewhere other than the deployer');
+  });
+  await test('Guard', 'deposit 60 into your lock', async () => { await guard.deposit({ lock: GL.addr, amount: U(60) }); eq(await bal(usdc, GL.addr), U(60), 'lock balance'); must(asked.at(-1).recipient === GL.addr, 'recipient'); });
+  await test('Guard', 'release below the goal is stopped before your wallet is even asked', async () => noSend(() => guard.release({ lock: GL.addr }), 'Dry run failed'));
+  await test('Guard', 'reach the goal and release: everything comes back to you', async () => {
+    await guard.deposit({ lock: GL.addr, amount: U(40) }); const b = await bal(usdc, me);
+    await guard.release({ lock: GL.addr }); eq((await bal(usdc, me)) - b, U(100), 'received'); eq(await bal(usdc, GL.addr), 0, 'not empty');
+  });
+  await test('Guard', 'create a fixed-date USDT lock', async () => { const n = await now(); const D = await guard.create({ kind: 'date', sym: 'USDT', releaseTime: n + 30 * DAY }); must(D.kind === 'date' && D.sym === 'USDT', 'bad lock'); });
+  await test('Guard', 'REFUSES a fake look-alike lock that claims to pay you but pays an attacker', async () => {
+    const n = await now(); const fake = await deployRaw(FAKE_BYTECODE, ['address', 'address', 'uint256', 'uint256', 'address'], [usdc, me, n + 30 * DAY, U(1000), attacker]);
+    must((await call(fake, 'beneficiary')) === me, 'fake should claim to pay me');
+    await noSend(() => guard.deposit({ lock: fake, amount: U(5) }), 'not a TimeVault lock');
+  });
+  await test('Guard', 'REFUSES a genuine lock that pays someone else', async () => {
+    const other = await newGoal(usdc, U(100), 30 * DAY, attacker); await noSend(() => guard.deposit({ lock: other, amount: U(5) }), 'pays a different wallet');
+  });
+  await test('Guard', 'REFUSES sending to a normal wallet address', async () => noSend(() => guard.deposit({ lock: attacker, amount: U(5) }), 'not a TimeVault lock'));
+  await test('Guard', 'REFUSES a lock holding an unsupported coin', async () => { const j = await newGoal(junk, U(100), 30 * DAY); await noSend(() => guard.deposit({ lock: j, amount: U(5) }), 'does not support'); });
+  await test('Guard', 'REFUSES depositing into a lock whose date has passed', async () => {
+    const n = await now(); const E = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 2 * 3600, goal: U(10) });
+    await warp(3 * 3600); await noSend(() => guard.deposit({ lock: E.addr, amount: U(5) }), 'date has passed');
+  });
+  await test('Guard', 'REFUSES depositing more than your wallet has', async () => {
+    const n = await now(); const M = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: U(10) });
+    const mine = await bal(usdc, me);
+    await noSend(() => guard.deposit({ lock: M.addr, amount: mine + 1n }), 'more USDC than your wallet has');
+  });
+  await test('Guard', 'REFUSES releasing a lock that is not yours', async () => { const o = await newDate(usdc, DAY, attacker); await noSend(() => guard.release({ lock: o }), 'pays a different wallet'); });
+  await test('Guard', 'REFUSES bad settings before asking the wallet (zero goal, past date, 11 years)', async () => {
+    const n = await now();
+    await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: 0n }), 'more than zero');
+    await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n - 10, goal: U(5) }), 'at least an hour');
+    await noSend(() => guard.create({ kind: 'date', sym: 'USDC', releaseTime: n + 11 * 365 * DAY }), 'at most 10 years');
+    await noSend(() => guard.create({ kind: 'goal', sym: 'JUNK', releaseTime: n + 30 * DAY, goal: U(5) }), 'Unsupported coin');
+  });
+  await test('Guard', 'REFUSES when one server lies about a lock\'s code', async () => {
+    const liar = { getCode: async (a) => (await prov.getCode(a)).slice(0, -2) + 'ff', call: (t) => prov.call(t), getBlock: (b) => prov.getBlock(b), provider: prov };
+    const n = await now(); const ok = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: U(10) });
+    const g2 = TV.makeGuard(ethers, { ...baseCfg, providers: [prov, liar] });
+    await noSend(() => g2.deposit({ lock: ok.addr, amount: U(1) }), 'disagree');
+  });
+  await test('Guard', 'REFUSES when servers cannot be reached', async () => {
+    const dead = { getCode: async () => { throw new Error('offline'); }, call: async () => { throw new Error('offline'); }, getBlock: (b) => prov.getBlock(b), provider: prov };
+    const g3 = TV.makeGuard(ethers, { ...baseCfg, providers: [prov, dead] });
+    await noSend(() => g3.deposit({ lock: GL.addr, amount: U(1) }), 'Could not reach enough');
+  });
+  await test('Guard', 'REFUSES if the deployer contract has been tampered with', async () => {
+    const setDeployer = async (code) => {
+      await send('evm_setAccountCode', [TV.DEPLOYER, code]); await send('evm_mine');
+      must((await send('eth_getCode', [TV.DEPLOYER, 'latest'])).toLowerCase() === code.toLowerCase(), 'could not set deployer code');
+    };
+    await setDeployer(TV.DEPLOYER_RUNTIME.slice(0, -2) + '00');
+    const n = await now();
+    try { await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: U(5) }), 'standard deployer on this network looks wrong'); }
+    finally { await setDeployer(TV.DEPLOYER_RUNTIME); }
+  });
+  await test('Guard', 'REFUSES when the wallet is on the wrong network', async () => {
+    const g4 = TV.makeGuard(ethers, { ...baseCfg, chainId: 42161 + 999 });
+    await noSend(() => g4.deposit({ lock: GL.addr, amount: U(1) }), 'not on Arbitrum');
+  });
+  await test('Guard', 'REFUSES when the connected account changed', async () => {
+    const g5 = TV.makeGuard(ethers, { ...baseCfg, getAccount: () => stranger });
+    await noSend(() => g5.deposit({ lock: GL.addr, amount: U(1) }), 'account changed');
+  });
+  await test('Guard', 'nothing is sent if you press Cancel on the confirm screen', async () => {
+    const g6 = TV.makeGuard(ethers, { ...baseCfg, onAsk: async () => false });
+    const n = await now(); await noSend(() => g6.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: U(5) }), 'Cancelled');
+  });
+
+  return { pass, total, seconds: Math.round((Date.now() - t0) / 1000) };
+}
+</script>
+<script>// Test page runner: loads the simulated blockchain (pinned, integrity-checked) and runs every test.
+(() => {
+  const MOCK = '0x60806040526001805460ff191660061790553480156200001e57600080fd5b50604051620009d2380380620009d2833981016040819052620000419162000094565b60006200004f83826200020d565b506004805460ff191691151591909117905550620002d9565b634e487b7160e01b600052604160045260246000fd5b805180151581146200008f57600080fd5b919050565b60008060408385031215620000a857600080fd5b82516001600160401b0380821115620000c057600080fd5b818501915085601f830112620000d557600080fd5b815181811115620000ea57620000ea62000068565b604051601f8201601f19908116603f0116810190838211818310171562000115576200011562000068565b816040528281526020935088848487010111156200013257600080fd5b600091505b8282101562000156578482018401518183018501529083019062000137565b6000848483010152809650505050620001718186016200007e565b925050509250929050565b600181811c908216806200019157607f821691505b602082108103620001b257634e487b7160e01b600052602260045260246000fd5b50919050565b601f82111562000208576000816000526020600020601f850160051c81016020861015620001e35750805b601f850160051c820191505b818110156200020457828155600101620001ef565b5050505b505050565b81516001600160401b0381111562000229576200022962000068565b62000241816200023a84546200017c565b84620001b8565b602080601f831160018114620002795760008415620002605750858301515b600019600386901b1c1916600185901b17855562000204565b600085815260208120601f198616915b82811015620002aa5788860151825594840194600190910190840162000289565b5085821015620002c95787850151600019600388901b60f8161c191681555b5050505050600190811b01905550565b6106e980620002e96000396000f3fe608060405234801561001057600080fd5b50600436106100935760003560e01c806340c10f191161006657806340c10f191461010b57806369a897101461012057806370a082311461012d578063a9059cbb1461015b578063dd62ed3e1461016e57600080fd5b806306fdde0314610098578063095ea7b3146100b657806323b872dd146100d9578063313ce567146100ec575b600080fd5b6100a0610199565b6040516100ad9190610517565b60405180910390f35b6100c96100c4366004610582565b610227565b60405190151581526020016100ad565b6100c96100e73660046105ac565b6102e2565b6001546100f99060ff1681565b60405160ff90911681526020016100ad565b61011e610119366004610582565b610432565b005b6004546100c99060ff1681565b61014d61013b3660046105e8565b60026020526000908152604090205481565b6040519081526020016100ad565b6100c9610169366004610582565b610463565b61014d61017c36600461060a565b600360209081526000928352604080842090915290825290205481565b600080546101a69061063d565b80601f01602080910402602001604051908101604052809291908181526020018280546101d29061063d565b801561021f5780601f106101f45761010080835404028352916020019161021f565b820191906000526020600020905b81548152906001019060200180831161020257829003601f168201915b505050505081565b60045460009060ff16156102a85781158061026357503360009081526003602090815260408083206001600160a01b0387168452909152902054155b6102a85760405162461bcd60e51b81526020600482015260116024820152701554d1150e881c995cd95d08199a5c9cdd607a1b60448201526064015b60405180910390fd5b3360009081526003602090815260408083206001600160a01b038716845290915290208290556102d86001610500565b5060015b92915050565b6001600160a01b0383166000908152600260205260408120548211156103305760405162461bcd60e51b815260206004820152600360248201526218985b60ea1b604482015260640161029f565b6001600160a01b038416600090815260036020908152604080832033845290915290205482111561038b5760405162461bcd60e51b8152602060048201526005602482015264616c6c6f7760d81b604482015260640161029f565b6001600160a01b0384166000908152600360209081526040808320338452909152812080548492906103be90849061068d565b90915550506001600160a01b038416600090815260026020526040812080548492906103eb90849061068d565b90915550506001600160a01b038316600090815260026020526040812080548492906104189084906106a0565b9091555061042890506001610500565b5060019392505050565b6001600160a01b0382166000908152600260205260408120805483929061045a9084906106a0565b90915550505050565b336000908152600260205260408120548211156104a85760405162461bcd60e51b815260206004820152600360248201526218985b60ea1b604482015260640161029f565b33600090815260026020526040812080548492906104c790849061068d565b90915550506001600160a01b038316600090815260026020526040812080548492906104f49084906106a0565b909155506102d8905060015b60045460ff161561050d57005b8060005260206000f35b60006020808352835180602085015260005b8181101561054557858101830151858201604001528201610529565b506000604082860101526040601f19601f8301168501019250505092915050565b80356001600160a01b038116811461057d57600080fd5b919050565b6000806040838503121561059557600080fd5b61059e83610566565b946020939093013593505050565b6000806000606084860312156105c157600080fd5b6105ca84610566565b92506105d860208501610566565b9150604084013590509250925092565b6000602082840312156105fa57600080fd5b61060382610566565b9392505050565b6000806040838503121561061d57600080fd5b61062683610566565b915061063460208401610566565b90509250929050565b600181811c9082168061065157607f821691505b60208210810361067157634e487b7160e01b600052602260045260246000fd5b50919050565b634e487b7160e01b600052601160045260246000fd5b818103818111156102dc576102dc610677565b808201808211156102dc576102dc61067756fea264697066735822122079bfed4b53ef6799567280872fd0142d83ac88f509f35b4960770d3cad2ebfdc64736f6c63430008180033', FAKE = '0x608060405234801561001057600080fd5b5060405161032c38038061032c83398101604081905261002f91610096565b600080546001600160a01b039687166001600160a01b0319918216179091556001805495871695821695909517909455600292909255600355600480549190931691161790556100ed565b80516001600160a01b038116811461009157600080fd5b919050565b600080600080600060a086880312156100ae57600080fd5b6100b78661007a565b94506100c56020870161007a565b935060408601519250606086015191506100e16080870161007a565b90509295509295909350565b610230806100fc6000396000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c806338af3eed1461005c578063401938831461008c57806386d1a69f146100a3578063b91d4001146100ad578063fc0c546a146100b6575b600080fd5b60015461006f906001600160a01b031681565b6040516001600160a01b0390911681526020015b60405180910390f35b61009560035481565b604051908152602001610083565b6100ab6100c9565b005b61009560025481565b60005461006f906001600160a01b031681565b600054600480546040516370a0823160e01b815230928101929092526001600160a01b039283169263a9059cbb9291169083906370a0823190602401602060405180830381865afa158015610122573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061014691906101b8565b6040516001600160e01b031960e085901b1681526001600160a01b03909216600483015260248201526044016020604051808303816000875af1158015610191573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101b591906101d1565b50565b6000602082840312156101ca57600080fd5b5051919050565b6000602082840312156101e357600080fd5b815180151581146101f357600080fd5b939250505056fea26469706673582212207b54ac677e95f9223b75f986c2ba56a4a8d7a9d5ada27e761aea3f037fb653a964736f6c63430008180033';
+  const GANACHE = { src: 'https://cdn.jsdelivr.net/npm/ganache@7.9.2/dist/web/ganache.min.js', sri: 'sha384-7ZJuPSJycTVhi/25CY7DMzaD94WbBbDu4G0f8YzNRISN1guhFB9NpF8UlXf7ul6Y' };
+  const $ = (id) => document.getElementById(id);
+  crypto.subtle.digest('SHA-256', new TextEncoder().encode($('coreScript').textContent)).then((h) => { $('fp').textContent = 'sha256-' + btoa(String.fromCharCode(...new Uint8Array(h))); });
+  const load = () => new Promise((res, rej) => { if (window.Ganache) return res(); const s = document.createElement('script'); s.src = GANACHE.src; s.integrity = GANACHE.sri; s.crossOrigin = 'anonymous'; s.onload = res; s.onerror = () => rej(new Error('Could not load the test chain (or it failed its integrity check).')); document.head.appendChild(s); });
+  $('run').addEventListener('click', async () => {
+    const b = $('run'); b.disabled = true; const log = $('log'); log.innerHTML = ''; const sum = $('sum'); sum.className = ''; sum.textContent = 'Loading the test chain (8 MB, first time only)…';
+    try {
+      await load(); sum.textContent = 'Running…';
+      const r = await runTimeVaultTests(ethers, Ganache, MOCK, FAKE, (ok, m) => { const li = document.createElement('li'); li.className = ok ? 'pass' : 'fail'; li.textContent = (ok ? '✓ ' : '✗ ') + m; log.appendChild(li); sum.textContent = 'Running… ' + log.children.length + ' done'; });
+      sum.textContent = r.pass + ' of ' + r.total + ' tests passed (' + r.seconds + 's)'; sum.className = r.pass === r.total ? 'ok' : 'bad';
+      window.__result = r;
+    } catch (e) { sum.textContent = 'Setup failed: ' + (e.message || e); sum.className = 'bad'; window.__result = { err: String(e) }; }
+    b.disabled = false;
+  });
+})();
+</script>
+</body>
+</html>
