@@ -7,6 +7,9 @@ h256 = lambda s: "'sha256-" + base64.b64encode(hashlib.sha256(s.encode('utf-8'))
 core = rd('core.js').replace("'__TT_BYTECODE__'", "'" + rr('tt_bytecode.txt').strip() + "'").replace("'__GT_BYTECODE__'", "'" + rr('gt_bytecode.txt').strip() + "'")
 assert '__TT_BYTECODE__' not in core and '__GT_BYTECODE__' not in core
 app = rd('app.js'); tests = rd('tests.js')
+_wc = rd('walletconnect_project_id.txt').strip() if os.path.exists(os.path.join(D, 'walletconnect_project_id.txt')) else ''
+assert _wc == '' or re.fullmatch(r'[0-9a-f]{32}', _wc), 'walletconnect_project_id.txt must hold a 32-character Project ID'
+if _wc: app = app.replace('__WC_PROJECT_ID__', _wc)
 oz = json.loads(rd('oz.json'), object_pairs_hook=dict)
 goal_src = rr('GoalTimelock.sol')
 shim = "window.process = { env: { NODE_ENV: 'production' } };"

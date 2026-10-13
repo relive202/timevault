@@ -4,7 +4,7 @@ A phone app that locks your USDC or USDT on Arbitrum One until you reach a savin
 
 It also has a savings coach: a payday plan, a streak counter, calendar reminders and short money lessons.
 
-There is no server, no account and no company holding your coins. The app is a single web page that talks directly to the Arbitrum blockchain and to your wallet (Tangem, through WalletConnect).
+There is no server, no account and no company holding your coins. The app is a single web page that talks directly to the Arbitrum blockchain and to your wallet. It works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet.
 
 ## What's in this folder
 

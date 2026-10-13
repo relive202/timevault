@@ -8,6 +8,9 @@
   const SYMBOL = Object.fromEntries(Object.entries(TOKENS).map(([k, v]) => [v.address.toLowerCase(), k]));
   const ERC20 = ['function balanceOf(address) view returns (uint256)'];
   const DAY = 86400;
+  // Built-in WalletConnect Project ID (a public identifier, not a secret). Set at build time from walletconnect_project_id.txt.
+  const BUILT_IN_WC_ID = '__WC_PROJECT_ID__'.startsWith('__') ? '' : '__WC_PROJECT_ID__';
+  const TESTS_URL = 'https://relive202.github.io/timevault/tests.html';
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -55,7 +58,9 @@
   function setAccount(a, c) {
     account = a ? ethers.getAddress(a) : ''; chainId = Number(c || 0);
     const p = $('netPill');
-    if (!account) { p.textContent = store.get('watch') ? 'Watching ' + short(store.get('watch')) : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect'; }
+    document.querySelectorAll('[data-connect]').forEach((b) => { b.textContent = account ? 'Disconnect wallet' : 'Connect wallet'; b.className = account ? 'btn ghost small' : b.dataset.cls; });
+    $('welcome').hidden = !!viewer(); $('homeMain').hidden = !viewer();
+    if (!account) { p.textContent = store.get('watch') ? 'Viewing ' + short(store.get('watch')) : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect wallet'; }
     else if (chainId !== CHAIN_ID) { p.textContent = short(account) + ' · wrong network'; p.className = 'pill warn'; $('connectBtn').textContent = 'Disconnect'; }
     else { p.textContent = short(account) + ' · Arbitrum'; p.className = 'pill ok'; $('connectBtn').textContent = 'Disconnect'; }
     refresh();
@@ -68,8 +73,8 @@
     catch { throw new TV.Refused('Switch your wallet to Arbitrum One, then try again.'); }
   }
   async function initWc(connectNow) {
-    const projectId = store.get('wcid');
-    if (!projectId) { if (connectNow) { show('setup'); $('wcId').focus(); toast('Add your WalletConnect Project ID first (one-time).'); } return; }
+    const projectId = store.get('wcid') || BUILT_IN_WC_ID;
+    if (!projectId) { if (connectNow) { show('setup'); document.querySelector('details.advanced').open = true; $('wcId').focus(); toast('This copy of TimeVault needs a WalletConnect Project ID. Add one under Advanced.', 8000); } return; }
     if (!wc) {
       const { EthereumProvider } = window['@walletconnect/ethereum-provider'];
       wc = await EthereumProvider.init({
@@ -78,7 +83,9 @@
         metadata: { name: 'TimeVault', description: 'Personal savings locks', url: location.origin.startsWith('http') ? location.origin : 'https://timevault.local', icons: [] },
       });
       wc.on('display_uri', (uri) => {
-        show('setup'); $('qrBox').hidden = false; $('uriText').textContent = uri; $('copyUri').dataset.uri = uri;
+        $('qrBox').hidden = false; $('uriText').textContent = uri; $('copyUri').dataset.uri = uri;
+        const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+        $('openWallet').hidden = !touch; document.querySelectorAll('#qrBox details')[1].open = !touch;
         $('openWallet').onclick = () => { location.href = uri; };
         try { const q = qrcode(0, 'M'); q.addData(uri); q.make(); $('qr').innerHTML = q.createImgTag(5, 8); } catch { $('qr').textContent = 'Use Copy link instead.'; }
       });
@@ -92,16 +99,18 @@
       catch (e) { $('qrBox').hidden = true; toast(nice(e)); }
     }
   }
-  $('connectBtn').addEventListener('click', async () => {
-    if (account) { try { if (eip === wc) await wc.disconnect(); } catch {} eip = null; setAccount(''); return; }
-    try { await initWc(true); } catch (e) { toast('Could not start WalletConnect: ' + nice(e)); }
-  });
-  $('wcSave').addEventListener('click', () => { store.set('wcid', $('wcId').value.trim()); wc = null; toast($('wcId').value.trim() ? 'Saved. Now tap Connect.' : 'Cleared.'); });
-  $('copyUri').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('copyUri').dataset.uri); toast('Copied. In Tangem: WalletConnect → paste.'); } catch { toast('Select the link text and copy it.'); } });
-  $('cancelWc').addEventListener('click', () => { $('qrBox').hidden = true; });
+  async function connectClick() {
+    if (account) { try { if (eip === wc) await wc.disconnect(); } catch {} eip = null; setAccount(''); toast('Wallet disconnected.'); return; }
+    try { await initWc(true); } catch (e) { toast('Could not start the wallet connection: ' + nice(e)); }
+  }
+  $('connectBtn').addEventListener('click', connectClick);
+  document.querySelectorAll('[data-connect]').forEach((b) => { b.dataset.cls = b.className; b.addEventListener('click', connectClick); });
+  $('wcSave').addEventListener('click', () => { store.set('wcid', $('wcId').value.trim()); wc = null; toast($('wcId').value.trim() ? 'Saved. Now tap Connect wallet.' : 'Cleared. Using the built-in one.'); });
+  $('copyUri').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('copyUri').dataset.uri); toast('Copied. Now open your wallet app, find WalletConnect or the scan button, and paste.', 8000); } catch { toast('Select the link text and copy it.'); } });
+  $('cancelWc').addEventListener('click', () => { $('qrBox').hidden = true; toast('Connection cancelled.'); });
   $('watchSave').addEventListener('click', () => {
     const v = $('watchAddr').value.trim();
-    if (v && !ethers.isAddress(v)) return toast('That is not a valid address.');
+    if (v && !ethers.isAddress(v)) return toast('That is not a valid wallet address. It should start with 0x.');
     store.set('watch', v ? ethers.getAddress(v) : ''); setAccount(account, chainId);
   });
 
@@ -117,9 +126,9 @@
   function confirmScreen(s) {
     return new Promise((resolve) => {
       const lines = {
-        create: ['Create your lock', 'Tangem will ask you to sign a contract interaction with:', s.to, 'Arbitrum\'s standard contract deployer. No coins move in this step. Fee: a few cents of ETH.'],
-        deposit: ['Deposit into your lock', 'Tangem will show a token transfer to:', s.recipient, s.text],
-        release: ['Release to your wallet', 'Tangem will ask you to sign a contract interaction with:', s.to, s.text],
+        create: ['Create your lock', 'Your wallet will ask you to approve a contract interaction with:', s.to, 'This sets up your empty lock using Arbitrum\'s standard contract creator. No money moves yet. The network fee is a few cents of ETH.'],
+        deposit: ['Add money to your lock', 'Your wallet will show a transfer to your lock:', s.recipient, s.text],
+        release: ['Withdraw to your wallet', 'Your wallet will ask you to approve a contract interaction with your lock:', s.to, s.text],
       }[s.action];
       $('cfTitle').textContent = lines[0]; $('cfLead').textContent = lines[1];
       $('cfAddr').textContent = lines[2]; $('cfText').textContent = lines[3];
@@ -190,9 +199,10 @@
       ? num(fmt(WALLET.USDC)) + ' USDC · ' + num(fmt(WALLET.USDT)) + ' USDT · ' + Number(ethers.formatEther(WALLET.ETH)).toFixed(5) + ' ETH for fees'
       : (viewer() ? 'Loading balances…' : '');
     $('gasHint').hidden = !(WALLET.ETH !== undefined && WALLET.ETH < ethers.parseEther('0.0002'));
+    for (const o of $('lkToken').options) o.textContent = o.value + (WALLET[o.value] !== undefined ? ' (you have ' + num(fmt(WALLET[o.value])) + ')' : '');
     renderLocks(); renderToday(); renderCoach(); updateSummary();
     const tgt = $('cTarget'); const cur = store.get('plan.target');
-    tgt.innerHTML = '<option value="">Choose a goal lock</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
+    tgt.innerHTML = '<option value="">Choose one of your goals</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
   }
 
   function lockState(l) {
@@ -214,14 +224,16 @@
 
   function renderLocks() {
     const box = $('locks'); const who = viewer();
-    if (!who) { box.innerHTML = '<div class="empty">Connect your wallet to see your savings, or track an address in Setup.</div>'; return; }
+    if (!who) { box.innerHTML = '<div class="empty">Connect your wallet to see your savings.</div>'; return; }
     const rej = [...rejected.entries()];
     if (!LOCKS.length) {
-      box.innerHTML = '<div class="empty">No locks on this device yet.<br>Make one in <b>New</b>, or tap <b>Find my locks</b> to recover locks you made before.</div>';
+      box.innerHTML = '<div class="empty"><b>No locks yet.</b><br>Tap <b>New lock</b> below to start saving.<br><span class="small">Made locks before on another phone? Tap <b>Find my locks</b>.</span></div>';
     } else box.innerHTML = '';
     const now = Date.now() / 1000;
+    const finished = [];
     for (const l of LOCKS) {
       const s = lockState(l); const g = l.kind === 'goal';
+      if (s.empty && s.timeUp) { finished.push(l); continue; }
       const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
       const el = document.createElement('article'); el.className = 'lock';
       el.innerHTML =
@@ -230,31 +242,37 @@
         '<span class="state ' + s.cls + '">' + s.label + '</span></div>' +
         (s.empty && s.timeUp ? '' : '<div class="bar' + (g ? ' goalbar' : '') + '" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div>') +
         '<div class="kv">' +
-          (g ? '<div><span class="label">To go</span>' + (s.goalHit ? 'Done' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym) + '</div><div><span class="label">Backup unlock</span>' + dateStr(l.releaseTime) + '</div>'
+          (g ? '<div><span class="label">To go</span>' + (s.goalHit ? 'Done' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym) + '</div><div><span class="label">Backup date</span>' + dateStr(l.releaseTime) + '</div>'
              : '<div><span class="label">Unlocks</span>' + dateStr(l.releaseTime) + '</div>') +
-          '<div><span class="label">Pays to</span><span class="mono">' + short(l.beneficiary) + '</span></div>' +
-          '<div><span class="label">Verified</span><span class="ok-text">✓ exact tested code</span></div>' +
+          '<div><span class="label">Pays out to</span><span class="mono">' + short(l.beneficiary) + (account && account === l.beneficiary ? ' (you)' : '') + '</span></div>' +
+          '<div><span class="label">Safety check</span><span class="ok-text">✓ Genuine lock</span></div>' +
         '</div>' +
-        (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this lock no longer holds money back. Release it and start a new goal.</p>' : '') +
+        (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this money is free. Withdraw it and start a new goal.</p>' : '') + (g && s.goalHit && !s.empty && !s.timeUp ? '<p class="note">You did it! Withdraw your savings whenever you like.</p>' : '') +
         '<details><summary>Details</summary><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div></details>';
       if (account && account === l.beneficiary) {
         const row = document.createElement('div'); row.className = 'row';
         if (s.ready) {
-          const r = document.createElement('button'); r.className = 'btn'; r.textContent = 'Release ' + num(fmt(l.balance)) + ' ' + l.sym + ' to my wallet';
-          r.onclick = () => run(r, async () => { await ensureArbitrum(); await guard.release({ lock: l.addr }); toast(g ? 'Goal complete! Sent to your wallet.' : 'Sent to your wallet.'); });
+          const r = document.createElement('button'); r.className = 'btn'; r.textContent = 'Withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' to my wallet';
+          r.onclick = () => run(r, async () => { await ensureArbitrum(); await guard.release({ lock: l.addr }); toast('Done! The money is back in your wallet.'); });
           row.appendChild(r);
         }
         if (!s.timeUp) {
-          const d = document.createElement('button'); d.className = g ? 'btn brass' : 'btn ghost'; d.textContent = 'Deposit';
+          const d = document.createElement('button'); d.className = g ? 'btn brass' : 'btn ghost'; d.textContent = 'Add money';
           d.onclick = () => openDeposit(l); row.appendChild(d);
         }
         if (row.children.length) el.appendChild(row);
       }
       box.appendChild(el);
     }
+    if (finished.length) {
+      if (!LOCKS.some((l) => !(l.balance === 0n && Date.now() / 1000 >= l.releaseTime))) box.innerHTML = '<div class="empty"><b>No active locks.</b><br>Tap <b>New lock</b> below to start your next goal.</div>';
+      const f = document.createElement('details'); f.className = 'rejected';
+      f.innerHTML = '<summary>Finished (' + finished.length + ')</summary>' + finished.map((l) => '<div class="small">' + esc(l.name || (l.kind === 'goal' ? num(fmt(l.goal)) + ' ' + l.sym + ' goal' : l.sym + ' lock')) + ': ended ' + dateStr(l.releaseTime) + ', nothing left inside. <a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">View</a></div>').join('');
+      box.appendChild(f);
+    }
     if (rej.length) {
       const r = document.createElement('details'); r.className = 'rejected';
-      r.innerHTML = '<summary>' + rej.length + ' address' + (rej.length > 1 ? 'es' : '') + ' ignored (not genuine locks for this wallet)</summary>' + rej.map(([a, why]) => '<div class="small"><span class="mono">' + esc(a) + '</span><br>' + esc(why) + '</div>').join('');
+      r.innerHTML = '<summary>' + rej.length + ' address' + (rej.length > 1 ? 'es' : '') + ' hidden: not a genuine TimeVault lock for this wallet</summary>' + rej.map(([a, why]) => '<div class="small"><span class="mono">' + esc(a) + '</span><br>' + esc(why) + '</div>').join('');
       box.appendChild(r);
     }
   }
@@ -267,8 +285,8 @@
   // ------------------------------------------------------------------ deposit sheet
   let depLock = null;
   function openDeposit(l, amount) {
-    depLock = l; $('depTitle').textContent = 'Deposit into ' + (l.name || (l.kind === 'goal' ? num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'lock'));
-    $('depAmount').value = amount || ''; $('depBal').textContent = WALLET[l.sym] !== undefined ? 'In wallet: ' + num(fmt(WALLET[l.sym]), 6) + ' ' + l.sym : '';
+    depLock = l; $('depTitle').textContent = 'Add money to ' + (l.name || (l.kind === 'goal' ? 'your ' + num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'your lock'));
+    $('depAmount').value = amount || ''; $('depBal').textContent = WALLET[l.sym] !== undefined ? 'You have ' + num(fmt(WALLET[l.sym]), 6) + ' ' + l.sym + ' in your wallet.' : '';
     $('depSheet').hidden = false; $('depAmount').focus();
   }
   $('depClose').addEventListener('click', () => { $('depSheet').hidden = true; });
@@ -281,7 +299,7 @@
       await ensureArbitrum();
       const after = await guard.deposit({ lock: l.addr, amount: amt });
       $('depSheet').hidden = true;
-      toast(after.kind === 'goal' && after.balance >= after.goal ? 'Goal reached! You can release it now.' : 'Deposited ' + raw + ' ' + l.sym + '.');
+      toast(after.kind === 'goal' && after.balance >= after.goal ? 'Goal reached! You can withdraw it now.' : 'Added ' + raw + ' ' + l.sym + '. Nice work!');
       history = null;
     });
   });
@@ -297,8 +315,8 @@
   $('lkMax').addEventListener('click', () => { const b = WALLET[$('lkToken').value]; if (b !== undefined) { $('lkAmount').value = ethers.formatUnits(b, 6); updateSummary(); } });
   function applyType() {
     const g = lockType() === 'goal';
-    $('goalField').hidden = !g; $('amountLabel').textContent = g ? 'First deposit (optional)' : 'Amount';
-    $('dateLabel').textContent = g ? 'Backup unlock date' : 'Unlock date'; $('dateHint').hidden = !g;
+    $('goalField').hidden = !g; $('amountLabel').textContent = g ? 'Add money now (optional)' : 'How much to lock';
+    $('dateLabel').textContent = g ? 'Backup date' : 'Unlock date'; $('dateHint').hidden = !g;
     if (!$('lkDate').value) { const d = new Date(); d.setMonth(d.getMonth() + (g ? 24 : 6)); setDate(d); }
     updateSummary();
   }
@@ -312,31 +330,32 @@
     const g = lockType() === 'goal', sym = $('lkToken').value;
     const amt = parse6($('lkAmount').value), goal = parse6($('lkGoal').value), ts = unlockTs();
     const bal = WALLET[sym];
-    $('lkBal').textContent = bal !== undefined ? 'In wallet: ' + num(fmt(bal), 6) + ' ' + sym : '';
+    $('lkBal').textContent = bal !== undefined ? 'You have ' + num(fmt(bal), 6) + ' ' + sym + ' in your wallet.' : '';
     const days = ts ? (ts - Date.now() / 1000) / DAY : 0;
-    const warn = [];
-    if (amt === null) warn.push('Amount: use a number like 25 or 25.50.');
-    if (g && goal === null) warn.push('Goal: use a number like 1000.');
-    if (!g && amt === 0n) warn.push('Enter an amount.');
-    if (g && goal === 0n) warn.push('Pick a goal.');
-    if (ts && days < 0.9) warn.push('Pick a date at least a day away.');
-    if (days > 3650) warn.push('The date can be at most 10 years away.');
-    if (bal !== undefined && amt && amt > bal) warn.push('More than you have in your wallet.');
-    if (g && goal && amt && amt >= goal) warn.push('Your first deposit already reaches the goal, so it would unlock right away.');
-    if (!account) warn.push('Connect your wallet first.');
-    if (!SELF.ok) warn.push('Self check failed. Do not use this copy of the app.');
-    const ok = !warn.length && ts && $('lkAgree').checked;
+    const warn = [], todo = [];
+    if (amt === null) warn.push('Enter the amount as a number, like 25 or 25.50.');
+    if (g && goal === null) warn.push('Enter your goal as a number, like 1000.');
+    if (!g && amt === 0n) todo.push('Enter how much to lock.');
+    if (g && goal === 0n) todo.push('Pick a goal.');
+    if (ts && days < 0.9) warn.push('Pick a date at least one day from now.');
+    if (days > 3650) warn.push('The date can be at most 10 years from now.');
+    if (bal !== undefined && amt && amt > bal) warn.push('That is more ' + sym + ' than you have in your wallet.');
+    if (g && goal && amt && amt >= goal) warn.push('This amount already reaches your goal, so the lock would open straight away. Pick a bigger goal.');
+    if (!account) todo.push('Connect your wallet (button at the top).');
+    if (!SELF.ok) warn.push('Safety check failed. Do not use this copy of the app.');
+    const ok = !warn.length && !todo.length && ts && $('lkAgree').checked;
     const goalTxt = goal ? num(fmt(goal)) + ' ' + sym : 'your goal';
     $('lkSummary').innerHTML = [
-      g ? '<b>Goal:</b> ' + goalTxt : '<b>Lock:</b> ' + (amt ? num(fmt(amt), 6) : '—') + ' ' + sym,
-      g ? '<b>First deposit:</b> ' + (amt ? num(fmt(amt), 6) + ' ' + sym : 'none, add later') : '',
-      ts ? (g ? '<b>Unlocks:</b> when it holds ' + goalTxt + ', or on ' + dateStr(ts) + ', whichever comes first' : '<b>Unlocks:</b> ' + dateStr(ts) + ' (' + Math.round(days) + ' days)') : '',
-      '<b>Pays to:</b> <span class="mono">' + (account || 'your wallet') + '</span>',
+      g ? '<b>Goal:</b> ' + goalTxt : '<b>Locking:</b> ' + (amt ? num(fmt(amt), 6) : '—') + ' ' + sym,
+      g ? '<b>Adding now:</b> ' + (amt ? num(fmt(amt), 6) + ' ' + sym : 'nothing yet, add money later') : '',
+      ts ? (g ? '<b>Opens:</b> when it reaches ' + goalTxt + ', or on ' + dateStr(ts) + ' if that comes first' : '<b>Opens:</b> ' + dateStr(ts) + ' (in ' + Math.round(days) + ' days)') : '',
+      '<b>Pays out to:</b> ' + (account ? 'your wallet <span class="mono">' + short(account) + '</span>' : 'your wallet'),
+      ...todo.map((w) => '<span class="muted">→ ' + esc(w) + '</span>'),
       ...warn.map((w) => '<span class="warn">⚠ ' + esc(w) + '</span>'),
     ].filter(Boolean).map((x) => '<div>' + x + '</div>').join('');
     $('lkAgreeText').textContent = g
-      ? 'I understand nobody, including me, can take this money out until the lock holds ' + goalTxt + (ts ? ' or ' + dateStr(ts) + ' arrives' : '') + '.'
-      : 'I understand nobody, including me, can take this money out before ' + (ts ? dateStr(ts) : 'the unlock date') + '.';
+      ? 'I understand that nobody, not even me, can take this money out until it reaches ' + goalTxt + (ts ? ' or ' + dateStr(ts) + ' arrives' : '') + '.'
+      : 'I understand that nobody, not even me, can take this money out before ' + (ts ? dateStr(ts) : 'the date') + '.';
     $('lkGo').disabled = !ok;
   }
   const step = (n, s) => { $('st' + n).className = s; };
@@ -345,7 +364,7 @@
     const amt = parse6($('lkAmount').value) || 0n, goal = g ? parse6($('lkGoal').value) : undefined, ts = unlockTs();
     const name = $('lkName').value.trim().slice(0, 40);
     $('lkSteps').hidden = false; [1, 2, 3].forEach((n) => step(n, ''));
-    $('st3').textContent = amt > 0n ? 'Send ' + num(fmt(amt), 6) + ' ' + sym + ' into the lock (sign in wallet)' : 'No first deposit. Add money any time with Deposit.';
+    $('st3').textContent = amt > 0n ? 'Add ' + num(fmt(amt), 6) + ' ' + sym + ' to the lock (approve in your wallet)' : 'No money added yet. Use Add money on the Savings screen any time.';
     run($('lkGo'), async () => {
       await ensureArbitrum();
       const startBlock = await main.getBlockNumber().catch(() => 0);
@@ -355,7 +374,7 @@
       verified.set(L.addr, L); step(2, 'done');
       if (amt > 0n) { step(3, 'doing'); await guard.deposit({ lock: L.addr, amount: amt }); }
       step(3, 'done');
-      toast(g ? 'Goal lock created.' : 'Locked until ' + dateStr(ts) + '.', 8000);
+      toast(g ? 'Your savings goal is ready!' : 'Locked until ' + dateStr(ts) + '.', 8000);
       $('lkAmount').value = ''; $('lkAgree').checked = false; $('lkName').value = '';
       if (g && !store.get('plan.target')) store.set('plan.target', L.addr);
       show('home');
@@ -378,7 +397,7 @@
     return out;
   }
   $('findBtn').addEventListener('click', async () => {
-    const who = viewer(); if (!who) return toast('Connect or track a wallet first.');
+    const who = viewer(); if (!who) return toast('Connect your wallet first.');
     const b = $('findBtn'); b.disabled = true;
     try {
       const logs = await transferLogs(who, null, 28, true);
@@ -390,14 +409,14 @@
         if (code.length !== 2 + 1737 * 2 && code.length !== 2 + 1639 * 2) continue;
         try { await verifyCached(a, who); addLock(who, { addr: a }); found++; } catch {}
       }
-      toast(found ? 'Found ' + found + ' lock' + (found > 1 ? 's' : '') + '.' : 'No new locks found. (Only locks you deposited into can be found this way. Use Setup → Add a lock by address for others.)', 8000);
+      toast(found ? 'Found ' + found + ' lock' + (found > 1 ? 's' : '') + '.' : 'No other locks found. Locks you never added money to can only be added by address in Settings.', 8000);
       refresh();
     } catch (e) { toast('Search failed: ' + nice(e)); } finally { b.disabled = false; b.textContent = 'Find my locks'; }
   });
   $('addLockBtn').addEventListener('click', async () => {
     const who = viewer(), v = $('addLock').value.trim();
     if (!who) return toast('Connect or track a wallet first.');
-    try { const L = await TV.verifyLock(ethers, verifyCfg, v, { beneficiary: who }); verified.set(L.addr, L); addLock(who, { addr: L.addr }); $('addLock').value = ''; toast('Verified and added.'); refresh(); }
+    try { const L = await TV.verifyLock(ethers, verifyCfg, v, { beneficiary: who }); verified.set(L.addr, L); addLock(who, { addr: L.addr }); $('addLock').value = ''; toast('Checked: it is a genuine lock for your wallet. Added.'); refresh(); }
     catch (e) { toast(nice(e), 8000); }
   });
   $('exportBtn').addEventListener('click', () => {
@@ -441,19 +460,19 @@
     rows.push('<div><b>In a year:</b> ' + money(S * perYear) + '</div>');
     if (L) {
       const left = Math.max(0, fmt(L.goal) - fmt(L.balance));
-      if (left === 0) rows.push('<div class="ok-text"><b>Goal reached.</b> Release it, then start your next goal.</div>');
+      if (left === 0) rows.push('<div class="ok-text"><b>Goal reached!</b> Withdraw it on the Savings screen, then set your next goal.</div>');
       else {
         const n = Math.ceil(left / S); const { k } = lastAndNext(p); const when = payday(p, k + n);
         rows.push('<div><b>' + money(left) + ' to go:</b> about ' + n + ' more payday' + (n > 1 ? 's' : '') + ', around ' + dayStr(when) + '</div>');
         const backup = new Date(L.releaseTime * 1000); let m = 0; while (payday(p, k + m + 1) < backup && m < 2000) m++;
         if (m > 0 && when > backup) rows.push('<div class="warn">⚠ At this pace you will not reach it before the backup date (' + dateStr(L.releaseTime) + '). To make it, lock about ' + money(Math.ceil(left / m * 100) / 100) + ' each payday.</div>');
       }
-    } else rows.push('<div class="muted">Pick a goal lock above to see when you will reach it.</div>');
+    } else rows.push('<div class="muted">Choose a goal above to see when you will reach it. No goal yet? Make one in New lock.</div>');
     out.innerHTML = rows.join('');
   }
   function renderToday() {
     const p = PLAN(); const box = $('today');
-    if (!viewer() || !planReady(p)) { box.innerHTML = '<div class="today-empty"><b>Set up your payday plan</b><span>Tell the coach when you get paid and how much to save. It will tell you exactly what to lock each payday.</span><button class="btn ghost small" data-go="coach">Open coach</button></div>'; bindGo(box); return; }
+    if (!viewer() || !planReady(p)) { box.innerHTML = '<div class="today-empty"><b>Make a payday plan</b><span>Tell the coach when you get paid. It tells you how much to lock each payday and reminds you.</span><button class="btn ghost small" data-go="coach">Make my plan</button></div>'; bindGo(box); return; }
     const { last, next } = lastAndNext(p); const S = saveAmount(p);
     const L = LOCKS.find((l) => l.addr === p.target);
     const since = history ? history.filter((h) => h.time * 1000 >= last.getTime() && (!p.target || h.to === p.target)) : null;
@@ -545,7 +564,7 @@
   // ------------------------------------------------------------------ safety screen
   async function renderSelf() {
     $('selfList').innerHTML = SELF.items.map((i) => '<li class="' + (i.ok ? 'ok' : 'bad') + '">' + (i.ok ? '✓ ' : '✗ ') + esc(i.label) + '</li>').join('');
-    $('selfBanner').hidden = SELF.ok;
+    $('selfBanner').hidden = SELF.ok; $('safeOk').hidden = !SELF.ok;
   }
   async function codeFingerprints() {
     const out = [];
@@ -557,11 +576,11 @@
   }
   $('liveCheck').addEventListener('click', async () => {
     const who = viewer(); const box = $('liveOut');
-    if (!who || !LOCKS.length) { box.textContent = 'No locks to check yet.'; return; }
-    box.textContent = 'Checking every lock on 4 independent servers…';
+    if (!who || !LOCKS.length) { box.textContent = 'You have no locks to check yet.'; return; }
+    box.textContent = 'Checking every lock on 4 independent servers. This takes a few seconds…';
     const lines = [];
     for (const l of LOCKS) {
-      try { await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, l.addr, { beneficiary: who }); lines.push('✓ ' + short(l.addr) + ' · exact tested code · pays ' + short(who)); }
+      try { await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, l.addr, { beneficiary: who }); lines.push('✓ ' + (l.name || short(l.addr)) + ': genuine, pays only ' + short(who)); }
       catch (e) { lines.push('✗ ' + short(l.addr) + ' · ' + e.message); }
     }
     box.textContent = lines.join('\n');
@@ -613,6 +632,7 @@
 
   // ------------------------------------------------------------------ boot
   bindGo(document);
+  if (NATIVE) $('testsLink').href = TESTS_URL;
   $('wcId').value = store.get('wcid');
   const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
   if (!p0.next) { const d = new Date(); d.setDate(d.getDate() + 1); $('cNext').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); }

@@ -133,67 +133,116 @@ nav.tabs button[aria-current="true"] { color: var(--brass); }
 #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 9px; font-size: 14px; width: max-content; max-width: calc(100% - 32px); z-index: 40; }
 body.broken main::before { content: "Self check failed: this copy of the app does not match the tested build. Do not use it."; display: block; background: var(--bad); color: #fff; padding: 12px; border-radius: 9px; font-weight: 600; }
 @media (prefers-reduced-motion: no-preference) { .bar > i { transition: width .6s ease; } }
+/* polish */
+.wide { width: 100%; padding-block: 13px; font-size: 16px; }
+.welcome { gap: 16px; padding: 20px 18px; }
+.welcome-title { font-size: 1.45rem; line-height: 1.25; }
+ol.how { list-style: none; counter-reset: how; margin: 0; padding: 0; display: grid; gap: 12px; }
+ol.how li { counter-increment: how; display: grid; grid-template-columns: 30px 1fr; column-gap: 10px; }
+ol.how li::before { content: counter(how); grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; background: var(--brass-soft); color: var(--brass); font: 700 14px var(--body); display: grid; place-items: center; }
+ol.how span { color: var(--muted); font-size: 14px; }
+details.need summary { font-weight: 600; color: var(--ink); font-size: 14px; }
+details.need ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: var(--muted); }
+details.need ul b { color: var(--ink); }
+details.need > p, details.need > div { margin-top: 8px; }
+#homeMain { display: grid; gap: 22px; }
+details.advanced > summary { list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.advanced > summary::-webkit-details-marker { display: none; }
+details.advanced > summary::after { content: "Show"; font-size: 13px; color: var(--muted); }
+details.advanced[open] > summary::after { content: "Hide"; }
+details.advanced[open] { gap: 14px; }
+details.advanced:not([open]) { gap: 0; }
+.status { display: flex; gap: 14px; align-items: center; border-radius: 12px; padding: 16px; }
+.status.ok { background: var(--ok-soft); border: 1px solid var(--ok); }
+.status b { display: block; font: 600 1.1rem var(--display); }
+.status span:not(.big-check) { display: block; color: var(--muted); font-size: 14px; }
+.agree { background: var(--bg); border-radius: 10px; padding: 12px; }
+.sheet > .card { max-height: 92vh; overflow-y: auto; }
 </style>
 </head>
 <body>
-<div id="waitBar" hidden>Open your Tangem app and check the request…</div>
+<div id="waitBar" hidden>Open your wallet app and approve the request, then come back here.</div>
 <main>
   <div class="topbar">
     <div class="brand">
       <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="7" fill="var(--brass)"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="16" cy="14.2" r="2.2" fill="#fff"/><rect x="15" y="15" width="2" height="5" rx="1" fill="#fff"/></svg>
       <h1>TimeVault</h1>
     </div>
-    <div class="row"><span id="netPill" class="pill">Not connected</span><button id="connectBtn" class="btn small">Connect</button></div>
+    <div class="row"><span id="netPill" class="pill">Not connected</span><button id="connectBtn" class="btn small">Connect wallet</button></div>
   </div>
 
   <!-- HOME -->
   <section id="tab-home">
-    <div class="hero">
-      <span class="label">Locked savings</span>
-      <div class="big" id="totalLocked">$0.00</div>
-      <div class="stats">
-        <div><span class="label">Locks</span><b id="lockCount">0</b></div>
-        <div><span class="label">Goal progress</span><b id="nextMilestone">—</b></div>
-        <div><span class="label">In wallet</span><b id="walletTotal">—</b></div>
-      </div>
-      <p class="small muted" id="walletLine"></p>
-      <p class="small warn" id="gasHint" hidden>You need a little ETH on Arbitrum (about $1) to pay network fees.</p>
+    <div id="welcome" class="card welcome">
+      <h2 class="welcome-title">Savings you can't touch until you reach your goal.</h2>
+      <p class="muted">TimeVault locks your digital dollars (USDC or USDT) in a safe on the blockchain. Nobody can take them out early, not even you. When you reach your goal, the money goes back to your wallet.</p>
+      <ol class="how">
+        <li><b>Connect your wallet</b><span>Any wallet app that supports WalletConnect.</span></li>
+        <li><b>Set a goal</b><span>For example $1,000, plus a backup date in case you never get there.</span></li>
+        <li><b>Add money every payday</b><span>The coach tells you how much. It unlocks when you hit the goal.</span></li>
+      </ol>
+      <button class="btn brass wide" data-connect>Connect wallet</button>
+      <details class="need">
+        <summary>What do I need?</summary>
+        <ul>
+          <li><b>A crypto wallet app</b> such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet.</li>
+          <li><b>USDC or USDT on the Arbitrum network.</b> Most exchanges let you withdraw straight to Arbitrum.</li>
+          <li><b>About $1 of ETH on Arbitrum</b> to pay the small network fees (a few cents each time).</li>
+        </ul>
+      </details>
     </div>
-    <div id="today"></div>
-    <div class="section-head"><h2>Your locks</h2><button class="btn ghost small" id="findBtn">Find my locks</button></div>
-    <div class="ledger" id="locks"></div>
+
+    <div id="homeMain">
+      <div class="hero">
+        <span class="label">Locked savings</span>
+        <div class="big" id="totalLocked">$0.00</div>
+        <div class="stats">
+          <div><span class="label">Locks</span><b id="lockCount">0</b></div>
+          <div><span class="label">Goal progress</span><b id="nextMilestone">—</b></div>
+          <div><span class="label">In your wallet</span><b id="walletTotal">—</b></div>
+        </div>
+        <p class="small muted" id="walletLine"></p>
+        <p class="notice" id="gasHint" hidden>Your wallet needs a little ETH on the Arbitrum network (about $1) to pay transaction fees.</p>
+      </div>
+      <div id="today"></div>
+      <div class="section-head"><h2>Your savings</h2><button class="btn ghost small" id="findBtn">Find my locks</button></div>
+      <div class="ledger" id="locks"></div>
+    </div>
   </section>
 
   <!-- NEW -->
   <section id="tab-new" hidden>
     <div class="card">
-      <h2>New lock</h2>
+      <h2>New savings lock</h2>
       <div class="seg" role="radiogroup" aria-label="Lock type">
-        <label class="check" for="typeGoal"><input type="radio" name="lkType" id="typeGoal" checked> <span><b>Savings goal</b><br><span class="small muted">Keep adding money. It unlocks when you reach the goal, or on a backup date if you never get there.</span></span></label>
-        <label class="check" for="typeDate"><input type="radio" name="lkType" id="typeDate"> <span><b>Fixed date</b><br><span class="small muted">Locked until a date, however much is inside.</span></span></label>
+        <label class="check" for="typeGoal"><input type="radio" name="lkType" id="typeGoal" checked> <span><b>Savings goal</b><br><span class="small muted">Add money whenever you want. It unlocks when you reach your goal.</span></span></label>
+        <label class="check" for="typeDate"><input type="radio" name="lkType" id="typeDate"> <span><b>Until a date</b><br><span class="small muted">Locked until a date you pick, no matter how much is inside.</span></span></label>
       </div>
-      <label for="lkName">Name (only on this device, optional)<input id="lkName" maxlength="40" placeholder="e.g. Emergency fund" autocomplete="off"></label>
-      <label for="lkToken">Coin<select id="lkToken"><option value="USDC">USDC</option><option value="USDT">USDT</option></select></label>
-      <label for="lkGoal" id="goalField">Goal
+      <label for="lkGoal" id="goalField">Your goal (in dollars)
         <input id="lkGoal" inputmode="decimal" placeholder="1000" autocomplete="off">
-        <div class="presets"><button type="button" class="btn ghost small" data-goal="2">$2 test</button><button type="button" class="btn ghost small" data-goal="500">$500</button><button type="button" class="btn ghost small" data-goal="1000">$1,000</button><button type="button" class="btn ghost small" data-goal="5000">$5,000</button><button type="button" class="btn ghost small" data-goal="10000">$10,000</button></div>
+        <div class="presets"><button type="button" class="btn ghost small" data-goal="100">$100</button><button type="button" class="btn ghost small" data-goal="500">$500</button><button type="button" class="btn ghost small" data-goal="1000">$1,000</button><button type="button" class="btn ghost small" data-goal="5000">$5,000</button><button type="button" class="btn ghost small" data-goal="10000">$10,000</button></div>
+        <span class="small muted">First time? Try a small goal like $5 to see how it works.</span>
       </label>
-      <label for="lkAmount"><span id="amountLabel">First deposit (optional)</span>
-        <div class="inline"><input id="lkAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="lkMax" type="button">Max</button></div>
+      <label for="lkDate"><span id="dateLabel">Backup date</span>
+        <input id="lkDate" type="date">
+        <div class="presets"><button type="button" class="btn ghost small" data-months="3">3 months</button><button type="button" class="btn ghost small" data-months="6">6 months</button><button type="button" class="btn ghost small" data-months="12">1 year</button><button type="button" class="btn ghost small" data-months="24">2 years</button></div>
+        <span class="small muted" id="dateHint">If you haven't reached the goal by this date, the lock opens anyway, so your money is never stuck forever.</span>
+      </label>
+      <label for="lkToken">Which coin<select id="lkToken"><option value="USDC">USDC</option><option value="USDT">USDT</option></select>
+        <span class="small muted">Both are worth $1 each. Pick the one you have.</span>
+      </label>
+      <label for="lkAmount"><span id="amountLabel">Add money now (optional)</span>
+        <div class="inline"><input id="lkAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="lkMax" type="button">All</button></div>
         <span class="small muted" id="lkBal"></span>
       </label>
-      <label for="lkDate"><span id="dateLabel">Backup unlock date</span>
-        <input id="lkDate" type="date">
-        <div class="presets"><button type="button" class="btn ghost small" data-days="1">1 day test</button><button type="button" class="btn ghost small" data-months="6">6 months</button><button type="button" class="btn ghost small" data-months="12">1 year</button><button type="button" class="btn ghost small" data-months="24">2 years</button><button type="button" class="btn ghost small" data-months="36">3 years</button></div>
-        <span class="small muted" id="dateHint">If you never reach the goal, the lock opens on this date, so your money is never stuck forever.</span>
-      </label>
+      <label for="lkName">Name it (optional)<input id="lkName" maxlength="40" placeholder="e.g. New car" autocomplete="off"></label>
       <div class="summary" id="lkSummary"></div>
-      <label class="check" for="lkAgree"><input type="checkbox" id="lkAgree"> <span id="lkAgreeText"></span></label>
-      <button class="btn brass" id="lkGo" disabled>Create lock</button>
+      <label class="check agree" for="lkAgree"><input type="checkbox" id="lkAgree"> <span id="lkAgreeText"></span></label>
+      <button class="btn brass wide" id="lkGo" disabled>Create lock</button>
       <div class="steps" id="lkSteps" hidden>
-        <div id="st1">Create your lock (sign in Tangem)</div>
-        <div id="st2">Check its code on 4 independent servers</div>
-        <div id="st3">Send the first deposit (sign in Tangem)</div>
+        <div id="st1">Create the lock (approve in your wallet)</div>
+        <div id="st2">Check the new lock is genuine</div>
+        <div id="st3">Add the money (approve in your wallet)</div>
       </div>
     </div>
   </section>
@@ -201,25 +250,26 @@ body.broken main::before { content: "Self check failed: this copy of the app doe
   <!-- COACH -->
   <section id="tab-coach" hidden>
     <div class="card">
-      <div class="section-head"><h2>Your streak</h2><span class="small muted">from the blockchain</span></div>
-      <div class="streak"><b id="streakNum">0</b><span class="muted">paydays in a row with a deposit</span></div>
-      <div id="history"></div>
-    </div>
-    <div class="card">
       <h2>Payday plan</h2>
-      <label for="cPay">Take-home pay per payday<input id="cPay" inputmode="decimal" placeholder="e.g. 800" autocomplete="off"></label>
+      <p class="small muted">Tell the coach when you get paid. It works out how much to lock each payday and when you'll reach your goal.</p>
+      <label for="cPay">How much you get paid each time<input id="cPay" inputmode="decimal" placeholder="e.g. 800" autocomplete="off"></label>
       <div class="row">
         <label for="cFreq" style="flex:1;min-width:150px">How often<select id="cFreq"><option value="weekly">Every week</option><option value="biweekly">Every 2 weeks</option><option value="twice">1st and 15th</option><option value="monthly">Once a month</option></select></label>
         <label for="cNext" style="flex:1;min-width:150px">Next payday<input id="cNext" type="date"></label>
       </div>
-      <label for="cMode">Save rule<select id="cMode"><option value="pct">A percent of my pay</option><option value="fixed">A fixed amount</option></select></label>
-      <label for="cPct" id="cPctRow">Percent to save<input id="cPct" inputmode="decimal" placeholder="20"></label>
-      <label for="cFixed" id="cFixedRow" hidden>Amount to save each payday<input id="cFixed" inputmode="decimal" placeholder="100"></label>
-      <label for="cTarget">Put it into<select id="cTarget"></select></label>
+      <label for="cMode">How much to save<select id="cMode"><option value="pct">A percent of my pay</option><option value="fixed">The same amount every time</option></select></label>
+      <label for="cPct" id="cPctRow">Percent<input id="cPct" inputmode="decimal" placeholder="20"></label>
+      <label for="cFixed" id="cFixedRow" hidden>Amount each payday<input id="cFixed" inputmode="decimal" placeholder="100"></label>
+      <label for="cTarget">Save into<select id="cTarget"></select></label>
       <div class="summary" id="cPlan"></div>
-      <div class="row"><button class="btn small" id="notifyBtn" hidden>Turn on payday notifications</button><button class="btn ghost small" id="icsBtn">Add payday reminders to my calendar</button></div>
+      <div class="row"><button class="btn small" id="notifyBtn" hidden>Remind me every payday</button><button class="btn ghost small" id="icsBtn">Add reminders to my calendar</button></div>
       <p class="small" id="notifyNote" hidden></p>
-      <p class="small muted">Your plan stays on this phone. It never touches your money; it only suggests amounts.</p>
+      <p class="small muted">Your plan stays on this phone. It never moves money by itself.</p>
+    </div>
+    <div class="card">
+      <div class="section-head"><h2>Your streak</h2></div>
+      <div class="streak"><b id="streakNum">0</b><span class="muted">paydays in a row you saved</span></div>
+      <div id="history"></div>
     </div>
     <div class="card">
       <div class="section-head"><h2>Money lessons</h2><span class="small muted" id="lessonCount"></span></div>
@@ -227,101 +277,113 @@ body.broken main::before { content: "Self check failed: this copy of the app doe
     </div>
   </section>
 
-  <!-- SETUP -->
+  <!-- SETTINGS -->
   <section id="tab-setup" hidden>
     <div class="card">
-      <h2>Connect Tangem</h2>
-      <p class="small muted">One-time: get a free WalletConnect Project ID at <a href="https://cloud.reown.com" target="_blank" rel="noopener noreferrer">cloud.reown.com</a>, paste it here and save. Then tap Connect at the top.</p>
-      <label for="wcId">WalletConnect Project ID<input id="wcId" autocomplete="off" placeholder="32 letters and numbers"></label>
-      <div class="row"><button class="btn small" id="wcSave">Save</button></div>
-      <div id="qrBox" hidden class="card">
-        <p><b>On another device:</b> in Tangem open WalletConnect and scan this code.<br><b>On this phone:</b> tap Open wallet app. If Tangem does not open, tap Copy link, open Tangem, go to WalletConnect and paste.</p>
-        <div id="qr"></div>
-        <div class="row"><button class="btn small" id="openWallet">Open wallet app</button><button class="btn ghost small" id="copyUri">Copy link</button><button class="btn ghost small" id="cancelWc">Cancel</button></div>
-        <p class="uri" id="uriText"></p>
-      </div>
+      <h2>Wallet</h2>
+      <p class="small muted">TimeVault works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet. Your wallet must be set to the <b>Arbitrum</b> network.</p>
+      <div class="row"><button class="btn small" data-connect>Connect wallet</button></div>
     </div>
     <div class="card">
-      <h2>Your lock list</h2>
-      <p class="small muted">Your money lives on the blockchain, not in this app. If you lose this phone, open TimeVault anywhere, connect the same wallet and tap Find my locks.</p>
-      <label for="addLock">Add a lock by address<div class="inline"><input id="addLock" class="mono" placeholder="0x…" autocomplete="off"><button class="btn ghost small" id="addLockBtn">Verify &amp; add</button></div></label>
-      <div class="row"><button class="btn ghost small" id="exportBtn">Download backup list</button></div>
+      <h2>Your locks</h2>
+      <p class="small muted">Your money is kept on the blockchain, not in this app. If you lose your phone, install TimeVault again, connect the same wallet and tap <b>Find my locks</b> on the Savings screen.</p>
+      <label for="addLock">Add a lock by its address<div class="inline"><input id="addLock" class="mono" placeholder="0x…" autocomplete="off"><button class="btn ghost small" id="addLockBtn">Check &amp; add</button></div></label>
+      <div class="row"><button class="btn ghost small" id="exportBtn">Save a backup list</button></div>
     </div>
-    <div class="card">
-      <h2>Watch a wallet</h2>
-      <p class="small muted">See a wallet's locks without connecting it. Read-only.</p>
-      <label for="watchAddr">Wallet address<div class="inline"><input id="watchAddr" class="mono" placeholder="0x…" autocomplete="off"><button class="btn ghost small" id="watchSave">Watch</button></div></label>
-    </div>
+    <details class="card advanced">
+      <summary><h2>Advanced</h2></summary>
+      <label for="watchAddr">View someone's savings (read-only)<div class="inline"><input id="watchAddr" class="mono" placeholder="Wallet address 0x…" autocomplete="off"><button class="btn ghost small" id="watchSave">View</button></div></label>
+      <label for="wcId">Your own WalletConnect Project ID<input id="wcId" autocomplete="off" placeholder="Leave empty to use the built-in one"></label>
+      <p class="small muted" id="wcIdHint">Only needed if you run your own copy of TimeVault. Get one free at <a href="https://cloud.reown.com" target="_blank" rel="noopener noreferrer">cloud.reown.com</a>.</p>
+      <div class="row"><button class="btn ghost small" id="wcSave">Save</button></div>
+    </details>
   </section>
 
   <!-- SAFETY -->
   <section id="tab-safety" hidden>
-    <div class="notice bad" id="selfBanner" hidden>Self check failed. This copy of the app does not match the tested build. Do not use it.</div>
+    <div class="status ok" id="safeOk"><span class="big-check">✓</span><div><b>All safety checks passed</b><span>This copy of the app matches the tested code.</span></div></div>
+    <div class="notice bad" id="selfBanner" hidden>Safety check failed. This copy of the app doesn't match the tested code. Don't use it to move money.</div>
     <div class="card">
       <h2>How your money is protected</h2>
       <ul class="protect">
-        <li><b>1. Audited contract code</b><span class="small muted">Fixed-date locks are OpenZeppelin's audited TokenTimelock, unchanged. Goal locks add one marked rule ("or the balance has reached the goal"). No owner, no admin, no early exit, nothing can change the goal, date or receiving wallet.</span></li>
-        <li><b>2. Tested 49 ways</b><span class="small muted">Including 560 random actions checked against the rules, and attacks on the app itself. Run them yourself on the test page.</span></li>
-        <li><b>3. One guarded door</b><span class="small muted">The app can only do three things: create a lock that pays your wallet, send coins into one of your verified locks, release a lock. It builds those transactions itself and refuses everything else.</span></li>
-        <li><b>4. Exact-code check before every deposit</b><span class="small muted">The lock's code on the blockchain must match the tested code byte for byte. A fake lock that claims to pay you is refused.</span></li>
-        <li><b>5. Four independent servers</b><span class="small muted">Every check is confirmed by several separate Arbitrum servers. If any disagree, the app stops.</span></li>
-        <li><b>6. Dry run first</b><span class="small muted">Each transaction is simulated against the live chain before Tangem is asked. If it would fail, Tangem is never asked.</span></li>
-        <li><b>7. Locked-down page</b><span class="small muted">Outside libraries are pinned to exact fingerprints and the page may only talk to Arbitrum servers and WalletConnect.</span></li>
+        <li><b>Nobody can take it out early</b><span class="small muted">Not you, not the people who made this app, not a hacker. The lock is a contract on the blockchain with no owner, no admin and no back door. It can only pay out to your wallet.</span></li>
+        <li><b>Proven, tested code</b><span class="small muted">Built on OpenZeppelin's widely used, audited timelock contract and tested 49 ways, including 560 random actions and attacks on the app.</span></li>
+        <li><b>Fake locks are refused</b><span class="small muted">Before every deposit, the app checks that the lock's code matches the tested code exactly, using 4 separate servers.</span></li>
+        <li><b>You approve everything</b><span class="small muted">The app can't move money by itself. Every action needs your approval in your wallet, and the app shows you the address first.</span></li>
       </ul>
     </div>
     <div class="card">
-      <h2>Self check</h2>
-      <ul class="checks" id="selfList"></ul>
-      <span class="label">This app's code fingerprints</span>
-      <pre class="wrap" id="appFp"></pre>
-      <p class="small muted">Compare with the README on GitHub. If they differ, you are not running the published app.</p>
-    </div>
-    <div class="card">
-      <h2>Check my locks now</h2>
-      <p class="small muted">Re-checks every lock against 4 servers, requiring at least 3 to agree.</p>
-      <div class="row"><button class="btn small" id="liveCheck">Run check</button><a class="btn ghost small" href="tests.html" target="_blank" rel="noopener">Open the test page</a></div>
+      <h2>Check my locks</h2>
+      <p class="small muted">Re-checks every lock you have against 4 independent servers.</p>
+      <div class="row"><button class="btn small" id="liveCheck">Run check</button></div>
       <pre class="wrap" id="liveOut"></pre>
     </div>
-    <div class="card">
-      <h2>Publish the code on Arbiscan</h2>
+    <details class="card advanced">
+      <summary><h2>Technical details</h2></summary>
+      <ul class="checks" id="selfList"></ul>
+      <span class="label">Code fingerprints</span>
+      <pre class="wrap" id="appFp"></pre>
+      <p class="small muted">These should match FINGERPRINTS.txt on GitHub. <a id="testsLink" href="tests.html" target="_blank" rel="noopener">Run the 49 safety tests yourself.</a></p>
+      <span class="label">Publish a lock's code on Arbiscan</span>
       <ol class="small" style="margin:0;padding-left:20px;display:grid;gap:4px">
-        <li>Download the verification file for your lock type.</li>
+        <li>Get the file for your lock type below.</li>
         <li>On Arbiscan, open your lock address → Contract → Verify and Publish.</li>
-        <li>Choose Solidity (Standard-Json-Input), compiler v0.8.24+commit.e11b9ed9, license MIT, upload the file.</li>
+        <li>Choose Solidity (Standard-Json-Input), compiler v0.8.24+commit.e11b9ed9, license MIT, and upload the file.</li>
       </ol>
-      <div class="row"><button class="btn ghost small" id="dlVerifyGoal">Goal lock file</button><button class="btn ghost small" id="dlVerifyDate">Fixed-date lock file</button></div>
+      <div class="row"><button class="btn ghost small" id="dlVerifyGoal">Goal lock file</button><button class="btn ghost small" id="dlVerifyDate">Date lock file</button></div>
       <details><summary>Read the goal lock contract</summary><pre>{{GT_SOURCE_HTML}}</pre></details>
-      <details><summary>Read the fixed-date lock contract (OpenZeppelin)</summary><pre>{{TT_SOURCE_HTML}}</pre></details>
-    </div>
+      <details><summary>Read the date lock contract (OpenZeppelin)</summary><pre>{{TT_SOURCE_HTML}}</pre></details>
+    </details>
   </section>
 </main>
 
 <nav class="tabs" aria-label="Main">
   <div>
     <button data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5V3.5M16 5V3.5"/></svg>Savings</button>
-    <button data-tab="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New</button>
+    <button data-tab="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New lock</button>
     <button data-tab="coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Coach</button>
-    <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 7h12M3 7h2M15 17h6M3 17h8"/><circle cx="7" cy="7" r="2"/><circle cx="13" cy="17" r="2"/></svg>Setup</button>
     <button data-tab="safety"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Safety</button>
+    <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>Settings</button>
   </div>
 </nav>
+
+<div class="sheet" id="qrBox" hidden role="dialog" aria-modal="true" aria-labelledby="wcTitle">
+  <div class="card">
+    <h2 id="wcTitle">Connect your wallet</h2>
+    <button class="btn brass wide" id="openWallet">Open my wallet app</button>
+    <p class="small muted">Approve the connection in your wallet, then come back here.</p>
+    <details class="need">
+      <summary>Wallet didn't open?</summary>
+      <p class="small">Tap <b>Copy link</b>. In your wallet app, find <b>WalletConnect</b> (often a scan button in the top corner) and paste the link.</p>
+      <div class="row"><button class="btn ghost small" id="copyUri">Copy link</button></div>
+      <p class="uri" id="uriText"></p>
+    </details>
+    <details class="need">
+      <summary>Wallet on another device?</summary>
+      <p class="small">Scan this code with your wallet app's WalletConnect scanner.</p>
+      <div id="qr"></div>
+    </details>
+    <button class="btn ghost wide" id="cancelWc">Cancel</button>
+  </div>
+</div>
 
 <div class="sheet" id="confirm" hidden role="dialog" aria-modal="true" aria-labelledby="cfTitle">
   <div class="card">
     <h2 id="cfTitle"></h2>
+    <p class="small" id="cfText"></p>
     <p class="small muted" id="cfLead"></p>
     <div class="addr" id="cfAddr"></div>
-    <p class="small" id="cfText"></p>
-    <p class="small muted">Check that Tangem shows the same address before you approve. If anything looks different, reject it in Tangem.</p>
-    <div class="row"><button class="btn brass" id="cfGo">Continue to Tangem</button><button class="btn ghost" id="cfNo">Cancel</button></div>
+    <p class="small muted">Your wallet should show this same address. If it shows anything different, reject it in your wallet.</p>
+    <div class="row"><button class="btn brass" id="cfGo">Continue to my wallet</button><button class="btn ghost" id="cfNo">Cancel</button></div>
   </div>
 </div>
 
 <div class="sheet" id="depSheet" hidden role="dialog" aria-modal="true" aria-labelledby="depTitle">
   <div class="card">
-    <h2 id="depTitle">Deposit</h2>
-    <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">Max</button></div><span class="small muted" id="depBal"></span></label>
-    <div class="row"><button class="btn brass" id="depGo">Deposit</button><button class="btn ghost" id="depClose">Close</button></div>
+    <h2 id="depTitle">Add money</h2>
+    <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">All</button></div><span class="small muted" id="depBal"></span></label>
+    <p class="small muted">Once it's in, it stays locked until the lock opens.</p>
+    <div class="row"><button class="btn brass" id="depGo">Add money</button><button class="btn ghost" id="depClose">Cancel</button></div>
   </div>
 </div>
 <div id="toast" hidden role="status"></div>
