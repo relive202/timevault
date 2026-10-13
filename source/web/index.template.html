@@ -217,7 +217,8 @@ body.broken main::before { content: "Self check failed: this copy of the app doe
       <label for="cFixed" id="cFixedRow" hidden>Amount to save each payday<input id="cFixed" inputmode="decimal" placeholder="100"></label>
       <label for="cTarget">Put it into<select id="cTarget"></select></label>
       <div class="summary" id="cPlan"></div>
-      <div class="row"><button class="btn ghost small" id="icsBtn">Add payday reminders to my calendar</button></div>
+      <div class="row"><button class="btn small" id="notifyBtn" hidden>Turn on payday notifications</button><button class="btn ghost small" id="icsBtn">Add payday reminders to my calendar</button></div>
+      <p class="small" id="notifyNote" hidden></p>
       <p class="small muted">Your plan stays on this phone. It never touches your money; it only suggests amounts.</p>
     </div>
     <div class="card">
@@ -234,9 +235,9 @@ body.broken main::before { content: "Self check failed: this copy of the app doe
       <label for="wcId">WalletConnect Project ID<input id="wcId" autocomplete="off" placeholder="32 letters and numbers"></label>
       <div class="row"><button class="btn small" id="wcSave">Save</button></div>
       <div id="qrBox" hidden class="card">
-        <p><b>On another device:</b> in Tangem open WalletConnect and scan this code.<br><b>On this phone:</b> tap Copy link, open Tangem, go to WalletConnect and paste.</p>
+        <p><b>On another device:</b> in Tangem open WalletConnect and scan this code.<br><b>On this phone:</b> tap Open wallet app. If Tangem does not open, tap Copy link, open Tangem, go to WalletConnect and paste.</p>
         <div id="qr"></div>
-        <div class="row"><button class="btn small" id="copyUri">Copy link</button><button class="btn ghost small" id="cancelWc">Cancel</button></div>
+        <div class="row"><button class="btn small" id="openWallet">Open wallet app</button><button class="btn ghost small" id="copyUri">Copy link</button><button class="btn ghost small" id="cancelWc">Cancel</button></div>
         <p class="uri" id="uriText"></p>
       </div>
     </div>

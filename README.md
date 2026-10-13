@@ -15,6 +15,7 @@ There is no server, no account and no company holding your coins. The app is a s
 | `FINGERPRINTS.txt` | The fingerprints the app and tests must show. |
 | `manifest.webmanifest`, `icon-*.png` | Lets you add the app to your home screen. |
 | `source/` | Contract source code, the app source, and `build.py`, which rebuilds `index.html` and `tests.html` byte for byte. |
+| `android/`, `.github/workflows/android.yml` | The Android app wrapper and the GitHub build that turns it into an APK. |
 
 ## The two lock contracts
 
@@ -90,6 +91,18 @@ These are honest limits, not bugs:
 - **Your wallet.** Losing your Tangem card and backups, or signing something malicious elsewhere, is outside this app.
 - **Your copy of the app.** Always open the app from your own home-screen icon or your own GitHub Pages address, never from a link someone sends you. Check the fingerprints on the Safety tab after any update.
 - **No professional audit.** The goal contract is a small change to audited OpenZeppelin code and is heavily tested, but it has not been audited by a firm. Start with small amounts.
+
+## Android app
+
+The Android app is the same page with the same safety core, packaged as a real app with [Capacitor](https://capacitorjs.com) 7.0.0. The differences:
+
+- The three libraries are bundled inside the app instead of loaded from the internet. The build downloads each one and stops if its fingerprint differs from the pinned value.
+- Scripts may only come from inside the app (`'self'`) and the exact inline-script hashes.
+- Payday notifications use the phone's own notification system. The next 26 paydays are scheduled at 9:00 and reset whenever the plan changes.
+
+GitHub builds it: `.github/workflows/android.yml` runs on every change to `source/` or `android/` and publishes a signed `TimeVault.apk` under **Releases**. The release notes list the APK's sha256, its signing certificate and the code fingerprints.
+
+The signing key is kept in two repository secrets, `KEYSTORE_B64` and `KEYSTORE_PASS`, and never in the repository. Every update must be signed with the same key, or Android refuses to install it over the old version.
 
 ## License
 

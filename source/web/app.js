@@ -25,6 +25,11 @@
   };
 
   // ------------------------------------------------------------------ startup self check (blocks money actions if it fails)
+  // Running inside the Android app? (Capacitor injects window.Capacitor before this script runs.)
+  const NATIVE = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+  const LN = NATIVE && window.Capacitor.Plugins ? window.Capacitor.Plugins.LocalNotifications : null;
+  if (NATIVE) document.body.classList.add('native');
+
   const SELF = TV.selfCheck(ethers);
   if (!SELF.ok) document.body.classList.add('broken');
 
@@ -74,6 +79,7 @@
       });
       wc.on('display_uri', (uri) => {
         show('setup'); $('qrBox').hidden = false; $('uriText').textContent = uri; $('copyUri').dataset.uri = uri;
+        $('openWallet').onclick = () => { location.href = uri; };
         try { const q = qrcode(0, 'M'); q.addData(uri); q.make(); $('qr').innerHTML = q.createImgTag(5, 8); } catch { $('qr').textContent = 'Use Copy link instead.'; }
       });
       wc.on('accountsChanged', (a) => setAccount(a[0], wc.chainId));
@@ -421,7 +427,7 @@
   ['cPay', 'cFreq', 'cNext', 'cMode', 'cPct', 'cFixed', 'cTarget'].forEach((id) => $(id).addEventListener('input', () => {
     store.set('plan.pay', $('cPay').value); store.set('plan.freq', $('cFreq').value); store.set('plan.next', $('cNext').value);
     store.set('plan.mode', $('cMode').value); store.set('plan.pct', $('cPct').value); store.set('plan.fixed', $('cFixed').value); store.set('plan.target', $('cTarget').value);
-    renderCoach(); renderToday();
+    renderCoach(); renderToday(); planChanged();
   }));
   function planReady(p) { return p.next && saveAmount(p) > 0; }
   function renderCoach() {
@@ -473,7 +479,13 @@
     download('timevault-payday.ics', ics, 'text/calendar');
     toast('Open the downloaded file to add the reminders to your calendar.');
   });
-  function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+  async function download(name, text, type) {
+    if (NATIVE) { // the Android app cannot save files from a web page, so copy instead
+      try { await navigator.clipboard.writeText(text); toast('Copied to your clipboard. Paste it into a note or email to keep it.', 8000); }
+      catch { toast('Could not copy. Use the website version to download this file.'); }
+      return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
 
   // ------------------------------------------------------------------ coach: history + streak (from the blockchain, not this device)
   let history = null, historyFor = '';
@@ -567,6 +579,38 @@
     download((kind === 'goal' ? 'GoalTimelock' : 'TokenTimelock') + '-verify.json', json, 'application/json');
   }
 
+  // ------------------------------------------------------------------ payday notifications (Android app only)
+  // Schedules the next 26 paydays at 9:00 as one-time phone notifications. Rescheduled whenever the plan changes or the app opens.
+  function notifyNote(t) { $('notifyNote').textContent = t; $('notifyNote').hidden = !t; }
+  async function scheduleNotifications(ask) {
+    if (!LN) return;
+    try {
+      let perm = await LN.checkPermissions();
+      if (perm.display !== 'granted' && ask) perm = await LN.requestPermissions();
+      if (perm.display !== 'granted') {
+        $('notifyBtn').hidden = false;
+        notifyNote(ask ? 'Notifications are blocked. Turn them on in Android Settings \u2192 Apps \u2192 TimeVault \u2192 Notifications.' : '');
+        return;
+      }
+      store.set('notify', '1'); $('notifyBtn').hidden = true;
+      const pending = await LN.getPending();
+      if (pending.notifications.length) await LN.cancel({ notifications: pending.notifications.map((n) => ({ id: Number(n.id) })) });
+      const p = PLAN();
+      if (!planReady(p)) { notifyNote('Notifications are on. Fill in your plan above and they will be set for each payday.'); return; }
+      const { k } = lastAndNext(p); const list = []; const now = Date.now(); const S = money(saveAmount(p));
+      for (let i = 0; list.length < 26 && i < 80; i++) {
+        const d = payday(p, k + i); d.setHours(9, 0, 0, 0);
+        if (d.getTime() > now + 60000) list.push({ id: 1000 + list.length, title: 'Payday: lock ' + S, body: 'Open TimeVault and tap Lock to keep your streak going.', schedule: { at: d, allowWhileIdle: true } });
+      }
+      if (list.length) await LN.schedule({ notifications: list });
+      notifyNote(list.length ? 'Notifications on. Next one: ' + dayStr(list[0].schedule.at) + ' at 9:00.' : '');
+    } catch (e) { notifyNote('Could not set notifications: ' + nice(e)); }
+  }
+  let planT;
+  function planChanged() { if (LN && store.get('notify') === '1') { clearTimeout(planT); planT = setTimeout(() => scheduleNotifications(false), 1500); } }
+  $('notifyBtn').addEventListener('click', () => scheduleNotifications(true));
+  if (LN) { $('icsBtn').hidden = true; $('notifyBtn').hidden = store.get('notify') === '1'; }
+
   // ------------------------------------------------------------------ boot
   bindGo(document);
   $('wcId').value = store.get('wcid');
@@ -576,5 +620,6 @@
   show(TABS.includes(store.get('tab')) ? store.get('tab') : 'home');
   setAccount('');
   initWc(false).catch(() => {});
+  if (LN && store.get('notify') === '1') scheduleNotifications(false);
   setInterval(() => { if (!document.hidden) refresh(); }, 60000);
 })();

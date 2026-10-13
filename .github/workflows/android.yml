@@ -1,0 +1,106 @@
+# Builds the TimeVault Android app (APK) and publishes it under Releases.
+# Runs when the app source changes, or by hand from the Actions tab ("Run workflow").
+name: Build Android app
+
+on:
+  push:
+    branches: [main]
+    paths: ['source/**', 'android/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to publish the release
+
+concurrency:
+  group: android-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Check the signing key is set up
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASS" ]; then
+            echo "::error::Add the KEYSTORE_B64 and KEYSTORE_PASS secrets (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+
+      - name: Build the app page from source
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 source/web/build.py
+
+      - name: Bundle the pinned libraries (build fails if any file differs from its fingerprint)
+        run: |
+          mkdir -p android/www/lib
+          cp source/web/dist-android/index.html android/www/index.html
+          while read -r url local sri; do
+            [ -n "$url" ] || continue
+            curl -fsSL "$url" -o "android/www/$local"
+            got="sha384-$(openssl dgst -sha384 -binary "android/www/$local" | base64 -w0)"
+            if [ "$got" != "$sri" ]; then echo "::error::Fingerprint mismatch for $url"; exit 1; fi
+            echo "OK $local"
+          done < source/web/dist-android/libs.txt
+
+      - name: Create the Android project
+        working-directory: android
+        run: |
+          npm install --no-audit --no-fund
+          npx cap add android
+          python3 ../source/web/android_res.py android/app/src/main/res
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q POST_NOTIFICATIONS "$M" || sed -i 's#</manifest>#    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>#' "$M"
+          sed -i -E "s/versionCode [0-9]+/versionCode ${GITHUB_RUN_NUMBER}/; s/versionName \"[^\"]*\"/versionName \"1.0.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+          npx cap sync android
+          npm ls --depth=0
+
+      - name: Build the APK
+        working-directory: android/android
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Sign the APK
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/timevault.jks"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          IN=android/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          "$BT/zipalign" -p -f 4 "$IN" "$RUNNER_TEMP/aligned.apk"
+          "$BT/apksigner" sign --ks "$RUNNER_TEMP/timevault.jks" --ks-pass env:KEYSTORE_PASS \
+            --ks-key-alias timevault --key-pass env:KEYSTORE_PASS --out TimeVault.apk "$RUNNER_TEMP/aligned.apk"
+          rm -f "$RUNNER_TEMP/timevault.jks"
+          "$BT/apksigner" verify --print-certs TimeVault.apk | tee certs.txt
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "Download **TimeVault.apk** below on your Android phone and install it."
+            echo
+            echo "APK sha256: \`$(sha256sum TimeVault.apk | cut -d' ' -f1)\`"
+            echo "Signing certificate: \`$(grep -m1 'SHA-256' certs.txt | sed 's/.*: //')\`"
+            echo
+            grep -E "Safety core|App screens" source/web/dist/FINGERPRINTS.txt | sed 's/^/- /'
+            echo
+            echo "Built from commit ${GITHUB_SHA}."
+          } > notes.md
+          gh release create "app-${GITHUB_RUN_NUMBER}" TimeVault.apk --title "TimeVault app 1.0.${GITHUB_RUN_NUMBER}" --notes-file notes.md --latest

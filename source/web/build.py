@@ -57,6 +57,22 @@ def icon(size, maskable=False):
 for sz in (180, 192, 512): icon(sz).save(os.path.join(out, 'icon-%d.png' % sz))
 icon(512, True).save(os.path.join(out, 'icon-512-maskable.png'))
 
+# ---- Android app version: identical page, but libraries are bundled inside the app (no code loaded from the internet)
+aout = os.path.join(D, 'dist-android'); os.makedirs(aout, exist_ok=True)
+android_csp = app_csp.replace(' '.join(LIBS), "'self'")
+assert android_csp != app_csp
+aindex = index.replace(app_csp, android_csp).replace('<link rel="manifest" href="manifest.webmanifest">', '')
+libs_txt = []
+for u in LIBS:
+    m = re.search(r'<script src="' + re.escape(u) + r'" integrity="([^"]+)" crossorigin="anonymous"></script>', aindex)
+    assert m, u
+    local = 'lib/' + {0: 'ethers.umd.min.js', 1: 'walletconnect-provider.umd.js', 2: 'qrcode.min.js'}[LIBS.index(u)]
+    aindex = aindex.replace('src="' + u + '"', 'src="' + local + '"')
+    libs_txt.append(' '.join((u, local, m.group(1))))
+assert 'cdn.jsdelivr' not in aindex and 'cdnjs' not in aindex
+open(os.path.join(aout, 'index.html'), 'w', encoding='utf-8').write(aindex)
+open(os.path.join(aout, 'libs.txt'), 'w').write('\n'.join(libs_txt) + '\n')
+
 fp = lambda s: h256(s).strip("'")
 open(os.path.join(out, 'FINGERPRINTS.txt'), 'w').write(
     'TimeVault build fingerprints\n\nSafety core: %s\nApp screens: %s\nTest page core: %s (must equal Safety core)\n\nGoalTimelock code: 0x9ea0a457432e78e589fdb1dffa3bd2c2e67b2fec599fb539b9de8b81b27e9bca\nTokenTimelock code: 0x29b075c113591090dc177f4c04c75fa4d97f33dcb4b479e05fc78c7138b43d07\n' % (fp(core), fp(app), fp(core)))

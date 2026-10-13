@@ -1,0 +1,5 @@
+source/web/dist/
+source/web/dist-android/
+__pycache__/
+*.jks
+KEYSTORE*
