@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-XoROsUFRG6JJ/mxK7SNAmpb3Eg7/FisUT992cWdLYgE=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-Q+54Y36BRbYYTu9kEK++EaigtB7/hzSfYBkDEQh5LzE=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0f1412">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -821,7 +821,7 @@ const TV = (() => {
   const ERC20 = ['function balanceOf(address) view returns (uint256)'];
   const DAY = 86400;
   // Built-in WalletConnect Project ID (a public identifier, not a secret). Set at build time from walletconnect_project_id.txt.
-  const BUILT_IN_WC_ID = '__WC_PROJECT_ID__'.startsWith('__') ? '' : '__WC_PROJECT_ID__';
+  const BUILT_IN_WC_ID = 'ee4d8b9347fa0c7d0b8cf072ff44e8df'.startsWith('__') ? '' : 'ee4d8b9347fa0c7d0b8cf072ff44e8df';
   const TESTS_URL = 'https://relive202.github.io/timevault/tests.html';
 
   const $ = (id) => document.getElementById(id);

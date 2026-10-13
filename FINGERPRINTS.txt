@@ -1,7 +1,7 @@
 TimeVault build fingerprints
 
 Safety core: sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=
-App screens: sha256-XoROsUFRG6JJ/mxK7SNAmpb3Eg7/FisUT992cWdLYgE=
+App screens: sha256-Q+54Y36BRbYYTu9kEK++EaigtB7/hzSfYBkDEQh5LzE=
 Test page core: sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98= (must equal Safety core)
 
 GoalTimelock code: 0x9ea0a457432e78e589fdb1dffa3bd2c2e67b2fec599fb539b9de8b81b27e9bca
