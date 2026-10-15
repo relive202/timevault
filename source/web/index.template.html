@@ -158,6 +158,24 @@ details.advanced:not([open]) { gap: 0; }
 .status span:not(.big-check) { display: block; color: var(--muted); font-size: 14px; }
 .agree { background: var(--bg); border-radius: 10px; padding: 12px; }
 .sheet > .card { max-height: 92vh; overflow-y: auto; }
+.rules { border: 1px solid var(--brass); background: var(--brass-soft); border-radius: 10px; padding: 12px 14px; font-size: 14px; display: grid; gap: 6px; }
+.rules ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--muted); }
+.rules ul b { color: var(--ink); }
+ol.guide { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
+ol.guide b { color: var(--ink); }
+.caution { color: var(--brass); }
+.cheer { text-align: center; justify-items: center; position: relative; overflow: hidden; }
+.cheer-pct { font: 600 3.4rem/1 var(--display); color: var(--brass); margin-top: 8px; }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti i { position: absolute; top: -12px; width: 8px; height: 12px; border-radius: 2px; background: var(--brass); opacity: 0; }
+.confetti i:nth-child(3n) { background: var(--ok); } .confetti i:nth-child(4n) { background: var(--ink); }
+.confetti i:nth-child(1){left:6%} .confetti i:nth-child(2){left:14%} .confetti i:nth-child(3){left:23%} .confetti i:nth-child(4){left:31%} .confetti i:nth-child(5){left:40%} .confetti i:nth-child(6){left:48%}
+.confetti i:nth-child(7){left:56%} .confetti i:nth-child(8){left:64%} .confetti i:nth-child(9){left:72%} .confetti i:nth-child(10){left:80%} .confetti i:nth-child(11){left:88%} .confetti i:nth-child(12){left:95%}
+@media (prefers-reduced-motion: no-preference) {
+  .confetti i { animation: fall 2.2s ease-in forwards; }
+  .confetti i:nth-child(2n) { animation-delay: .25s; animation-duration: 2.6s; } .confetti i:nth-child(3n) { animation-delay: .5s; }
+  @keyframes fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0; transform: translateY(360px) rotate(540deg); } }
+}
 </style>
 </head>
 <body>
@@ -189,6 +207,16 @@ details.advanced:not([open]) { gap: 0; }
           <li><b>USDC or USDT on the Arbitrum network.</b> Most exchanges let you withdraw straight to Arbitrum.</li>
           <li><b>About $1 of ETH on Arbitrum</b> to pay the small network fees (a few cents each time).</li>
         </ul>
+      </details>
+      <details class="need">
+        <summary>How do I get USDC on Arbitrum?</summary>
+        <ol class="guide">
+          <li><b>Get a wallet app</b> that supports WalletConnect, such as MetaMask, Trust Wallet or Tangem, and write down its recovery phrase on paper.</li>
+          <li><b>Buy USDT or USDC on an exchange.</b> Many people buy with local money through the exchange's <b>P2P</b> market (for example on Binance, Bybit or OKX).</li>
+          <li><b>Withdraw to your wallet on the Arbitrum network.</b> Paste your wallet address and choose the network <b>Arbitrum One</b>. Any other network and the coins won't show up here.</li>
+          <li><b>Also withdraw a little ETH on Arbitrum One</b>, about $1 to $2. It pays the network fees, which are a few cents each time.</li>
+          <li><b>Send a small test first</b>, like $5, and check it arrives before sending more.</li>
+        </ol>
       </details>
     </div>
 
@@ -236,6 +264,15 @@ details.advanced:not([open]) { gap: 0; }
         <span class="small muted" id="lkBal"></span>
       </label>
       <label for="lkName">Name it (optional)<input id="lkName" maxlength="40" placeholder="e.g. New car" autocomplete="off"></label>
+      <div class="rules">
+        <b>Before you lock</b>
+        <ul>
+          <li><b>There is no early exit.</b> Not for emergencies, not for anyone. Only lock money you know you won't need.</li>
+          <li><b>Keep a buffer outside.</b> Leave at least 1 to 2 months of spending in your wallet.</li>
+          <li><b>Anyone can add to your goal.</b> If someone sends coins to your lock and it reaches the goal, it opens early. The money still only goes to you.</li>
+          <li><b>Only add money through TimeVault.</b> Coins sent straight to a lock's address from your wallet, especially a different coin, can be lost forever.</li>
+        </ul>
+      </div>
       <div class="summary" id="lkSummary"></div>
       <label class="check agree" for="lkAgree"><input type="checkbox" id="lkAgree"> <span id="lkAgreeText"></span></label>
       <button class="btn brass wide" id="lkGo" disabled>Create lock</button>
@@ -282,7 +319,17 @@ details.advanced:not([open]) { gap: 0; }
     <div class="card">
       <h2>Wallet</h2>
       <p class="small muted">TimeVault works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet. Your wallet must be set to the <b>Arbitrum</b> network.</p>
-      <div class="row"><button class="btn small" data-connect>Connect wallet</button></div>
+      <div class="row"><button class="btn small" data-connect>Connect wallet</button><button class="btn ghost small" id="copyMine" hidden>Copy my wallet address</button></div>
+      <details class="need">
+        <summary>How do I get USDC on Arbitrum?</summary>
+        <ol class="guide">
+          <li><b>Get a wallet app</b> that supports WalletConnect, such as MetaMask, Trust Wallet or Tangem, and write down its recovery phrase on paper.</li>
+          <li><b>Buy USDT or USDC on an exchange.</b> Many people buy with local money through the exchange's <b>P2P</b> market (for example on Binance, Bybit or OKX).</li>
+          <li><b>Withdraw to your wallet on the Arbitrum network.</b> Paste your wallet address and choose the network <b>Arbitrum One</b>. Any other network and the coins won't show up here.</li>
+          <li><b>Also withdraw a little ETH on Arbitrum One</b>, about $1 to $2. It pays the network fees, which are a few cents each time.</li>
+          <li><b>Send a small test first</b>, like $5, and check it arrives before sending more.</li>
+        </ol>
+      </details>
     </div>
     <div class="card">
       <h2>Your locks</h2>
@@ -384,6 +431,15 @@ details.advanced:not([open]) { gap: 0; }
     <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">All</button></div><span class="small muted" id="depBal"></span></label>
     <p class="small muted">Once it's in, it stays locked until the lock opens.</p>
     <div class="row"><button class="btn brass" id="depGo">Add money</button><button class="btn ghost" id="depClose">Cancel</button></div>
+  </div>
+</div>
+<div class="sheet" id="cheer" hidden role="dialog" aria-modal="true" aria-labelledby="cheerTitle">
+  <div class="card cheer">
+    <div class="confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="cheer-pct" id="cheerPct"></div>
+    <h2 id="cheerTitle"></h2>
+    <p class="muted" id="cheerText"></p>
+    <button class="btn brass wide" id="cheerOk">Keep going</button>
   </div>
 </div>
 <div id="toast" hidden role="status"></div>
