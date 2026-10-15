@@ -41,7 +41,7 @@ out = os.path.join(D, 'dist'); os.makedirs(out, exist_ok=True)
 open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(index)
 open(os.path.join(out, 'tests.html'), 'w', encoding='utf-8').write(tpage)
 json.dump({'name': 'TimeVault', 'short_name': 'TimeVault', 'description': 'Lock your savings until you reach your goal.', 'start_url': './', 'scope': './',
-           'display': 'standalone', 'background_color': '#0e1311', 'theme_color': '#0e1311',
+           'display': 'standalone', 'background_color': '#0A1022', 'theme_color': '#0A1022',
            'icons': [{'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png'}, {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png'},
                      {'src': 'icon-512-maskable.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'}]},
           open(os.path.join(out, 'manifest.webmanifest'), 'w'), indent=2)
@@ -51,7 +51,7 @@ from PIL import Image, ImageDraw
 def icon(size, maskable=False):
     s = 4; S = size * s; im = Image.new('RGBA', (S, S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     pad = 0 if maskable else int(S * 0.06); r = 0 if maskable else int(S * 0.22)
-    d.rounded_rectangle([pad, pad, S - pad, S - pad], radius=r, fill=(148, 101, 25, 255))
+    d.rounded_rectangle([pad, pad, S - pad, S - pad], radius=r, fill=(64, 110, 245, 255))
     c = S / 2; R = S * (0.25 if maskable else 0.29); w = int(S * 0.065)
     d.ellipse([c - R, c - R, c + R, c + R], outline=(255, 255, 255, 255), width=w)
     k = S * 0.068; d.ellipse([c - k, c - k * 1.6, c + k, c + k * 0.4], fill=(255, 255, 255, 255))

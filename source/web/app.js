@@ -61,9 +61,10 @@
     const p = $('netPill');
     document.querySelectorAll('[data-connect]').forEach((b) => { b.textContent = account ? 'Disconnect wallet' : 'Connect wallet'; b.className = account ? 'btn ghost small' : b.dataset.cls; });
     $('welcome').hidden = !!viewer(); $('homeMain').hidden = !viewer(); $('copyMine').hidden = !account;
+    p.hidden = !account && !store.get('watch');
     if (!account) { p.textContent = store.get('watch') ? 'Viewing ' + short(store.get('watch')) : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect wallet'; }
-    else if (chainId !== CHAIN_ID) { p.textContent = short(account) + ' · wrong network'; p.className = 'pill warn'; $('connectBtn').textContent = 'Disconnect'; }
-    else { p.textContent = short(account) + ' · Arbitrum'; p.className = 'pill ok'; $('connectBtn').textContent = 'Disconnect'; }
+    else if (chainId !== CHAIN_ID) { p.textContent = 'Wrong network'; p.className = 'pill warn'; $('connectBtn').textContent = 'Disconnect'; }
+    else { p.textContent = short(account); p.className = 'pill ok'; $('connectBtn').textContent = 'Disconnect'; }
     refresh();
   }
   async function ensureArbitrum() {
@@ -197,7 +198,11 @@
     const active = LOCKS.filter((l) => l.balance > 0n || now < l.releaseTime);
     $('lockCount').textContent = String(active.length);
     const goal = LOCKS.find((l) => l.kind === 'goal' && now < l.releaseTime && l.balance < l.goal);
-    $('nextMilestone').textContent = goal ? Math.floor(100 * fmt(goal.balance) / fmt(goal.goal)) + '% of ' + money(fmt(goal.goal)) : '—';
+    const gp = goal ? Math.min(100, Math.floor(100 * fmt(goal.balance) / fmt(goal.goal))) : (LOCKS.some((l) => l.kind === 'goal' && l.balance >= l.goal && l.balance > 0n) ? 100 : 0);
+    $('nextMilestone').textContent = goal ? (goal.name || money(fmt(goal.goal))) : '—';
+    $('dialPct').textContent = gp + '%';
+    $('dialCap').textContent = goal ? 'of ' + money(fmt(goal.goal)).replace('.00', '') : (gp === 100 ? 'goal reached' : 'no goal yet');
+    $('dialFill').style.strokeDashoffset = String(251.33 * (1 - gp / 100));
     $('walletTotal').textContent = WALLET.USDC !== undefined ? money(fmt(WALLET.USDC) + fmt(WALLET.USDT)) : '—';
     $('walletLine').textContent = WALLET.USDC !== undefined
       ? num(fmt(WALLET.USDC)) + ' USDC · ' + num(fmt(WALLET.USDT)) + ' USDT · ' + Number(ethers.formatEther(WALLET.ETH)).toFixed(5) + ' ETH for fees'
@@ -267,7 +272,7 @@
       const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
       const el = document.createElement('article'); el.className = 'lock';
       el.innerHTML =
-        '<div class="lock-top"><div><div class="label">' + (g ? 'Savings goal' : 'Fixed date') + (l.name ? ' · ' + esc(l.name) : '') + '</div>' +
+        '<div class="lock-top"><div><div class="label">' + (l.name ? esc(l.name) : (g ? 'Savings goal' : 'Locked until a date')) + '</div>' +
         '<div class="lock-amt">' + num(fmt(l.balance)) + (g ? '<span class="of"> / ' + num(fmt(l.goal)) + '</span>' : '') + ' ' + l.sym + '</div></div>' +
         '<span class="state ' + s.cls + '">' + s.label + '</span></div>' +
         (s.empty && s.timeUp ? '' : '<div class="bar' + (g ? ' goalbar' : '') + '" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div>') +
@@ -680,6 +685,7 @@
 
   // ------------------------------------------------------------------ boot
   bindGo(document);
+  $('dialTicks').innerHTML = Array.from({ length: 60 }, (_, i) => { const a = i / 60 * 2 * Math.PI, r1 = i % 5 ? 50 : 48, r2 = 54; return '<line' + (i % 5 ? '' : ' class="major"') + ' x1="' + (60 + r1 * Math.sin(a)).toFixed(2) + '" y1="' + (60 - r1 * Math.cos(a)).toFixed(2) + '" x2="' + (60 + r2 * Math.sin(a)).toFixed(2) + '" y2="' + (60 - r2 * Math.cos(a)).toFixed(2) + '"/>'; }).join('');
   if (NATIVE) $('testsLink').href = TESTS_URL;
   $('wcId').value = store.get('wcid');
   const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
