@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-O3BU+tDoIvoBCdSNtA3HiOq06cfBMioiyE+hXTvHTwc=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-U8fdZC2rxV6s2K9CAxvjKjbLFg4M3sKNRVdN7/Xan5w=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0A1022">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -241,6 +241,20 @@ ol.guide b { color: var(--ink); }
   .confetti i:nth-child(2n) { animation-delay: .25s; animation-duration: 2.6s; } .confetti i:nth-child(3n) { animation-delay: .5s; }
   @keyframes fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0; transform: translateY(360px) rotate(540deg); } }
 }
+.tabs2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--raised); border-radius: 13px; padding: 4px; }
+.tabs2 button { border: 0; background: none; color: var(--muted); font: 600 14px var(--body); padding: 9px 6px; border-radius: 10px; cursor: pointer; }
+.tabs2 button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.sheet-body { display: grid; gap: 14px; }
+ol.exsteps { margin: 0; padding-left: 20px; display: grid; gap: 12px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
+.sheet > .card { overflow-x: hidden; }
+ol.exsteps b { color: var(--ink); }
+ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
+#exQr { background: #fff; padding: 10px; border-radius: var(--r-md); width: max-content; margin-top: 8px; }
+#exQr img { display: block; width: 180px; height: 180px; image-rendering: pixelated; }
+.exwatch { background: var(--raised); border-radius: var(--r-sm); padding: 12px 14px; font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+.exwatch::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+.exwatch.got { background: var(--mint-soft); color: var(--ink); } .exwatch.got::before { background: var(--mint); }
+@media (prefers-reduced-motion: no-preference) { .exwatch:not(.got)::before { animation: pulse 1.4s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .25; } } }
 </style>
 </head>
 <body>
@@ -343,7 +357,7 @@ ol.guide b { color: var(--ink); }
           <li><b>There is no early exit.</b> Not for emergencies, not for anyone. Only lock money you know you won't need.</li>
           <li><b>Keep a buffer outside.</b> Leave at least 1 to 2 months of spending in your wallet.</li>
           <li><b>Anyone can add to your goal.</b> If someone sends coins to your lock and it reaches the goal, it opens early. The money still only goes to you.</li>
-          <li><b>Only add money through TimeVault.</b> Coins sent straight to a lock's address from your wallet, especially a different coin, can be lost forever.</li>
+          <li><b>Only the lock's own coin, on Arbitrum One.</b> You can add money from your wallet or straight from an exchange. Any other coin or network sent to a lock is lost forever.</li>
         </ul>
       </div>
       <div class="summary" id="lkSummary"></div>
@@ -659,9 +673,31 @@ contract TokenTimelock {
 <div class="sheet" id="depSheet" hidden role="dialog" aria-modal="true" aria-labelledby="depTitle">
   <div class="card">
     <h2 id="depTitle">Add money</h2>
-    <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">All</button></div><span class="small muted" id="depBal"></span></label>
-    <p class="small muted">Once it's in, it stays locked until the lock opens.</p>
-    <div class="row"><button class="btn brass" id="depGo">Add money</button><button class="btn ghost" id="depClose">Cancel</button></div>
+    <div class="tabs2" role="tablist">
+      <button role="tab" id="depTabWallet" aria-selected="true">From my wallet</button>
+      <button role="tab" id="depTabEx" aria-selected="false">From an exchange</button>
+    </div>
+    <div id="depWallet" class="sheet-body">
+      <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">All</button></div><span class="small muted" id="depBal"></span></label>
+      <p class="small muted">Once it's in, it stays locked until the lock opens.</p>
+      <div class="row"><button class="btn brass" id="depGo">Add money</button><button class="btn ghost" id="depClose">Cancel</button></div>
+    </div>
+    <div id="depEx" class="sheet-body" hidden>
+      <p class="small muted">Send straight from Binance, Bybit, OKX or any exchange into this lock. Follow every step: a mistake here can't be undone.</p>
+      <ol class="exsteps">
+        <li>On the exchange, choose <b>Withdraw</b> and pick the coin <b id="exCoin">USDC</b>.</li>
+        <li>Pick the network <b>Arbitrum One</b>. Not Ethereum, not Arbitrum Nova, not any other.</li>
+        <li>Paste this lock's address:
+          <div class="addr" id="exAddr"></div>
+          <div class="row"><button class="btn small" id="exCopy">Copy address</button><button class="btn ghost small" id="exQrBtn">Show QR code</button></div>
+          <div id="exQr" hidden></div>
+        </li>
+        <li>Check the coin is right. If the exchange shows the coin's contract, it must end in <b id="exContract"></b>. If it says <b>USDC.e</b> or <b>Bridged USDC</b>, stop: that coin would be stuck forever.</li>
+        <li><b>Send a small test first</b>, like $5, and wait for it to show up here.</li>
+      </ol>
+      <div class="exwatch" id="exWatch">Waiting for money to arrive…</div>
+      <button class="btn ghost wide" id="exClose">Done</button>
+    </div>
   </div>
 </div>
 <div class="sheet" id="cheer" hidden role="dialog" aria-modal="true" aria-labelledby="cheerTitle">
@@ -1224,7 +1260,7 @@ const TV = (() => {
           '<div><span class="label">Safety check</span><span class="ok-text">✓ Genuine lock</span></div>' +
         '</div>' +
         (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this money is free. Withdraw it and start a new goal.</p>' : '') + (g && s.goalHit && !s.empty && !s.timeUp ? '<p class="note">You did it! Withdraw your savings whenever you like.</p>' : '') +
-        '<details><summary>Details</summary><p class="small caution">Never send coins straight to this address from your wallet. Always use Add money in TimeVault. A different coin sent here is lost forever.</p><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div></details>';
+        '<details><summary>Details</summary><p class="small caution">Only ever send ' + l.sym + ' on the Arbitrum One network to this address, using Add money. Any other coin or network sent here is lost forever.</p><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div></details>';
       if (account && account === l.beneficiary) {
         const row = document.createElement('div'); row.className = 'row';
         if (s.ready) {
@@ -1263,9 +1299,34 @@ const TV = (() => {
   function openDeposit(l, amount) {
     depLock = l; $('depTitle').textContent = 'Add money to ' + (l.name || (l.kind === 'goal' ? 'your ' + num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'your lock'));
     $('depAmount').value = amount || ''; $('depBal').textContent = WALLET[l.sym] !== undefined ? 'You have ' + num(fmt(WALLET[l.sym]), 6) + ' ' + l.sym + ' in your wallet.' : '';
-    $('depSheet').hidden = false; $('depAmount').focus();
+    $('exCoin').textContent = l.sym; $('exAddr').textContent = l.addr; $('exContract').textContent = '\u2026' + l.token.slice(-4) + ' (full: ' + l.token + ')';
+    $('exQr').hidden = true; $('exQr').innerHTML = ''; exBase = null; exStop();
+    depTab(false); $('depSheet').hidden = false;
   }
-  $('depClose').addEventListener('click', () => { $('depSheet').hidden = true; });
+  // ---- add money from an exchange: show the lock address and watch for coins arriving
+  let exBase = null, exTimer = null;
+  function exStop() { clearInterval(exTimer); exTimer = null; $('exWatch').className = 'exwatch'; $('exWatch').textContent = 'Waiting for money to arrive\u2026'; }
+  async function exPoll() {
+    if (!depLock || $('depSheet').hidden) return exStop();
+    try {
+      const b = await new ethers.Contract(depLock.token, ERC20, main).balanceOf(depLock.addr);
+      if (exBase === null) exBase = b;
+      else if (b > exBase) { $('exWatch').className = 'exwatch got'; $('exWatch').textContent = 'Arrived: +' + num(fmt(b - exBase), 6) + ' ' + depLock.sym + '. It is locked now.'; history = null; }
+    } catch {}
+  }
+  function depTab(ex) {
+    $('depTabWallet').setAttribute('aria-selected', String(!ex)); $('depTabEx').setAttribute('aria-selected', String(ex));
+    $('depWallet').hidden = ex; $('depEx').hidden = !ex;
+    if (ex && !exTimer) { exPoll(); exTimer = setInterval(exPoll, 8000); } else if (!ex) exStop();
+    if (!ex) $('depAmount').focus();
+  }
+  $('depTabWallet').addEventListener('click', () => depTab(false));
+  $('depTabEx').addEventListener('click', () => depTab(true));
+  $('exCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(depLock.addr); toast('Lock address copied. Pick ' + depLock.sym + ' on the Arbitrum One network.', 8000); } catch { toast('Select the address and copy it.'); } });
+  $('exQrBtn').addEventListener('click', () => { try { const q = qrcode(0, 'M'); q.addData(depLock.addr); q.make(); $('exQr').innerHTML = q.createImgTag(4, 8); $('exQr').hidden = false; } catch { toast('QR code not available. Use Copy address.'); } });
+  const closeDep = () => { $('depSheet').hidden = true; exStop(); if ($('exWatch').classList.contains('got')) refresh(); };
+  $('exClose').addEventListener('click', () => { $('depSheet').hidden = true; exStop(); refresh(); });
+  $('depClose').addEventListener('click', closeDep);
   $('depMax').addEventListener('click', () => { if (depLock && WALLET[depLock.sym] !== undefined) $('depAmount').value = ethers.formatUnits(WALLET[depLock.sym], 6); });
   $('depGo').addEventListener('click', () => {
     const l = depLock; const raw = $('depAmount').value.trim();
@@ -1362,7 +1423,7 @@ const TV = (() => {
   // ------------------------------------------------------------------ find my locks (deposit history from this wallet)
   async function transferLogs(from, toList, windows, progress) {
     const head = await main.getBlockNumber(); const WIN = 9_900_000; const out = [];
-    const topic0 = ethers.id('Transfer(address,address,uint256)'), fromT = ethers.zeroPadValue(from, 32);
+    const topic0 = ethers.id('Transfer(address,address,uint256)'), fromT = from ? ethers.zeroPadValue(from, 32) : null;
     const toT = toList ? toList.map((a) => ethers.zeroPadValue(a, 32)) : null;
     for (let w = 0; w < windows; w++) {
       const to = head - w * WIN, fromB = Math.max(0, to - WIN + 1); if (to <= 0) break;
@@ -1492,10 +1553,11 @@ const TV = (() => {
     if (history && historyFor === key) { renderHistory(); return; }
     historyFor = key;
     try {
-      const logs = await transferLogs(who, LOCKS.map((l) => l.addr), 13);
+      const logs = await transferLogs(null, LOCKS.map((l) => l.addr), 13);
       const blocks = {}; for (const lg of logs) blocks[lg.blockNumber] = 0;
       await Promise.all(Object.keys(blocks).map(async (b) => { const blk = await main.getBlock(Number(b)).catch(() => null); blocks[b] = blk ? blk.timestamp : 0; }));
-      history = logs.map((lg) => ({ to: ethers.getAddress('0x' + lg.topics[2].slice(26)), sym: SYMBOL[lg.address.toLowerCase()], amount: BigInt(lg.data), time: blocks[lg.blockNumber], tx: lg.transactionHash }))
+      history = logs.map((lg) => ({ to: ethers.getAddress('0x' + lg.topics[2].slice(26)), fromMe: ethers.getAddress('0x' + lg.topics[1].slice(26)) === ethers.getAddress(who), sym: SYMBOL[lg.address.toLowerCase()], amount: BigInt(lg.data), time: blocks[lg.blockNumber], tx: lg.transactionHash }))
+        .filter((h) => LOCKS.some((l) => l.addr === h.to && l.sym === h.sym)) // only the lock's own coin counts
         .sort((a, b) => b.time - a.time);
     } catch { history = []; }
     renderHistory(); renderToday();
@@ -1518,7 +1580,7 @@ const TV = (() => {
     const total = history.reduce((s, h) => s + fmt(h.amount), 0);
     $('streakNum').textContent = String(streak());
     box.innerHTML = '<div class="small muted">' + history.length + ' deposits · ' + money(total) + ' saved in the last year</div>' +
-      '<ol class="hist">' + history.slice(0, 12).map((h) => '<li><span>' + dateStr(h.time) + '</span><b>+' + num(fmt(h.amount)) + ' ' + h.sym + '</b><a class="mono small" target="_blank" rel="noopener noreferrer" href="https://arbiscan.io/tx/' + h.tx + '">view</a></li>').join('') + '</ol>';
+      '<ol class="hist">' + history.slice(0, 12).map((h) => '<li><span>' + dateStr(h.time) + (h.fromMe ? '' : ' <span class="muted small">from exchange or other</span>') + '</span><b>+' + num(fmt(h.amount)) + ' ' + h.sym + '</b><a class="mono small" target="_blank" rel="noopener noreferrer" href="https://arbiscan.io/tx/' + h.tx + '">view</a></li>').join('') + '</ol>';
   }
 
   // ------------------------------------------------------------------ coach: lessons

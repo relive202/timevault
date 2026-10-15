@@ -241,6 +241,20 @@ ol.guide b { color: var(--ink); }
   .confetti i:nth-child(2n) { animation-delay: .25s; animation-duration: 2.6s; } .confetti i:nth-child(3n) { animation-delay: .5s; }
   @keyframes fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0; transform: translateY(360px) rotate(540deg); } }
 }
+.tabs2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--raised); border-radius: 13px; padding: 4px; }
+.tabs2 button { border: 0; background: none; color: var(--muted); font: 600 14px var(--body); padding: 9px 6px; border-radius: 10px; cursor: pointer; }
+.tabs2 button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.sheet-body { display: grid; gap: 14px; }
+ol.exsteps { margin: 0; padding-left: 20px; display: grid; gap: 12px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
+.sheet > .card { overflow-x: hidden; }
+ol.exsteps b { color: var(--ink); }
+ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
+#exQr { background: #fff; padding: 10px; border-radius: var(--r-md); width: max-content; margin-top: 8px; }
+#exQr img { display: block; width: 180px; height: 180px; image-rendering: pixelated; }
+.exwatch { background: var(--raised); border-radius: var(--r-sm); padding: 12px 14px; font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+.exwatch::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+.exwatch.got { background: var(--mint-soft); color: var(--ink); } .exwatch.got::before { background: var(--mint); }
+@media (prefers-reduced-motion: no-preference) { .exwatch:not(.got)::before { animation: pulse 1.4s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .25; } } }
 </style>
 </head>
 <body>
@@ -343,7 +357,7 @@ ol.guide b { color: var(--ink); }
           <li><b>There is no early exit.</b> Not for emergencies, not for anyone. Only lock money you know you won't need.</li>
           <li><b>Keep a buffer outside.</b> Leave at least 1 to 2 months of spending in your wallet.</li>
           <li><b>Anyone can add to your goal.</b> If someone sends coins to your lock and it reaches the goal, it opens early. The money still only goes to you.</li>
-          <li><b>Only add money through TimeVault.</b> Coins sent straight to a lock's address from your wallet, especially a different coin, can be lost forever.</li>
+          <li><b>Only the lock's own coin, on Arbitrum One.</b> You can add money from your wallet or straight from an exchange. Any other coin or network sent to a lock is lost forever.</li>
         </ul>
       </div>
       <div class="summary" id="lkSummary"></div>
@@ -501,9 +515,31 @@ ol.guide b { color: var(--ink); }
 <div class="sheet" id="depSheet" hidden role="dialog" aria-modal="true" aria-labelledby="depTitle">
   <div class="card">
     <h2 id="depTitle">Add money</h2>
-    <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">All</button></div><span class="small muted" id="depBal"></span></label>
-    <p class="small muted">Once it's in, it stays locked until the lock opens.</p>
-    <div class="row"><button class="btn brass" id="depGo">Add money</button><button class="btn ghost" id="depClose">Cancel</button></div>
+    <div class="tabs2" role="tablist">
+      <button role="tab" id="depTabWallet" aria-selected="true">From my wallet</button>
+      <button role="tab" id="depTabEx" aria-selected="false">From an exchange</button>
+    </div>
+    <div id="depWallet" class="sheet-body">
+      <label for="depAmount">Amount<div class="inline"><input id="depAmount" inputmode="decimal" placeholder="0.00" autocomplete="off"><button class="btn ghost small" id="depMax" type="button">All</button></div><span class="small muted" id="depBal"></span></label>
+      <p class="small muted">Once it's in, it stays locked until the lock opens.</p>
+      <div class="row"><button class="btn brass" id="depGo">Add money</button><button class="btn ghost" id="depClose">Cancel</button></div>
+    </div>
+    <div id="depEx" class="sheet-body" hidden>
+      <p class="small muted">Send straight from Binance, Bybit, OKX or any exchange into this lock. Follow every step: a mistake here can't be undone.</p>
+      <ol class="exsteps">
+        <li>On the exchange, choose <b>Withdraw</b> and pick the coin <b id="exCoin">USDC</b>.</li>
+        <li>Pick the network <b>Arbitrum One</b>. Not Ethereum, not Arbitrum Nova, not any other.</li>
+        <li>Paste this lock's address:
+          <div class="addr" id="exAddr"></div>
+          <div class="row"><button class="btn small" id="exCopy">Copy address</button><button class="btn ghost small" id="exQrBtn">Show QR code</button></div>
+          <div id="exQr" hidden></div>
+        </li>
+        <li>Check the coin is right. If the exchange shows the coin's contract, it must end in <b id="exContract"></b>. If it says <b>USDC.e</b> or <b>Bridged USDC</b>, stop: that coin would be stuck forever.</li>
+        <li><b>Send a small test first</b>, like $5, and wait for it to show up here.</li>
+      </ol>
+      <div class="exwatch" id="exWatch">Waiting for money to arrive…</div>
+      <button class="btn ghost wide" id="exClose">Done</button>
+    </div>
   </div>
 </div>
 <div class="sheet" id="cheer" hidden role="dialog" aria-modal="true" aria-labelledby="cheerTitle">

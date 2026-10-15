@@ -283,7 +283,7 @@
           '<div><span class="label">Safety check</span><span class="ok-text">✓ Genuine lock</span></div>' +
         '</div>' +
         (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this money is free. Withdraw it and start a new goal.</p>' : '') + (g && s.goalHit && !s.empty && !s.timeUp ? '<p class="note">You did it! Withdraw your savings whenever you like.</p>' : '') +
-        '<details><summary>Details</summary><p class="small caution">Never send coins straight to this address from your wallet. Always use Add money in TimeVault. A different coin sent here is lost forever.</p><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div></details>';
+        '<details><summary>Details</summary><p class="small caution">Only ever send ' + l.sym + ' on the Arbitrum One network to this address, using Add money. Any other coin or network sent here is lost forever.</p><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div></details>';
       if (account && account === l.beneficiary) {
         const row = document.createElement('div'); row.className = 'row';
         if (s.ready) {
@@ -322,9 +322,34 @@
   function openDeposit(l, amount) {
     depLock = l; $('depTitle').textContent = 'Add money to ' + (l.name || (l.kind === 'goal' ? 'your ' + num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'your lock'));
     $('depAmount').value = amount || ''; $('depBal').textContent = WALLET[l.sym] !== undefined ? 'You have ' + num(fmt(WALLET[l.sym]), 6) + ' ' + l.sym + ' in your wallet.' : '';
-    $('depSheet').hidden = false; $('depAmount').focus();
+    $('exCoin').textContent = l.sym; $('exAddr').textContent = l.addr; $('exContract').textContent = '\u2026' + l.token.slice(-4) + ' (full: ' + l.token + ')';
+    $('exQr').hidden = true; $('exQr').innerHTML = ''; exBase = null; exStop();
+    depTab(false); $('depSheet').hidden = false;
   }
-  $('depClose').addEventListener('click', () => { $('depSheet').hidden = true; });
+  // ---- add money from an exchange: show the lock address and watch for coins arriving
+  let exBase = null, exTimer = null;
+  function exStop() { clearInterval(exTimer); exTimer = null; $('exWatch').className = 'exwatch'; $('exWatch').textContent = 'Waiting for money to arrive\u2026'; }
+  async function exPoll() {
+    if (!depLock || $('depSheet').hidden) return exStop();
+    try {
+      const b = await new ethers.Contract(depLock.token, ERC20, main).balanceOf(depLock.addr);
+      if (exBase === null) exBase = b;
+      else if (b > exBase) { $('exWatch').className = 'exwatch got'; $('exWatch').textContent = 'Arrived: +' + num(fmt(b - exBase), 6) + ' ' + depLock.sym + '. It is locked now.'; history = null; }
+    } catch {}
+  }
+  function depTab(ex) {
+    $('depTabWallet').setAttribute('aria-selected', String(!ex)); $('depTabEx').setAttribute('aria-selected', String(ex));
+    $('depWallet').hidden = ex; $('depEx').hidden = !ex;
+    if (ex && !exTimer) { exPoll(); exTimer = setInterval(exPoll, 8000); } else if (!ex) exStop();
+    if (!ex) $('depAmount').focus();
+  }
+  $('depTabWallet').addEventListener('click', () => depTab(false));
+  $('depTabEx').addEventListener('click', () => depTab(true));
+  $('exCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(depLock.addr); toast('Lock address copied. Pick ' + depLock.sym + ' on the Arbitrum One network.', 8000); } catch { toast('Select the address and copy it.'); } });
+  $('exQrBtn').addEventListener('click', () => { try { const q = qrcode(0, 'M'); q.addData(depLock.addr); q.make(); $('exQr').innerHTML = q.createImgTag(4, 8); $('exQr').hidden = false; } catch { toast('QR code not available. Use Copy address.'); } });
+  const closeDep = () => { $('depSheet').hidden = true; exStop(); if ($('exWatch').classList.contains('got')) refresh(); };
+  $('exClose').addEventListener('click', () => { $('depSheet').hidden = true; exStop(); refresh(); });
+  $('depClose').addEventListener('click', closeDep);
   $('depMax').addEventListener('click', () => { if (depLock && WALLET[depLock.sym] !== undefined) $('depAmount').value = ethers.formatUnits(WALLET[depLock.sym], 6); });
   $('depGo').addEventListener('click', () => {
     const l = depLock; const raw = $('depAmount').value.trim();
@@ -421,7 +446,7 @@
   // ------------------------------------------------------------------ find my locks (deposit history from this wallet)
   async function transferLogs(from, toList, windows, progress) {
     const head = await main.getBlockNumber(); const WIN = 9_900_000; const out = [];
-    const topic0 = ethers.id('Transfer(address,address,uint256)'), fromT = ethers.zeroPadValue(from, 32);
+    const topic0 = ethers.id('Transfer(address,address,uint256)'), fromT = from ? ethers.zeroPadValue(from, 32) : null;
     const toT = toList ? toList.map((a) => ethers.zeroPadValue(a, 32)) : null;
     for (let w = 0; w < windows; w++) {
       const to = head - w * WIN, fromB = Math.max(0, to - WIN + 1); if (to <= 0) break;
@@ -551,10 +576,11 @@
     if (history && historyFor === key) { renderHistory(); return; }
     historyFor = key;
     try {
-      const logs = await transferLogs(who, LOCKS.map((l) => l.addr), 13);
+      const logs = await transferLogs(null, LOCKS.map((l) => l.addr), 13);
       const blocks = {}; for (const lg of logs) blocks[lg.blockNumber] = 0;
       await Promise.all(Object.keys(blocks).map(async (b) => { const blk = await main.getBlock(Number(b)).catch(() => null); blocks[b] = blk ? blk.timestamp : 0; }));
-      history = logs.map((lg) => ({ to: ethers.getAddress('0x' + lg.topics[2].slice(26)), sym: SYMBOL[lg.address.toLowerCase()], amount: BigInt(lg.data), time: blocks[lg.blockNumber], tx: lg.transactionHash }))
+      history = logs.map((lg) => ({ to: ethers.getAddress('0x' + lg.topics[2].slice(26)), fromMe: ethers.getAddress('0x' + lg.topics[1].slice(26)) === ethers.getAddress(who), sym: SYMBOL[lg.address.toLowerCase()], amount: BigInt(lg.data), time: blocks[lg.blockNumber], tx: lg.transactionHash }))
+        .filter((h) => LOCKS.some((l) => l.addr === h.to && l.sym === h.sym)) // only the lock's own coin counts
         .sort((a, b) => b.time - a.time);
     } catch { history = []; }
     renderHistory(); renderToday();
@@ -577,7 +603,7 @@
     const total = history.reduce((s, h) => s + fmt(h.amount), 0);
     $('streakNum').textContent = String(streak());
     box.innerHTML = '<div class="small muted">' + history.length + ' deposits · ' + money(total) + ' saved in the last year</div>' +
-      '<ol class="hist">' + history.slice(0, 12).map((h) => '<li><span>' + dateStr(h.time) + '</span><b>+' + num(fmt(h.amount)) + ' ' + h.sym + '</b><a class="mono small" target="_blank" rel="noopener noreferrer" href="https://arbiscan.io/tx/' + h.tx + '">view</a></li>').join('') + '</ol>';
+      '<ol class="hist">' + history.slice(0, 12).map((h) => '<li><span>' + dateStr(h.time) + (h.fromMe ? '' : ' <span class="muted small">from exchange or other</span>') + '</span><b>+' + num(fmt(h.amount)) + ' ' + h.sym + '</b><a class="mono small" target="_blank" rel="noopener noreferrer" href="https://arbiscan.io/tx/' + h.tx + '">view</a></li>').join('') + '</ol>';
   }
 
   // ------------------------------------------------------------------ coach: lessons
