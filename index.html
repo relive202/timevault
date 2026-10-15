@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-R0taarWhWz73Ia8Alc58CigNRDkG3JUQBCLRSbyNfdY=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-ucH0wkvA0vLUY/JUv8y3p1ybBdI4DWVoHMMH5pt3/Xc=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0A1022">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -279,6 +279,7 @@ nav.tabs button:active svg { transform: scale(.9); }
   @keyframes tabin { from { opacity: 0; transform: translateY(6px); } }
   details[open] > *:not(summary) { animation: tabin .18s ease-out; }
 }
+#confirm { z-index: 26; } /* the confirm screen always sits above any other sheet */
 </style>
 </head>
 <body>
@@ -1431,10 +1432,10 @@ const TV = (() => {
     const l = depLock; const raw = $('depAmount').value.trim();
     let amt; try { amt = ethers.parseUnits(raw || '0', 6); } catch { return toast('Enter an amount like 25 or 25.50'); }
     if (amt <= 0n) return toast('Enter an amount.');
+    $('depSheet').hidden = true; // close this sheet first so the confirm screen is visible on top
     run($('depGo'), async () => {
       await ensureArbitrum();
       const after = await guard.deposit({ lock: l.addr, amount: amt });
-      $('depSheet').hidden = true;
       toast(after.kind === 'goal' && after.balance >= after.goal ? 'Goal reached! You can withdraw it now.' : 'Added ' + raw + ' ' + l.sym + '. Nice work!');
       history = null;
     });

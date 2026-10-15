@@ -426,10 +426,10 @@
     const l = depLock; const raw = $('depAmount').value.trim();
     let amt; try { amt = ethers.parseUnits(raw || '0', 6); } catch { return toast('Enter an amount like 25 or 25.50'); }
     if (amt <= 0n) return toast('Enter an amount.');
+    $('depSheet').hidden = true; // close this sheet first so the confirm screen is visible on top
     run($('depGo'), async () => {
       await ensureArbitrum();
       const after = await guard.deposit({ lock: l.addr, amount: amt });
-      $('depSheet').hidden = true;
       toast(after.kind === 'goal' && after.balance >= after.goal ? 'Goal reached! You can withdraw it now.' : 'Added ' + raw + ' ' + l.sym + '. Nice work!');
       history = null;
     });
