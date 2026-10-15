@@ -175,34 +175,60 @@
   const verified = new Map();   // addr -> verified lock info (this session)
   const rejected = new Map();   // addr -> reason
 
+  // Lock code and settings can never change after creation, so a lock verified once stays verified.
+  // This cache only speeds up the screens: every deposit or withdrawal is verified again from scratch by the guard.
+  const big = (v) => (v === undefined || v === null ? v : String(v));
+  const unbig = (v) => (v === undefined || v === null ? v : BigInt(v));
+  const serL = (L) => ({ ...L, goal: big(L.goal), balance: big(L.balance) });
+  const deL = (o) => ({ ...o, goal: unbig(o.goal), balance: unbig(o.balance) });
   async function verifyCached(addr, who) {
     if (verified.has(addr)) return verified.get(addr);
+    const saved = store.json('v.' + addr.toLowerCase(), null);
+    if (saved && saved.addr === addr && saved.beneficiary === ethers.getAddress(who)) { const L = deL(saved); verified.set(addr, L); return L; }
     const L = await TV.verifyLock(ethers, verifyCfg, addr, { beneficiary: who });
-    verified.set(addr, L); rejected.delete(addr); return L;
+    verified.set(addr, L); rejected.delete(addr); store.setJson('v.' + addr.toLowerCase(), serL(L)); return L;
   }
 
   let LOCKS = []; let WALLET = {}; let lastSig = '';
+  let refreshSeq = 0, shownFor = '', loadedOnce = false;
+  const cacheKey = (w) => 'cache.' + w.toLowerCase();
+  function setUpdating(on) { $('upd').hidden = !on; }
   async function refresh() {
     const who = viewer();
     renderSelf();
-    if (!who) { LOCKS = []; render(); return; }
-    try {
-      const [eth, ...bals] = await Promise.all([main.getBalance(who), ...Object.values(TOKENS).map((t) => new ethers.Contract(t.address, ERC20, main).balanceOf(who))]);
-      WALLET = { ETH: eth, ...Object.fromEntries(Object.keys(TOKENS).map((k, i) => [k, bals[i]])) };
-    } catch { WALLET = {}; }
+    if (!who) { LOCKS = []; WALLET = {}; shownFor = ''; render(); return; }
+    const seq = ++refreshSeq;
+    if (shownFor !== who) { // first look at this wallet: show the last known numbers right away
+      shownFor = who; loadedOnce = false;
+      const c = store.json(cacheKey(who), null);
+      if (c) { WALLET = Object.fromEntries(Object.entries(c.w || {}).map(([k, v]) => [k, BigInt(v)])); LOCKS = (c.l || []).map(deL); }
+      else { WALLET = {}; LOCKS = []; }
+      render(); loadHistory(true);
+    }
+    setUpdating(true);
+    const walletP = Promise.all([main.getBalance(who), ...Object.values(TOKENS).map((t) => new ethers.Contract(t.address, ERC20, main).balanceOf(who))])
+      .then(([eth, ...bals]) => ({ ETH: eth, ...Object.fromEntries(Object.keys(TOKENS).map((k, i) => [k, bals[i]])) })).catch(() => null);
     const list = getList(who).filter((e) => !isHidden(who, e.addr));
     const out = [];
-    await Promise.all(list.map(async (e) => {
+    const locksP = Promise.all(list.map(async (e) => {
       try {
         const L = await verifyCached(ethers.getAddress(e.addr), who);
         const balance = await new ethers.Contract(L.token, ERC20, main).balanceOf(L.addr);
         out.push({ ...L, balance, created: e.created || 0, block: e.block || 0, name: e.name || '' });
-      } catch (err) { if (err.refused) rejected.set(e.addr, err.message); }
+        if (!loadedOnce && seq === refreshSeq) { // first look: show each lock as soon as it is checked
+          const have = new Set(out.map((x) => x.addr)); LOCKS = [...out, ...LOCKS.filter((x) => !have.has(x.addr))].sort((x, y) => (x.kind === y.kind ? x.releaseTime - y.releaseTime : x.kind === 'goal' ? -1 : 1)); render();
+        }
+      } catch (err) { if (err.refused) rejected.set(e.addr, err.message); else { const old = LOCKS.find((x) => x.addr.toLowerCase() === e.addr.toLowerCase()); if (old) out.push(old); } }
     }));
-    const sig = out.map((l) => l.addr + l.balance).sort().join();
+    const [w] = await Promise.all([walletP, locksP]);
+    if (seq !== refreshSeq || viewer() !== who) return; // a newer refresh is running
+    if (w) WALLET = w;
     LOCKS = out.sort((a, b) => (a.kind === b.kind ? a.releaseTime - b.releaseTime : a.kind === 'goal' ? -1 : 1));
-    render();
-    if (sig !== lastSig) { lastSig = sig; planChanged(); }
+    loadedOnce = true;
+    store.setJson(cacheKey(who), { w: Object.fromEntries(Object.entries(WALLET).map(([k, v]) => [k, String(v)])), l: LOCKS.map(serL), t: Date.now() });
+    setUpdating(false);
+    const sig = LOCKS.map((l) => l.addr + l.balance + l.name).sort().join() + '|' + Object.values(WALLET).join();
+    if (sig !== lastSig) { lastSig = sig; render(); planChanged(); } else renderToday();
     loadHistory();
   }
 
@@ -220,7 +246,8 @@
   function render() {
     const now = Date.now() / 1000;
     const total = LOCKS.reduce((s, l) => s + fmt(l.balance), 0);
-    $('totalLocked').textContent = money(total);
+    countTo($('totalLocked'), total);
+    $('homeMain').classList.toggle('loading', !loadedOnce && !LOCKS.length);
     const active = LOCKS.filter((l) => !isFinished(l));
     $('lockCount').textContent = String(active.length);
     const goal = LOCKS.find((l) => l.kind === 'goal' && now < l.releaseTime && l.balance < l.goal);
@@ -266,6 +293,15 @@
   }
   $('cheerOk').addEventListener('click', () => { $('cheer').hidden = true; checkMilestones(); });
 
+  let countFrom = null, countRaf = 0;
+  function countTo(el, v) { // the total glides to its new value instead of jumping
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (countFrom === null || reduce || countFrom === v) { countFrom = v; el.textContent = money(v); return; }
+    const a = countFrom, t0 = performance.now(), dur = 700; countFrom = v; cancelAnimationFrame(countRaf);
+    const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = money(a + (v - a) * e); if (k < 1) countRaf = requestAnimationFrame(step); };
+    countRaf = requestAnimationFrame(step);
+  }
+
   function lockState(l) {
     const now = Date.now() / 1000, timeUp = now >= l.releaseTime, goalHit = l.kind === 'goal' && l.balance >= l.goal, empty = l.balance === 0n;
     const ready = !empty && (timeUp || goalHit);
@@ -286,6 +322,8 @@
   function renderLocks() {
     const box = $('locks'); const who = viewer();
     if (!who) { box.innerHTML = '<div class="empty">Connect your wallet to see your savings.</div>'; return; }
+    const openAddrs = new Set([...box.querySelectorAll('article[data-addr] details[open]')].map((d) => d.closest('article').dataset.addr));
+    if (!loadedOnce && !LOCKS.length && getList(who).length) { box.innerHTML = '<div class="lock skel"></div><div class="lock skel"></div>'; return; }
     const rej = [...rejected.entries()];
     if (!LOCKS.length) {
       box.innerHTML = '<div class="empty"><b>No locks yet.</b><br>Tap <b>New lock</b> below to start saving.<br><span class="small">Made locks before on another phone? Tap <b>Find my locks</b>.</span></div>';
@@ -296,7 +334,7 @@
       const s = lockState(l); const g = l.kind === 'goal';
       if (isFinished(l)) { finished.push(l); continue; }
       const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
-      const el = document.createElement('article'); el.className = 'lock';
+      const el = document.createElement('article'); el.className = 'lock'; el.dataset.addr = l.addr;
       el.innerHTML =
         '<div class="lock-top"><div><div class="label">' + (l.name ? esc(l.name) : (g ? 'Savings goal' : 'Locked until a date')) + '</div>' +
         '<div class="lock-amt">' + num(fmt(l.balance)) + (g ? '<span class="of"> / ' + num(fmt(l.goal)) + '</span>' : '') + ' ' + l.sym + '</div></div>' +
@@ -331,6 +369,7 @@
       f.innerHTML = '<summary>Finished (' + finished.length + ')</summary>' + finished.map((l) => '<div class="small">' + esc(l.name || (l.kind === 'goal' ? num(fmt(l.goal)) + ' ' + l.sym + ' goal' : l.sym + ' lock')) + ': ' + (Date.now() / 1000 >= l.releaseTime ? 'ended ' + dateStr(l.releaseTime) : 'withdrawn') + ', nothing left inside. <a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">View</a> · <a href="#" data-hide="' + l.addr + '">Hide</a></div>').join('');
       box.appendChild(f);
     }
+    openAddrs.forEach((a) => { const d = box.querySelector('article[data-addr="' + a + '"] details'); if (d) d.open = true; });
     box.querySelectorAll('[data-hide]').forEach((b) => b.addEventListener('click', (ev) => {
       ev.preventDefault(); const w = viewer(); if (!w) return;
       const lst = store.json(hiddenKey(w), []); lst.push(b.dataset.hide.toLowerCase()); store.setJson(hiddenKey(w), [...new Set(lst)]);
@@ -346,7 +385,7 @@
   async function run(btn, fn) {
     const t = btn.textContent; btn.disabled = true; btn.textContent = 'Working…';
     const stopped = new Promise((_, rej) => { stopWait = () => rej(new TV.Refused('Stopped waiting. If you still approve it in your wallet, it can go through, so check your savings before trying again.')); });
-    try { await Promise.race([fn(), stopped]); } catch (e) { toast(nice(e), 10000); } finally { stopWait = null; waiting(false); btn.disabled = false; btn.textContent = t; refresh(); }
+    try { await Promise.race([fn(), stopped]); } catch (e) { toast(nice(e), 10000); } finally { stopWait = null; waiting(false); btn.disabled = false; btn.textContent = t; historyAt = 0; lastSig = ''; refresh(); }
   }
 
   // ------------------------------------------------------------------ deposit sheet
@@ -610,22 +649,50 @@
 
   // ------------------------------------------------------------------ coach: history + streak (from the blockchain, not this device)
   let history = null, historyFor = '', historyFailed = false;
-  async function loadHistory() {
+  // Deposits into each lock, cached per lock: after the first full look-back, only new blocks are fetched.
+  const HWIN = 9_900_000, HWINDOWS = 13;
+  const histKey = (a) => 'h.' + a.toLowerCase();
+  function buildHistory(who) {
+    const me = ethers.getAddress(who);
+    return LOCKS.flatMap((l) => (store.json(histKey(l.addr), null)?.items || []).map((h) => ({ ...h, amount: BigInt(h.amount), fromMe: h.from === me })))
+      .filter((h) => LOCKS.some((l) => l.addr === h.to && l.sym === h.sym)) // only the lock's own coin counts
+      .sort((a, b) => b.time - a.time);
+  }
+  async function lockHistory(l, head) {
+    const c = store.json(histKey(l.addr), null);
+    const oldest = Math.max(0, head - HWINDOWS * HWIN + 1);
+    const from = c ? Math.max(c.upTo + 1, oldest) : oldest;
+    if (from > head) return;
+    const topic0 = ethers.id('Transfer(address,address,uint256)'), toT = ethers.zeroPadValue(l.addr, 32);
+    const found = [];
+    for (let hi = head; hi >= from; hi -= HWIN) { // one lock per request: servers only allow long ranges for a single address
+      const lo = Math.max(from, hi - HWIN + 1);
+      found.push(...await getLogsRetry({ address: l.token, topics: [topic0, null, toT], fromBlock: ethers.toQuantity(lo), toBlock: ethers.toQuantity(hi) }));
+    }
+    const items = c ? c.items.slice() : [];
+    for (const lg of found) {
+      if (items.some((x) => x.tx === lg.transactionHash && x.li === lg.logIndex)) continue;
+      const blk = await main.getBlock(Number(lg.blockNumber)).catch(() => null);
+      items.push({ to: ethers.getAddress('0x' + lg.topics[2].slice(26)), from: ethers.getAddress('0x' + lg.topics[1].slice(26)), sym: SYMBOL[lg.address.toLowerCase()], amount: String(BigInt(lg.data)), time: blk ? blk.timestamp : 0, tx: lg.transactionHash, li: lg.logIndex });
+    }
+    store.setJson(histKey(l.addr), { upTo: head, items });
+  }
+  let historyAt = 0, historyLoaded = false;
+  async function loadHistory(fromCacheOnly) {
     const who = viewer(); if (!who || !LOCKS.length) { history = []; renderHistory(); return; }
+    if (fromCacheOnly || !history) { history = buildHistory(who); renderHistory(); renderToday(); }
+    if (fromCacheOnly) return;
     const key = who + LOCKS.map((l) => l.addr).join();
-    if (history && historyFor === key) { renderHistory(); return; }
-    historyFor = key;
+    if (historyFor === key && Date.now() - historyAt < 50000) return;
+    historyFor = key; historyAt = Date.now();
+    const before = (history || []).length;
     try {
-      // one lock per request: the servers only allow long time ranges for a single address
-      const logs = (await Promise.all(LOCKS.map((l) => transferLogs(null, [l.addr], 13, false, l.token)))).flat();
-      const blocks = {}; for (const lg of logs) blocks[lg.blockNumber] = 0;
-      await Promise.all(Object.keys(blocks).map(async (b) => { const blk = await main.getBlock(Number(b)).catch(() => null); blocks[b] = blk ? blk.timestamp : 0; }));
-      history = logs.map((lg) => ({ to: ethers.getAddress('0x' + lg.topics[2].slice(26)), fromMe: ethers.getAddress('0x' + lg.topics[1].slice(26)) === ethers.getAddress(who), sym: SYMBOL[lg.address.toLowerCase()], amount: BigInt(lg.data), time: blocks[lg.blockNumber], tx: lg.transactionHash }))
-        .filter((h) => LOCKS.some((l) => l.addr === h.to && l.sym === h.sym)) // only the lock's own coin counts
-        .sort((a, b) => b.time - a.time);
-    } catch { history = null; historyFor = ''; historyFailed = true; renderHistory(); return; }
-    historyFailed = false;
-    renderHistory(); renderToday(); renderLocks();
+      const head = await main.getBlockNumber();
+      await Promise.all(LOCKS.map((l) => lockHistory(l, head)));
+    } catch { historyFor = ''; historyFailed = true; renderHistory(); return; }
+    historyFailed = false; historyLoaded = true;
+    history = buildHistory(who);
+    renderHistory(); renderToday(); if (history.length !== before) renderLocks();
   }
   function streak() {
     const p = PLAN(); if (!history || !planReady(p)) return 0;
@@ -640,7 +707,7 @@
   function streakText() { const s = streak(); return s ? 'Streak: ' + s + ' payday' + (s > 1 ? 's' : '') + ' in a row.' : 'Start your streak this payday.'; }
   function renderHistory() {
     const box = $('history');
-    if (!history) { box.innerHTML = '<p class="muted">' + (historyFailed ? 'Could not load your deposits right now. It will try again in a minute.' : 'Loading your deposits from the blockchain…') + '</p>'; return; }
+    if (!history || (!history.length && !historyLoaded)) { box.innerHTML = '<p class="muted">' + (historyFailed ? 'Could not load your deposits right now. It will try again in a minute.' : 'Loading your deposits from the blockchain…') + '</p>'; return; }
     if (!history.length) { box.innerHTML = '<p class="muted">No deposits yet. Your first one starts the streak.</p>'; return; }
     const total = history.reduce((s, h) => s + fmt(h.amount), 0);
     $('streakNum').textContent = String(streak());
@@ -762,7 +829,7 @@
   renderLessons(); codeFingerprints(); applyType();
   show(TABS.includes(store.get('tab')) ? store.get('tab') : 'home');
   setAccount('');
-  initWc(false).catch(() => {});
+  setTimeout(() => initWc(false).catch(() => {}), 400); // paint first, then reconnect the wallet
   if (LN && store.get('notify') === '1') scheduleNotifications(false);
   setInterval(() => { if (!document.hidden) refresh(); }, 60000);
 })();

@@ -58,7 +58,7 @@ main > *, section > * { min-width: 0; }
 /* the vault card: safe dial */
 .vault { position: relative; border-radius: var(--r-lg); padding: 22px 20px 18px; overflow: hidden;
   background: radial-gradient(120% 90% at 100% 0%, #2A3F86 0%, rgba(42,63,134,0) 55%), linear-gradient(160deg, #1A2752 0%, #111A36 60%, #0E1630 100%);
-  border: 1px solid rgba(255,255,255,.07); box-shadow: 0 18px 40px -18px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06); }
+  border: 1px solid rgba(255,255,255,.07); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
 .vault-grid { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; }
 .vault .label { color: #A9B6D6; }
 .big { font: 700 clamp(2.2rem, 10vw, 2.9rem)/1.05 var(--display); letter-spacing: -.035em; font-variant-numeric: tabular-nums; margin-top: 4px; }
@@ -179,7 +179,7 @@ ol.hist b { font-variant-numeric: tabular-nums; color: var(--mint); font-weight:
 .lesson p { margin-top: 8px; font-size: 14px; color: var(--muted); max-width: 60ch; }
 
 /* bottom tabs */
-nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(12,18,38,.86); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border-top: 1px solid var(--line-soft); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: #0D1428; border-top: 1px solid var(--line-soft); transform: translateZ(0); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
 nav.tabs > div { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; max-width: 560px; padding: 6px 6px 4px; }
 nav.tabs button { background: none; border: 0; padding: 6px 2px 8px; color: var(--faint); font: 600 11px var(--body); display: grid; justify-items: center; gap: 4px; cursor: pointer; border-radius: 14px; }
 nav.tabs button svg { width: 23px; height: 23px; }
@@ -187,7 +187,7 @@ nav.tabs button[aria-current="true"] { color: var(--ink); }
 nav.tabs button[aria-current="true"] svg { color: var(--accent); }
 
 /* sheets */
-.sheet { position: fixed; inset: 0; background: rgba(3,6,16,.66); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 20; }
+.sheet { position: fixed; inset: 0; background: rgba(3,6,16,.72); display: flex; align-items: flex-end; justify-content: center; z-index: 20; }
 .sheet > .card { width: 100%; max-width: 560px; border-radius: 26px 26px 0 0; padding: 26px 20px calc(24px + env(safe-area-inset-bottom, 0px)); background: var(--surface); max-height: 92vh; overflow-y: auto; position: relative; }
 .sheet > .card::before { content: ""; position: absolute; top: 9px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: var(--line); }
 @media (min-width: 600px) { .sheet { align-items: center; } .sheet > .card { border-radius: 26px; } }
@@ -258,6 +258,27 @@ ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
 .exwatch::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
 .exwatch.got { background: var(--mint-soft); color: var(--ink); } .exwatch.got::before { background: var(--mint); }
 @media (prefers-reduced-motion: no-preference) { .exwatch:not(.got)::before { animation: pulse 1.4s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .25; } } }
+/* motion & loading */
+html { scroll-behavior: auto; }
+body { overscroll-behavior-y: none; }
+button, nav.tabs, .pill { -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.upd { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-size: 11.5px; color: #A9B6D6; }
+.upd::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
+.lock.skel { height: 168px; }
+.loading .big, .loading #walletTotal, .loading #nextMilestone { color: transparent; border-radius: 8px; }
+.loading .big { width: 170px; }
+.loading .big, .loading #walletTotal, .loading #nextMilestone, .lock.skel { background: linear-gradient(90deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.05) 100%) 0 0 / 200% 100%; }
+nav.tabs button svg { transition: transform .15s ease; }
+nav.tabs button:active svg { transform: scale(.9); }
+.lock, .card, #today > div { transition: background-color .15s ease; }
+@media (prefers-reduced-motion: no-preference) {
+  .loading .big, .loading #walletTotal, .loading #nextMilestone, .lock.skel, .upd::before { animation: shimmer 1.3s linear infinite; }
+  .upd::before { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  section:not([hidden]) { animation: tabin .2s ease-out; }
+  @keyframes tabin { from { opacity: 0; transform: translateY(6px); } }
+  details[open] > *:not(summary) { animation: tabin .18s ease-out; }
+}
 </style>
 </head>
 <body>
@@ -309,7 +330,7 @@ ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
       <div class="vault">
         <div class="vault-grid">
           <div>
-            <span class="label">Total locked</span>
+            <span class="label">Total locked <span class="upd" id="upd" hidden>Updating</span></span>
             <div class="big" id="totalLocked">$0.00</div>
             <div class="vault-sub"><b id="walletTotal">—</b> in your wallet</div>
           </div>
