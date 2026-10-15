@@ -14,7 +14,7 @@
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const short = (a) => (a ? a.slice(0, 6) + '…' + a.slice(-4) : '');
+  const short = (a) => (a ? a.slice(0, 8) + '…' + a.slice(-7) : ''); // long enough that look-alike scam addresses don't match
   const fmt = (x) => Number(ethers.formatUnits(x, 6));
   const money = (n) => '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const num = (n, d = 2) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
@@ -69,6 +69,7 @@
   }
   async function ensureArbitrum() {
     if (!eip) throw new TV.Refused('Connect your wallet first.');
+    await wakeConnection();
     const c = Number(await eip.request({ method: 'eth_chainId' }));
     if (c === CHAIN_ID) return;
     try { await eip.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xa4b1' }] }); chainId = CHAIN_ID; }
@@ -136,11 +137,32 @@
       $('cfTitle').textContent = lines[0]; $('cfLead').textContent = lines[1];
       $('cfAddr').textContent = lines[2]; $('cfText').textContent = lines[3];
       $('confirm').hidden = false; $('cfGo').focus();
-      const done = (v) => { $('confirm').hidden = true; $('cfGo').onclick = $('cfNo').onclick = null; if (v) waiting(true); resolve(v); };
+      const done = (v) => { $('confirm').hidden = true; $('cfGo').onclick = $('cfNo').onclick = null; if (v) { waiting(true); if (isTouch()) setTimeout(openWalletApp, 700); } resolve(v); };
       $('cfGo').onclick = () => done(true); $('cfNo').onclick = () => done(false);
     });
   }
-  function waiting(on) { $('waitBar').hidden = !on; }
+  // ---- waiting for the wallet: bring it to the front, offer a way out if the request never shows up
+  let waitT = null, stopWait = null;
+  const isTouch = () => !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  function waiting(on) {
+    $('waitBar').hidden = !on; clearTimeout(waitT); $('wbStop').hidden = true;
+    $('wbSub').textContent = 'Your wallet app should open with the request. It can take a few seconds to show up.';
+    if (on) waitT = setTimeout(() => {
+      $('wbStop').hidden = false;
+      $('wbSub').textContent = 'Not showing up? Tap Open wallet and keep it open on its main screen for a few seconds. Still nothing? Tap Stop waiting and try again.';
+    }, 25000);
+  }
+  function openWalletApp() {
+    const md = wc && wc.session && wc.session.peer && wc.session.peer.metadata;
+    const link = md && md.redirect && (md.redirect.native || md.redirect.universal);
+    if (link) { try { location.href = link; } catch {} } else toast('Open your wallet app to see the request.');
+  }
+  async function wakeConnection() { // phones put the WalletConnect link to sleep in the background
+    try { const r = wc && wc.signer && wc.signer.client && wc.signer.client.core && wc.signer.client.core.relayer; if (r && r.connected === false && typeof r.restartTransport === 'function') await r.restartTransport(); } catch {}
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) wakeConnection(); });
+  $('wbOpen').addEventListener('click', openWalletApp);
+  $('wbStop').addEventListener('click', () => { if (stopWait) stopWait(); });
 
   // ------------------------------------------------------------------ locks: list, verification, balances
   const listKey = (w) => 'locks.' + w.toLowerCase();
@@ -314,7 +336,8 @@
 
   async function run(btn, fn) {
     const t = btn.textContent; btn.disabled = true; btn.textContent = 'Working…';
-    try { await fn(); } catch (e) { toast(nice(e), 9000); } finally { waiting(false); btn.disabled = false; btn.textContent = t; refresh(); }
+    const stopped = new Promise((_, rej) => { stopWait = () => rej(new TV.Refused('Stopped waiting. If you still approve it in your wallet, it can go through, so check your savings before trying again.')); });
+    try { await Promise.race([fn(), stopped]); } catch (e) { toast(nice(e), 10000); } finally { stopWait = null; waiting(false); btn.disabled = false; btn.textContent = t; refresh(); }
   }
 
   // ------------------------------------------------------------------ deposit sheet
@@ -617,6 +640,7 @@
     ['Scams to watch for', 'No real app will ask for your recovery phrase. Only open TimeVault from your saved home-screen icon, never from a link someone sends you.'],
     ['Locked means locked', 'TimeVault has no early exit, on purpose. Before you lock, ask: could I need this money before the goal or the date? If yes, lock less.'],
     ['Keep a small buffer', 'Even living at home, things come up: a broken phone, a family need, a good opportunity. Keep 1 to 2 months of your spending outside the lock, and lock the rest.'],
+    ['Look-alike address scams', 'Scammers send you tiny amounts from addresses that start and end like yours or your lock\'s, hoping you copy the fake one from your history. Never copy an address from history. Copy it from TimeVault, and check the whole address.'],
     ['Pick realistic goals', 'A goal you can reach in 3 to 6 months keeps you motivated. When you hit it, set the next one a bit higher.'],
   ];
   function renderLessons() {

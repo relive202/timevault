@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-U8fdZC2rxV6s2K9CAxvjKjbLFg4M3sKNRVdN7/Xan5w=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-VuW+Q+Aa8+IiHl7YC8ex6J6rOw/OJMNaWKMQx5CLEDI=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0A1022">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -193,7 +193,10 @@ nav.tabs button[aria-current="true"] svg { color: var(--accent); }
 @media (min-width: 600px) { .sheet { align-items: center; } .sheet > .card { border-radius: 26px; } }
 @media (prefers-reduced-motion: no-preference) { .sheet:not([hidden]) > .card { animation: up .22s ease-out; } @keyframes up { from { transform: translateY(24px); opacity: .6; } } }
 .addr { font: 600 13px var(--mono); background: var(--raised); border-radius: var(--r-sm); padding: 12px; overflow-wrap: anywhere; }
-#waitBar { position: fixed; left: 0; right: 0; top: 0; z-index: 30; background: var(--accent); color: #fff; text-align: center; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; font-weight: 600; font-size: 14px; }
+#waitBar { position: fixed; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: 536px; margin: 0 auto; background: var(--raised); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; display: grid; gap: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.55); }
+#waitBar .wb-text { display: grid; gap: 3px; font-size: 14px; } #waitBar .wb-text span { color: var(--muted); font-size: 13.5px; }
+#waitBar .wb-text b { display: flex; align-items: center; gap: 9px; } #waitBar .wb-text b::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+@media (prefers-reduced-motion: no-preference) { #waitBar .wb-text b::before { animation: pulse 1.4s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .25; } } }
 #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); background: #EEF2FA; color: #0A1022; padding: 12px 18px; border-radius: 14px; font-size: 14px; font-weight: 500; width: max-content; max-width: calc(100% - 32px); z-index: 40; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
 body.broken main::before { content: "Safety check failed: this copy of the app does not match the tested code. Do not use it."; display: block; background: var(--bad); color: #fff; padding: 12px; border-radius: var(--r-sm); font-weight: 600; }
 @media (prefers-reduced-motion: no-preference) { .bar > i, .dial .fill { transition: width .6s ease, stroke-dashoffset .9s ease; } }
@@ -258,7 +261,10 @@ ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
 </style>
 </head>
 <body>
-<div id="waitBar" hidden>Open your wallet app and approve the request, then come back here.</div>
+<div id="waitBar" hidden role="status">
+  <div class="wb-text"><b>Approve in your wallet</b><span id="wbSub">Your wallet app should open with the request. It can take a few seconds to show up.</span></div>
+  <div class="row"><button class="btn small" id="wbOpen">Open wallet</button><button class="btn ghost small" id="wbStop" hidden>Stop waiting</button></div>
+</div>
 <main>
   <div class="topbar">
     <div class="brand">
@@ -695,6 +701,7 @@ contract TokenTimelock {
         <li>Check the coin is right. If the exchange shows the coin's contract, it must end in <b id="exContract"></b>. If it says <b>USDC.e</b> or <b>Bridged USDC</b>, stop: that coin would be stuck forever.</li>
         <li><b>Send a small test first</b>, like $5, and wait for it to show up here.</li>
       </ol>
+      <p class="small caution">Only copy the address from this screen. Never copy it from your wallet's or exchange's history: scammers send tiny amounts from look-alike addresses so a fake one shows up there.</p>
       <div class="exwatch" id="exWatch">Waiting for money to arrive…</div>
       <button class="btn ghost wide" id="exClose">Done</button>
     </div>
@@ -991,7 +998,7 @@ const TV = (() => {
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const short = (a) => (a ? a.slice(0, 6) + '…' + a.slice(-4) : '');
+  const short = (a) => (a ? a.slice(0, 8) + '…' + a.slice(-7) : ''); // long enough that look-alike scam addresses don't match
   const fmt = (x) => Number(ethers.formatUnits(x, 6));
   const money = (n) => '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const num = (n, d = 2) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
@@ -1046,6 +1053,7 @@ const TV = (() => {
   }
   async function ensureArbitrum() {
     if (!eip) throw new TV.Refused('Connect your wallet first.');
+    await wakeConnection();
     const c = Number(await eip.request({ method: 'eth_chainId' }));
     if (c === CHAIN_ID) return;
     try { await eip.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xa4b1' }] }); chainId = CHAIN_ID; }
@@ -1113,11 +1121,32 @@ const TV = (() => {
       $('cfTitle').textContent = lines[0]; $('cfLead').textContent = lines[1];
       $('cfAddr').textContent = lines[2]; $('cfText').textContent = lines[3];
       $('confirm').hidden = false; $('cfGo').focus();
-      const done = (v) => { $('confirm').hidden = true; $('cfGo').onclick = $('cfNo').onclick = null; if (v) waiting(true); resolve(v); };
+      const done = (v) => { $('confirm').hidden = true; $('cfGo').onclick = $('cfNo').onclick = null; if (v) { waiting(true); if (isTouch()) setTimeout(openWalletApp, 700); } resolve(v); };
       $('cfGo').onclick = () => done(true); $('cfNo').onclick = () => done(false);
     });
   }
-  function waiting(on) { $('waitBar').hidden = !on; }
+  // ---- waiting for the wallet: bring it to the front, offer a way out if the request never shows up
+  let waitT = null, stopWait = null;
+  const isTouch = () => !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  function waiting(on) {
+    $('waitBar').hidden = !on; clearTimeout(waitT); $('wbStop').hidden = true;
+    $('wbSub').textContent = 'Your wallet app should open with the request. It can take a few seconds to show up.';
+    if (on) waitT = setTimeout(() => {
+      $('wbStop').hidden = false;
+      $('wbSub').textContent = 'Not showing up? Tap Open wallet and keep it open on its main screen for a few seconds. Still nothing? Tap Stop waiting and try again.';
+    }, 25000);
+  }
+  function openWalletApp() {
+    const md = wc && wc.session && wc.session.peer && wc.session.peer.metadata;
+    const link = md && md.redirect && (md.redirect.native || md.redirect.universal);
+    if (link) { try { location.href = link; } catch {} } else toast('Open your wallet app to see the request.');
+  }
+  async function wakeConnection() { // phones put the WalletConnect link to sleep in the background
+    try { const r = wc && wc.signer && wc.signer.client && wc.signer.client.core && wc.signer.client.core.relayer; if (r && r.connected === false && typeof r.restartTransport === 'function') await r.restartTransport(); } catch {}
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) wakeConnection(); });
+  $('wbOpen').addEventListener('click', openWalletApp);
+  $('wbStop').addEventListener('click', () => { if (stopWait) stopWait(); });
 
   // ------------------------------------------------------------------ locks: list, verification, balances
   const listKey = (w) => 'locks.' + w.toLowerCase();
@@ -1291,7 +1320,8 @@ const TV = (() => {
 
   async function run(btn, fn) {
     const t = btn.textContent; btn.disabled = true; btn.textContent = 'Working…';
-    try { await fn(); } catch (e) { toast(nice(e), 9000); } finally { waiting(false); btn.disabled = false; btn.textContent = t; refresh(); }
+    const stopped = new Promise((_, rej) => { stopWait = () => rej(new TV.Refused('Stopped waiting. If you still approve it in your wallet, it can go through, so check your savings before trying again.')); });
+    try { await Promise.race([fn(), stopped]); } catch (e) { toast(nice(e), 10000); } finally { stopWait = null; waiting(false); btn.disabled = false; btn.textContent = t; refresh(); }
   }
 
   // ------------------------------------------------------------------ deposit sheet
@@ -1594,6 +1624,7 @@ const TV = (() => {
     ['Scams to watch for', 'No real app will ask for your recovery phrase. Only open TimeVault from your saved home-screen icon, never from a link someone sends you.'],
     ['Locked means locked', 'TimeVault has no early exit, on purpose. Before you lock, ask: could I need this money before the goal or the date? If yes, lock less.'],
     ['Keep a small buffer', 'Even living at home, things come up: a broken phone, a family need, a good opportunity. Keep 1 to 2 months of your spending outside the lock, and lock the rest.'],
+    ['Look-alike address scams', 'Scammers send you tiny amounts from addresses that start and end like yours or your lock\'s, hoping you copy the fake one from your history. Never copy an address from history. Copy it from TimeVault, and check the whole address.'],
     ['Pick realistic goals', 'A goal you can reach in 3 to 6 months keeps you motivated. When you hit it, set the next one a bit higher.'],
   ];
   function renderLessons() {

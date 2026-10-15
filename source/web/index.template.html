@@ -193,7 +193,10 @@ nav.tabs button[aria-current="true"] svg { color: var(--accent); }
 @media (min-width: 600px) { .sheet { align-items: center; } .sheet > .card { border-radius: 26px; } }
 @media (prefers-reduced-motion: no-preference) { .sheet:not([hidden]) > .card { animation: up .22s ease-out; } @keyframes up { from { transform: translateY(24px); opacity: .6; } } }
 .addr { font: 600 13px var(--mono); background: var(--raised); border-radius: var(--r-sm); padding: 12px; overflow-wrap: anywhere; }
-#waitBar { position: fixed; left: 0; right: 0; top: 0; z-index: 30; background: var(--accent); color: #fff; text-align: center; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; font-weight: 600; font-size: 14px; }
+#waitBar { position: fixed; left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: 536px; margin: 0 auto; background: var(--raised); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; display: grid; gap: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.55); }
+#waitBar .wb-text { display: grid; gap: 3px; font-size: 14px; } #waitBar .wb-text span { color: var(--muted); font-size: 13.5px; }
+#waitBar .wb-text b { display: flex; align-items: center; gap: 9px; } #waitBar .wb-text b::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+@media (prefers-reduced-motion: no-preference) { #waitBar .wb-text b::before { animation: pulse 1.4s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .25; } } }
 #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); background: #EEF2FA; color: #0A1022; padding: 12px 18px; border-radius: 14px; font-size: 14px; font-weight: 500; width: max-content; max-width: calc(100% - 32px); z-index: 40; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
 body.broken main::before { content: "Safety check failed: this copy of the app does not match the tested code. Do not use it."; display: block; background: var(--bad); color: #fff; padding: 12px; border-radius: var(--r-sm); font-weight: 600; }
 @media (prefers-reduced-motion: no-preference) { .bar > i, .dial .fill { transition: width .6s ease, stroke-dashoffset .9s ease; } }
@@ -258,7 +261,10 @@ ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
 </style>
 </head>
 <body>
-<div id="waitBar" hidden>Open your wallet app and approve the request, then come back here.</div>
+<div id="waitBar" hidden role="status">
+  <div class="wb-text"><b>Approve in your wallet</b><span id="wbSub">Your wallet app should open with the request. It can take a few seconds to show up.</span></div>
+  <div class="row"><button class="btn small" id="wbOpen">Open wallet</button><button class="btn ghost small" id="wbStop" hidden>Stop waiting</button></div>
+</div>
 <main>
   <div class="topbar">
     <div class="brand">
@@ -537,6 +543,7 @@ ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
         <li>Check the coin is right. If the exchange shows the coin's contract, it must end in <b id="exContract"></b>. If it says <b>USDC.e</b> or <b>Bridged USDC</b>, stop: that coin would be stuck forever.</li>
         <li><b>Send a small test first</b>, like $5, and wait for it to show up here.</li>
       </ol>
+      <p class="small caution">Only copy the address from this screen. Never copy it from your wallet's or exchange's history: scammers send tiny amounts from look-alike addresses so a fake one shows up there.</p>
       <div class="exwatch" id="exWatch">Waiting for money to arrive…</div>
       <button class="btn ghost wide" id="exClose">Done</button>
     </div>
