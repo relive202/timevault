@@ -5,6 +5,7 @@
   "description": "Android wrapper for TimeVault. The app's own code is in source/web and is copied into www/ by the build.",
   "dependencies": {
     "@capacitor/android": "7.0.0",
+    "@capacitor/app": "7.0.0",
     "@capacitor/core": "7.0.0",
     "@capacitor/local-notifications": "7.0.0"
   },

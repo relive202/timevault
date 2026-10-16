@@ -59,9 +59,9 @@
   function setAccount(a, c) {
     account = a ? ethers.getAddress(a) : ''; chainId = Number(c || 0);
     const p = $('netPill');
-    document.querySelectorAll('[data-connect]').forEach((b) => { b.textContent = account ? 'Disconnect wallet' : 'Connect wallet'; b.className = account ? 'btn ghost small' : b.dataset.cls; });
+    document.querySelectorAll('[data-connect]').forEach((b) => { b.textContent = account ? 'Disconnect' : 'Connect wallet'; b.className = account ? 'btn ghost small' : b.dataset.cls; });
     $('welcome').hidden = !!viewer(); $('homeMain').hidden = !viewer(); $('copyMine').hidden = !account;
-    p.hidden = !account && !store.get('watch');
+    p.hidden = !(store.get('watch') && !account) && !(account && chainId !== CHAIN_ID); $('connectBtn').hidden = !!account;
     if (!account) { p.textContent = store.get('watch') ? 'Viewing ' + short(store.get('watch')) : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect wallet'; }
     else if (chainId !== CHAIN_ID) { p.textContent = 'Wrong network'; p.className = 'pill warn'; $('connectBtn').textContent = 'Disconnect'; }
     else { p.textContent = short(account); p.className = 'pill ok'; $('connectBtn').textContent = 'Disconnect'; }
@@ -77,7 +77,7 @@
   }
   async function initWc(connectNow) {
     const projectId = store.get('wcid') || BUILT_IN_WC_ID;
-    if (!projectId) { if (connectNow) { show('setup'); document.querySelector('details.advanced').open = true; $('wcId').focus(); toast('This copy of TimeVault needs a WalletConnect Project ID. Add one under Advanced.', 8000); } return; }
+    if (!projectId) { if (connectNow) { go('setup'); document.querySelector('details.advanced').open = true; $('wcId').focus(); toast('This copy of TimeVault needs a WalletConnect Project ID. Add one under Advanced.', 8000); } return; }
     if (!wc) {
       const { EthereumProvider } = window['@walletconnect/ethereum-provider'];
       wc = await EthereumProvider.init({
@@ -98,7 +98,7 @@
     }
     if (wc.session && wc.accounts?.length) { eip = wc; setAccount(wc.accounts[0], wc.chainId); return; }
     if (connectNow) {
-      try { await wc.connect(); eip = wc; $('qrBox').hidden = true; setAccount(wc.accounts[0], wc.chainId); toast('Wallet connected.'); show('home'); }
+      try { await wc.connect(); eip = wc; $('qrBox').hidden = true; setAccount(wc.accounts[0], wc.chainId); toast('Wallet connected.'); go('home'); }
       catch (e) { $('qrBox').hidden = true; toast(nice(e)); }
     }
   }
@@ -233,13 +233,24 @@
   }
 
   // ------------------------------------------------------------------ screens
-  const TABS = ['home', 'new', 'coach', 'setup', 'safety'];
-  document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab)));
+  const TABS = ['home', 'new', 'coach', 'setup', 'safety', 'menu', 'lock'];
+  document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => go(b.dataset.tab)));
+  let page = 'home', depth = 0;
   function show(t) {
     TABS.forEach((x) => { $('tab-' + x).hidden = x !== t; });
-    document.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.tab === t)));
-    store.set('tab', t); window.scrollTo(0, 0);
+    page = t; document.body.dataset.page = t; window.scrollTo(0, 0); onScroll();
   }
+  // every screen is a history step, so the phone's back gesture and the back arrow both go back one screen
+  function go(t) {
+    if (t === 'home') { if (depth > 0) window.history.go(-depth); else show('home'); return; }
+    if (t === page) return;
+    depth += 1; window.history.pushState({ tv: t, d: depth }, ''); show(t);
+  }
+  window.addEventListener('popstate', (e) => { const st = e.state || {}; depth = st.d || 0; show(st.tv || 'home'); });
+  $('backBtn').addEventListener('click', () => { if (depth > 0) window.history.back(); else show('home'); });
+  // the top bar gets a background and shows the total once the big number scrolls away
+  function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 8); document.body.classList.toggle('pastHero', page === 'home' && window.scrollY > 150); }
+  window.addEventListener('scroll', onScroll, { passive: true });
   let toastT;
   function toast(m, ms = 5000) { const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), ms); }
 
@@ -260,6 +271,7 @@
     $('walletLine').textContent = WALLET.USDC !== undefined
       ? num(fmt(WALLET.USDC)) + ' USDC · ' + num(fmt(WALLET.USDT)) + ' USDT · ' + Number(ethers.formatEther(WALLET.ETH)).toFixed(5) + ' ETH for fees'
       : (viewer() ? 'Loading balances…' : '');
+    $('menuWallet').textContent = viewer() ? short(viewer()) + (account ? '' : ' (view only)') : 'Not connected';
     $('gasHint').hidden = !(WALLET.ETH !== undefined && WALLET.ETH < ethers.parseEther('0.0002'));
     for (const o of $('lkToken').options) o.textContent = o.value + (WALLET[o.value] !== undefined ? ' (you have ' + num(fmt(WALLET[o.value])) + ')' : '');
     renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones();
@@ -294,11 +306,13 @@
   $('cheerOk').addEventListener('click', () => { $('cheer').hidden = true; checkMilestones(); });
 
   let countFrom = null, countRaf = 0;
+  const moneyHTML = (v) => { const m = money(v), i = m.lastIndexOf('.'); return m.slice(0, i) + '<span class="cents">' + m.slice(i) + '</span>'; };
   function countTo(el, v) { // the total glides to its new value instead of jumping
+    $('miniTotal').textContent = money(v);
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (countFrom === null || reduce || countFrom === v) { countFrom = v; el.textContent = money(v); return; }
+    if (countFrom === null || reduce || countFrom === v) { countFrom = v; el.innerHTML = moneyHTML(v); return; }
     const a = countFrom, t0 = performance.now(), dur = 700; countFrom = v; cancelAnimationFrame(countRaf);
-    const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = money(a + (v - a) * e); if (k < 1) countRaf = requestAnimationFrame(step); };
+    const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.innerHTML = moneyHTML(a + (v - a) * e); if (k < 1) countRaf = requestAnimationFrame(step); };
     countRaf = requestAnimationFrame(step);
   }
 
@@ -323,74 +337,84 @@
   const POT_COLORS = [['#7C5CFF', '#4F8BFF'], ['#FF6FA8', '#FF9F6B'], ['#1FC7B6', '#52E08F'], ['#FFB547', '#FF7A59'], ['#4F8BFF', '#22C7E8'], ['#B467FF', '#FF6FCF']];
   const ICON_GOAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="currentColor"/></svg>';
   const ICON_DATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>';
+  let viewAddr = ''; // the lock shown on its own screen
+  function openLock(a) { viewAddr = a; renderLocks(); go('lock'); }
+  const potStyle = (l) => { const [g1, g2] = POT_COLORS[[...l.addr.toLowerCase()].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7) % POT_COLORS.length]; return '--g1:' + g1 + ';--g2:' + g2; };
+  const lockName = (l) => (l.name ? esc(l.name) : (l.kind === 'goal' ? 'Savings goal' : 'Date lock'));
   function renderLocks() {
     const box = $('locks'); const who = viewer();
     if (!who) { box.innerHTML = '<div class="empty">Connect your wallet to see your savings.</div>'; return; }
-    const openAddrs = new Set([...box.querySelectorAll('article[data-addr] details[open]')].map((d) => d.closest('article').dataset.addr));
-    if (!loadedOnce && !LOCKS.length && getList(who).length) { box.innerHTML = '<div class="lock skel"></div><div class="lock skel"></div>'; return; }
+    if (!loadedOnce && !LOCKS.length && getList(who).length) { box.innerHTML = '<div class="group"><div class="pot-row skel"></div><div class="pot-row skel"></div></div>'; return; }
     const rej = [...rejected.entries()];
-    if (!LOCKS.length) {
-      box.innerHTML = '<div class="empty"><b>No locks yet.</b><br>Tap <b>New lock</b> below to start saving.<br><span class="small">Made locks before on another phone? Tap <b>Find my locks</b>.</span></div>';
-    } else box.innerHTML = '';
     const now = Date.now() / 1000;
-    const finished = [];
-    for (const l of LOCKS) {
-      const s = lockState(l); const g = l.kind === 'goal';
-      if (isFinished(l)) { finished.push(l); continue; }
-      const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
-      const el = document.createElement('article'); el.className = 'lock'; el.dataset.addr = l.addr;
-      const [g1, g2] = POT_COLORS[parseInt(l.addr.slice(2, 6), 16) % POT_COLORS.length]; el.style.setProperty('--g1', g1); el.style.setProperty('--g2', g2);
-      el.innerHTML =
-        '<div class="lock-top"><span class="pot-ico" aria-hidden="true">' + (g ? ICON_GOAL : ICON_DATE) + '</span><div class="pot-title"><b>' + (l.name ? esc(l.name) : (g ? 'Savings goal' : 'Date lock')) + '</b><span>' + (g ? 'Opens at ' + num(fmt(l.goal)) + ' ' + l.sym : 'Opens ' + dateStr(l.releaseTime)) + '</span></div>' +
-        '<span class="state ' + s.cls + '">' + s.label + '</span></div>' +
-        '<div class="lock-amt">' + money(fmt(l.balance)) + (g ? ' <span class="of">of ' + money(fmt(l.goal)).replace(/\.00$/, '') + '</span>' : '') + '</div>' +
-        (s.empty && s.timeUp ? '' : '<div class="bar' + (g ? ' goalbar' : '') + '" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div>') +
-        '<div class="kv">' +
-          (g ? '<div><span class="label">To go</span>' + (s.goalHit ? 'Done' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym) + '</div><div><span class="label">Backup date</span>' + dateStr(l.releaseTime) + (s.timeUp ? '' : ' <span class="muted small">(' + untilStr(l.releaseTime) + ')</span>') + '</div>'
-             : '<div><span class="label">Unlocks</span>' + dateStr(l.releaseTime) + (s.timeUp ? '' : ' <span class="muted small">(' + untilStr(l.releaseTime) + ')</span>') + '</div>') +
-          '<div><span class="label">Pays out to</span><span class="mono">' + short(l.beneficiary) + (account && account === l.beneficiary ? ' (you)' : '') + '</span></div>' +
-          '<div><span class="label">Safety check</span><span class="ok-text">✓ Genuine lock</span></div>' +
-        '</div>' +
-        (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this money is free. Withdraw it and start a new goal.</p>' : '') + (g && s.goalHit && !s.empty && !s.timeUp ? '<p class="note">You did it! Withdraw your savings whenever you like.</p>' : '') +
-        '<details><summary>Details</summary><p class="small caution">Only ever send ' + l.sym + ' on the Arbitrum One network to this address, using Add money. Any other coin or network sent here is lost forever.</p><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div>' + (l.balance === 0n ? '<button class="btn ghost small" data-hide="' + l.addr + '" style="margin-top:10px">Hide this lock</button>' : '') + '</details>';
-      if (account && account === l.beneficiary) {
-        const row = document.createElement('div'); row.className = 'row';
-        if (s.ready) {
-          const r = document.createElement('button'); r.className = 'btn'; r.textContent = 'Withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' to my wallet';
-          r.onclick = () => run(r, async () => { await ensureArbitrum(); await guard.release({ lock: l.addr }); toast('Done! The money is back in your wallet.'); });
-          row.appendChild(r);
-        }
-        if (!s.timeUp) {
-          const d = document.createElement('button'); d.className = 'btn brass'; d.textContent = 'Add money';
-          d.onclick = () => openDeposit(l); row.appendChild(d);
-        }
-        if (row.children.length) el.appendChild(row);
-      }
-      box.appendChild(el);
-    }
-    if (finished.length) {
-      if (!LOCKS.some((l) => !isFinished(l))) box.innerHTML = '<div class="empty"><b>No active locks.</b><br>Tap <b>New lock</b> below to start your next goal.</div>';
-      const f = document.createElement('details'); f.className = 'rejected';
-      f.innerHTML = '<summary>Finished (' + finished.length + ')</summary>' + finished.map((l) => '<div class="small">' + esc(l.name || (l.kind === 'goal' ? num(fmt(l.goal)) + ' ' + l.sym + ' goal' : l.sym + ' lock')) + ': ' + (Date.now() / 1000 >= l.releaseTime ? 'ended ' + dateStr(l.releaseTime) : 'withdrawn') + ', nothing left inside. <a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">View</a> · <a href="#" data-hide="' + l.addr + '">Hide</a></div>').join('');
-      box.appendChild(f);
-    }
-    openAddrs.forEach((a) => { const d = box.querySelector('article[data-addr="' + a + '"] details'); if (d) d.open = true; });
-    box.querySelectorAll('[data-hide]').forEach((b) => b.addEventListener('click', (ev) => {
+    const finished = LOCKS.filter(isFinished), active = LOCKS.filter((l) => !isFinished(l));
+    let html = '';
+    if (!LOCKS.length) html = '<div class="empty"><b>No locks yet.</b><br>Tap <b>New lock</b> above to start saving.</div>';
+    else if (!active.length) html = '<div class="empty"><b>No active locks.</b><br>Tap <b>New lock</b> above to start your next goal.</div>';
+    else html = '<div class="group">' + active.map((l) => {
+      const s = lockState(l), g = l.kind === 'goal';
+      return '<button class="pot-row" data-open="' + l.addr + '" style="' + potStyle(l) + '"><span class="pot-ico" aria-hidden="true">' + (g ? ICON_GOAL : ICON_DATE) + '</span>' +
+        '<span class="pot-mid"><b>' + lockName(l) + '</b><span class="' + s.cls + '">' + s.label + '</span></span>' +
+        '<span class="pot-end"><b>' + money(fmt(l.balance)) + '</b><span>' + (g ? 'of ' + money(fmt(l.goal)).replace(/\.00$/, '') : l.sym) + '</span></span></button>';
+    }).join('') + '</div>';
+    if (finished.length) html += '<details class="rejected"><summary>Finished (' + finished.length + ')</summary>' + finished.map((l) => '<div class="small">' + esc(l.name || (l.kind === 'goal' ? num(fmt(l.goal)) + ' ' + l.sym + ' goal' : l.sym + ' lock')) + ': ' + (now >= l.releaseTime ? 'ended ' + dateStr(l.releaseTime) : 'withdrawn') + ', nothing left inside. <a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">View</a> · <a href="#" data-hide="' + l.addr + '">Hide</a></div>').join('') + '</details>';
+    if (rej.length) html += '<details class="rejected"><summary>' + rej.length + ' address' + (rej.length > 1 ? 'es' : '') + ' hidden: not a genuine TimeVault lock for this wallet</summary>' + rej.map(([a, why]) => '<div class="small"><span class="mono">' + esc(a) + '</span><br>' + esc(why) + '</div>').join('') + '</details>';
+    const finOpen = !!box.querySelector('details.rejected[open]');
+    box.innerHTML = html;
+    if (finOpen) { const d = box.querySelector('details.rejected'); if (d) d.open = true; }
+    box.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openLock(b.dataset.open)));
+    bindHide(box);
+    renderLockView();
+  }
+  function bindHide(root) {
+    root.querySelectorAll('[data-hide]').forEach((b) => b.addEventListener('click', (ev) => {
       ev.preventDefault(); const w = viewer(); if (!w) return;
       const lst = store.json(hiddenKey(w), []); lst.push(b.dataset.hide.toLowerCase()); store.setJson(hiddenKey(w), [...new Set(lst)]);
-      toast('Hidden. You can show it again in Settings.'); refresh();
+      toast('Hidden. You can show it again in Settings.'); if (page === 'lock') go('home'); refresh();
     }));
-    if (rej.length) {
-      const r = document.createElement('details'); r.className = 'rejected';
-      r.innerHTML = '<summary>' + rej.length + ' address' + (rej.length > 1 ? 'es' : '') + ' hidden: not a genuine TimeVault lock for this wallet</summary>' + rej.map(([a, why]) => '<div class="small"><span class="mono">' + esc(a) + '</span><br>' + esc(why) + '</div>').join('');
-      box.appendChild(r);
-    }
+  }
+  const ACT_ADD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
+  const ACT_EX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h13l-4-4M20 14H7l4 4"/></svg>';
+  const ACT_OUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+  const ACT_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6.5a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></svg>';
+  function renderLockView() {
+    const v = $('lockView'); const l = LOCKS.find((x) => x.addr === viewAddr);
+    if (!l) { v.innerHTML = '<div class="empty">This lock is no longer in your list.</div>'; return; }
+    const detOpen = !!v.querySelector('details[open]');
+    const s = lockState(l), g = l.kind === 'goal', now = Date.now() / 1000;
+    const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
+    const mine = account && account === l.beneficiary;
+    const row = (k, val) => '<div class="irow"><span>' + k + '</span><b>' + val + '</b></div>';
+    v.setAttribute('style', potStyle(l));
+    v.innerHTML =
+      '<div class="lv-head"><span class="pot-ico" aria-hidden="true">' + (g ? ICON_GOAL : ICON_DATE) + '</span><h1>' + lockName(l) + '</h1>' +
+        '<div class="big">' + moneyHTML(fmt(l.balance)) + '</div><span class="label">' + (g ? 'of ' + money(fmt(l.goal)).replace(/\.00$/, '') + ' ' + l.sym + ' goal' : l.sym + ' locked until ' + dateStr(l.releaseTime)) + '</span></div>' +
+      '<div class="quick" id="lvActs"></div>' +
+      (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this money is free. Withdraw it and start a new goal.</p>' : '') + (g && s.goalHit && !s.empty && !s.timeUp ? '<p class="note">You did it! Withdraw your savings whenever you like.</p>' : '') +
+      (s.empty && s.timeUp ? '' : '<div class="group pad"><div class="prog-top"><b class="' + s.cls + '">' + s.label + '</b><span>' + (g ? (s.goalHit ? 'Goal reached' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym + ' to go') : (s.timeUp ? 'Unlocked' : untilStr(l.releaseTime) + ' left')) + '</span></div><div class="bar" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div></div>') +
+      '<div class="group">' +
+        (g ? row('Opens at', num(fmt(l.goal)) + ' ' + l.sym) + row('Backup date', dateStr(l.releaseTime)) : row('Opens on', dateStr(l.releaseTime))) +
+        row('Pays out to', '<span class="mono">' + short(l.beneficiary) + '</span>' + (mine ? ' (you)' : '')) +
+        row('Coin', l.sym + ' on Arbitrum One') +
+        row('Safety check', '<span class="ok-text">✓ Genuine lock</span>') +
+      '</div>' +
+      '<details class="group pad"><summary>Lock address and details</summary><p class="small caution">Only ever send ' + l.sym + ' on the Arbitrum One network to this address, using Add money. Any other coin or network sent here is lost forever.</p><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div>' + (l.balance === 0n ? '<button class="btn ghost small" data-hide="' + l.addr + '" style="margin-top:10px">Hide this lock</button>' : '') + '</details>';
+    if (detOpen) v.querySelector('details').open = true;
+    const acts = $('lvActs');
+    const act = (icon, label, fn) => { const b = document.createElement('button'); b.innerHTML = '<span class="qi">' + icon + '</span><span class="lbl">' + label + '</span>'; b.onclick = () => fn(b); acts.appendChild(b); };
+    if (mine && !s.timeUp) act(ACT_ADD, 'Add money', () => openDeposit(l));
+    if (mine && !s.timeUp) act(ACT_EX, 'From exchange', () => { openDeposit(l); depTab(true); });
+    if (mine && s.ready) act(ACT_OUT, 'Withdraw', (b) => run(b, async () => { await ensureArbitrum(); await guard.release({ lock: l.addr }); toast('Done! The money is back in your wallet.'); }));
+    act(ACT_COPY, 'Copy address', async () => { try { await navigator.clipboard.writeText(l.addr); toast('Lock address copied. Only send ' + l.sym + ' on Arbitrum One to it.', 7000); } catch { toast('Open "Lock address and details" to copy it.'); } });
+    acts.style.gridTemplateColumns = 'repeat(' + acts.children.length + ', 1fr)';
+    bindHide(v);
   }
 
+
   async function run(btn, fn) {
-    const t = btn.textContent; btn.disabled = true; btn.textContent = 'Working…';
+    const lbl = btn.querySelector('.lbl') || btn; const t = lbl.textContent; btn.disabled = true; lbl.textContent = 'Working…';
     const stopped = new Promise((_, rej) => { stopWait = () => rej(new TV.Refused('Stopped waiting. If you still approve it in your wallet, it can go through, so check your savings before trying again.')); });
-    try { await Promise.race([fn(), stopped]); } catch (e) { toast(nice(e), 10000); } finally { stopWait = null; waiting(false); btn.disabled = false; btn.textContent = t; historyAt = 0; lastSig = ''; refresh(); }
+    try { await Promise.race([fn(), stopped]); } catch (e) { toast(nice(e), 10000); } finally { stopWait = null; waiting(false); btn.disabled = false; lbl.textContent = t; historyAt = 0; lastSig = ''; refresh(); }
   }
 
   // ------------------------------------------------------------------ deposit sheet
@@ -515,7 +539,7 @@
       toast(g ? 'Your savings goal is ready!' : 'Locked until ' + dateStr(ts) + '.', 8000);
       $('lkAmount').value = ''; $('lkAgree').checked = false; $('lkName').value = '';
       if (g && !store.get('plan.target')) store.set('plan.target', L.addr);
-      show('home');
+      go('home');
     });
   });
 
@@ -635,10 +659,10 @@
     if (!account) return toast('Connect your wallet first.');
     const mine = LOCKS.filter((l) => l.beneficiary === account && !isFinished(l) && Date.now() / 1000 < l.releaseTime);
     if (mine.length === 1) return openDeposit(mine[0]);
-    if (!mine.length) { show('new'); return toast('Make a lock first, then add money to it.'); }
+    if (!mine.length) { go('new'); return toast('Make a lock first, then add money to it.'); }
     $('locks').scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('Pick which savings to add money to.');
   });
-  function bindGo(root) { root.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => show(b.dataset.go))); }
+  function bindGo(root) { root.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => go(b.dataset.go))); }
   $('icsBtn').addEventListener('click', () => {
     const p = PLAN(); if (!planReady(p)) return toast('Fill in your payday plan first.');
     const [y, m, d] = p.next.split('-');
@@ -839,7 +863,7 @@
   const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
   if (!p0.next) { const d = new Date(); d.setDate(d.getDate() + 1); $('cNext').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); }
   renderLessons(); codeFingerprints(); applyType();
-  show(TABS.includes(store.get('tab')) ? store.get('tab') : 'home');
+  window.history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
   setAccount('');
   setTimeout(() => initWc(false).catch(() => {}), 400); // paint first, then reconnect the wallet
   if (LN && store.get('notify') === '1') scheduleNotifications(false);

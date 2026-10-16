@@ -43,7 +43,7 @@ out = os.path.join(D, 'dist'); os.makedirs(out, exist_ok=True)
 open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(index)
 open(os.path.join(out, 'tests.html'), 'w', encoding='utf-8').write(tpage)
 json.dump({'name': 'TimeVault', 'short_name': 'TimeVault', 'description': 'Lock your savings until you reach your goal.', 'start_url': './', 'scope': './',
-           'display': 'standalone', 'background_color': '#0E0E18', 'theme_color': '#0E0E18',
+           'display': 'standalone', 'background_color': '#0F0F12', 'theme_color': '#0F0F12',
            'icons': [{'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png'}, {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png'},
                      {'src': 'icon-512-maskable.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'}]},
           open(os.path.join(out, 'manifest.webmanifest'), 'w'), indent=2)

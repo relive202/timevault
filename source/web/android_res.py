@@ -3,7 +3,7 @@
 import glob, os, sys
 from PIL import Image, ImageDraw
 
-BRASS = (108, 116, 255, 255); DARK = (14, 14, 24, 255); WHITE = (255, 255, 255, 255)
+BRASS = (108, 116, 255, 255); DARK = (15, 15, 18, 255); WHITE = (255, 255, 255, 255)
 
 
 def lock_symbol(d, c, R, S):
