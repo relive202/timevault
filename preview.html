@@ -1287,12 +1287,12 @@ const TV = (() => {
   }
   // every screen is a history step, so the phone's back gesture and the back arrow both go back one screen
   function go(t) {
-    if (t === 'home') { if (depth > 0) history.go(-depth); else show('home'); return; }
+    if (t === 'home') { if (depth > 0) window.history.go(-depth); else show('home'); return; }
     if (t === page) return;
-    depth += 1; history.pushState({ tv: t, d: depth }, ''); show(t);
+    depth += 1; window.history.pushState({ tv: t, d: depth }, ''); show(t);
   }
   window.addEventListener('popstate', (e) => { const st = e.state || {}; depth = st.d || 0; show(st.tv || 'home'); });
-  $('backBtn').addEventListener('click', () => { if (depth > 0) history.back(); else show('home'); });
+  $('backBtn').addEventListener('click', () => { if (depth > 0) window.history.back(); else show('home'); });
   // the top bar gets a background and shows the total once the big number scrolls away
   function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 8); document.body.classList.toggle('pastHero', page === 'home' && window.scrollY > 150); }
   window.addEventListener('scroll', onScroll, { passive: true });
@@ -1384,7 +1384,7 @@ const TV = (() => {
   const ICON_DATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>';
   let viewAddr = ''; // the lock shown on its own screen
   function openLock(a) { viewAddr = a; renderLocks(); go('lock'); }
-  const potStyle = (l) => { const [g1, g2] = POT_COLORS[parseInt(l.addr.slice(2, 6), 16) % POT_COLORS.length]; return '--g1:' + g1 + ';--g2:' + g2; };
+  const potStyle = (l) => { const [g1, g2] = POT_COLORS[[...l.addr.toLowerCase()].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7) % POT_COLORS.length]; return '--g1:' + g1 + ';--g2:' + g2; };
   const lockName = (l) => (l.name ? esc(l.name) : (l.kind === 'goal' ? 'Savings goal' : 'Date lock'));
   function renderLocks() {
     const box = $('locks'); const who = viewer();
@@ -1908,7 +1908,7 @@ const TV = (() => {
   const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
   if (!p0.next) { const d = new Date(); d.setDate(d.getDate() + 1); $('cNext').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); }
   renderLessons(); codeFingerprints(); applyType();
-  history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
+  window.history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
   setAccount('');
   setTimeout(() => initWc(false).catch(() => {}), 400); // paint first, then reconnect the wallet
   if (LN && store.get('notify') === '1') scheduleNotifications(false);
