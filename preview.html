@@ -49,7 +49,8 @@ a { color: var(--accent); text-decoration: none; }
 .aurora { position: absolute; z-index: 0; top: 0; left: 0; right: 0; height: 520px; pointer-events: none;
   background: radial-gradient(70% 55% at 50% 0%, rgba(58,72,170,.55), rgba(58,72,170,0) 70%), radial-gradient(45% 35% at 85% 10%, rgba(110,80,220,.28), rgba(110,80,220,0) 70%);
   transition: opacity .35s ease; }
-body:not([data-page="home"]) .aurora { opacity: 0; }
+body:not([data-page="home"]):not([data-page="lock"]) .aurora { opacity: 0; }
+body[data-page="menu"] .top-end [data-tab="menu"] { visibility: hidden; }
 
 /* top bar: small logo left, menu right; sticks and shows the total once you scroll */
 .topbar { position: sticky; top: 0; z-index: 10; margin-inline: -16px; padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 16px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-height: 56px; transition: background-color .2s ease, box-shadow .2s ease; }
@@ -72,7 +73,7 @@ body.pastHero .mini { opacity: 1; transform: none; }
 .page-title { font-size: 2rem; font-weight: 700; letter-spacing: -.035em; margin-top: 2px; }
 
 /* the balance */
-.hero { display: grid; justify-items: center; text-align: center; padding: 34px 0 6px; }
+.hero { display: grid; justify-items: center; text-align: center; padding: 44px 0 8px; }
 .big { font: 700 clamp(2.9rem, 14vw, 3.5rem)/1.02 var(--display); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .big .cents { font-size: .62em; color: rgba(245,245,247,.55); letter-spacing: -.02em; }
 .hero .label { margin-top: 8px; display: inline-flex; align-items: center; color: rgba(245,245,247,.62); }
@@ -129,7 +130,7 @@ section { display: grid; gap: 16px; }
 .prog-top b { font-weight: 600; color: var(--ink); } .prog-top b.open { color: var(--mint); }
 .irow { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; font-size: 14.5px; }
 .irow + .irow { box-shadow: inset 0 1px 0 var(--line-soft); }
-.irow span { color: var(--muted); } .irow b { font-weight: 550; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.irow > span { color: var(--muted); } .irow b { font-weight: 550; text-align: right; min-width: 0; overflow-wrap: anywhere; }
 .bar { height: 8px; background: rgba(255,255,255,.07); border-radius: 99px; overflow: hidden; }
 .bar > i { display: block; height: 100%; min-width: 8px; border-radius: 99px; background: linear-gradient(90deg, var(--g1), var(--g2)); }
 .note { font-size: 13.5px; color: var(--ink); background: var(--mint-soft); border-radius: var(--r-sm); padding: 11px 13px; }
@@ -464,7 +465,7 @@ button, .pill { -webkit-user-select: none; user-select: none; touch-action: mani
     <div class="group">
       <button class="mrow" data-tab="new"><span class="mico" style="--g1:#1FC7B6;--g2:#52E08F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="mmid"><b>New lock</b><span>Start a savings goal or a date lock</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Payday plan</b><span>Your plan, streak and money lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
-      <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected, check my locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
     <div class="group">
@@ -1102,7 +1103,7 @@ const TV = (() => {
   function setAccount(a, c) {
     account = a ? ethers.getAddress(a) : ''; chainId = Number(c || 0);
     const p = $('netPill');
-    document.querySelectorAll('[data-connect]').forEach((b) => { b.textContent = account ? 'Disconnect wallet' : 'Connect wallet'; b.className = account ? 'btn ghost small' : b.dataset.cls; });
+    document.querySelectorAll('[data-connect]').forEach((b) => { b.textContent = account ? 'Disconnect' : 'Connect wallet'; b.className = account ? 'btn ghost small' : b.dataset.cls; });
     $('welcome').hidden = !!viewer(); $('homeMain').hidden = !viewer(); $('copyMine').hidden = !account;
     p.hidden = !(store.get('watch') && !account) && !(account && chainId !== CHAIN_ID); $('connectBtn').hidden = !!account;
     if (!account) { p.textContent = store.get('watch') ? 'Viewing ' + short(store.get('watch')) : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect wallet'; }
