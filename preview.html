@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-aG0yrA7VDbjp/BKeLdMRm8NwSdiLoGIn73Wh7eBq9bg=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#0E0E18">
+<meta name="theme-color" content="#0F0F12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TimeVault">
 <link rel="manifest" href="manifest.webmanifest">
@@ -13,127 +13,147 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>TimeVault</title>
 <style>
-/* TimeVault visual system: aurora banking. One bold thing: the aurora balance hero; every lock is a colour-coded pot. Everything else stays quiet. */
+/* TimeVault visual system: quiet hardware-wallet style. Neutral greys, one soft glow behind the balance, colour only in the lock icons. */
 @font-face { font-family: "Onest"; src: url(https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
 :root {
-  --bg: #0E0E18; --surface: #17172A; --raised: #222238; --line: #2D2D48; --line-soft: #222237;
-  --ink: #F7F6FF; --muted: #A3A2C2; --faint: #6E6D90;
-  --accent: #8B7CFF; --accent-soft: rgba(139,124,255,.16);
-  --mint: #45E0A6; --mint-soft: rgba(69,224,166,.13);
+  --bg: #0F0F12; --surface: #1C1C20; --raised: #2A2A2F; --line: #34343A; --line-soft: #26262B;
+  --ink: #F5F5F7; --muted: #8E8E96; --faint: #5E5E66;
+  --accent: #5B8CFF; --accent-soft: rgba(91,140,255,.16);
+  --mint: #3DD68C; --mint-soft: rgba(61,214,140,.13);
   --amber: #FFC266; --amber-soft: rgba(255,194,102,.12);
-  --bad: #FF6B7D; --bad-soft: rgba(255,107,125,.13);
+  --bad: #FF6B6B; --bad-soft: rgba(255,107,107,.13);
   --brass: var(--accent); --brass-soft: var(--accent-soft); --ok: var(--mint); --ok-soft: var(--mint-soft);
   --g1: #7C5CFF; --g2: #4F8BFF;
   --body: "Onest", system-ui, -apple-system, Roboto, "Segoe UI", sans-serif;
   --display: var(--body);
   --mono: ui-monospace, "SF Mono", "Roboto Mono", Menlo, Consolas, monospace;
-  --r-xl: 28px; --r-lg: 24px; --r-md: 18px; --r-sm: 14px;
+  --r-xl: 28px; --r-lg: 20px; --r-md: 16px; --r-sm: 13px;
+  --ease: cubic-bezier(.2,.8,.2,1);
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; position: relative; overflow-x: hidden; }
-main { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: calc(10px + env(safe-area-inset-top, 0px)) calc(116px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 22px; }
+main { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 20px; }
 h1, h2, h3 { font-family: var(--display); font-weight: 650; margin: 0; letter-spacing: -.02em; text-wrap: balance; }
-h1 { font-size: 1.15rem; } h2 { font-size: 1.3rem; } h3 { font-size: 1rem; }
+h1 { font-size: 1.15rem; } h2 { font-size: 1.2rem; } h3 { font-size: 1rem; }
 p { margin: 0; }
 a { color: var(--accent); text-decoration: none; }
 .muted { color: var(--muted); } .small { font-size: 13.5px; }
 .mono { font-family: var(--mono); font-size: .9em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.label { font: 500 13px var(--body); color: var(--muted); display: block; }
+.label { font: 500 13.5px var(--body); color: var(--muted); display: block; }
 .ok-text { color: var(--mint); } .warn { color: var(--bad); } .caution { color: var(--amber); }
 
-/* aurora behind the top of the screen (static: no blur, no animation, cheap to draw) */
-.aurora { position: absolute; z-index: 0; top: 0; left: 0; right: 0; height: 560px; pointer-events: none;
-  background:
-    radial-gradient(55% 42% at 18% 8%, rgba(124,92,255,.62), rgba(124,92,255,0) 72%),
-    radial-gradient(48% 40% at 88% 4%, rgba(46,120,255,.55), rgba(46,120,255,0) 72%),
-    radial-gradient(60% 36% at 62% 40%, rgba(255,111,168,.22), rgba(255,111,168,0) 72%),
-    radial-gradient(50% 34% at 10% 46%, rgba(31,199,182,.20), rgba(31,199,182,0) 72%);
-  -webkit-mask-image: linear-gradient(#000 45%, transparent); mask-image: linear-gradient(#000 45%, transparent); transition: opacity .3s ease; }
-body:has(#tab-home[hidden]) .aurora { opacity: .35; }
+/* one soft glow behind the top of the home screen */
+.aurora { position: absolute; z-index: 0; top: 0; left: 0; right: 0; height: 520px; pointer-events: none;
+  background: radial-gradient(70% 55% at 50% 0%, rgba(58,72,170,.55), rgba(58,72,170,0) 70%), radial-gradient(45% 35% at 85% 10%, rgba(110,80,220,.28), rgba(110,80,220,0) 70%);
+  transition: opacity .35s ease; }
+body:not([data-page="home"]) .aurora { opacity: 0; }
 
-/* top bar */
-.topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 48px; }
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand svg { width: 32px; height: 32px; }
-.brand h1 { font-weight: 700; letter-spacing: -.03em; font-size: 1.2rem; }
-.topbar .row { flex-wrap: nowrap; min-width: 0; }
-main > *, section > * { min-width: 0; }
-.pill { font: 500 12.5px var(--body); padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.09); color: var(--ink); white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* top bar: small logo left, menu right; sticks and shows the total once you scroll */
+.topbar { position: sticky; top: 0; z-index: 10; margin-inline: -16px; padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 16px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-height: 56px; transition: background-color .2s ease, box-shadow .2s ease; }
+body.scrolled .topbar { background: rgba(15,15,18,.96); box-shadow: 0 1px 0 var(--line-soft); }
+.brand { display: flex; align-items: center; grid-column: 1; grid-row: 1; }
+.brand svg { width: 26px; height: 26px; display: block; }
+#backBtn { grid-column: 1; grid-row: 1; margin-left: -8px; }
+body[data-page="home"] #backBtn, body:not([data-page="home"]) .brand { display: none; }
+.mini { grid-column: 2; text-align: center; font: 650 15px var(--body); font-variant-numeric: tabular-nums; opacity: 0; transform: translateY(6px); transition: opacity .2s ease, transform .2s var(--ease); }
+body.pastHero .mini { opacity: 1; transform: none; }
+.top-end { grid-column: 3; display: flex; gap: 6px; align-items: center; min-width: 0; }
+.iconbtn { width: 40px; height: 40px; border-radius: 50%; border: 0; background: none; color: var(--ink); display: grid; place-items: center; cursor: pointer; transition: background .15s; flex: none; }
+.iconbtn svg { width: 22px; height: 22px; }
+.iconbtn:active { background: rgba(255,255,255,.1); }
+.pill { font: 500 12.5px var(--body); padding: 7px 12px; border-radius: 999px; background: var(--surface); color: var(--ink); white-space: nowrap; display: inline-flex; align-items: center; gap: 7px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; }
-.pill.ok::before { background: var(--mint); box-shadow: 0 0 0 3px var(--mint-soft); }
+.pill.ok::before { background: var(--mint); }
 .pill.warn { color: var(--amber); } .pill.warn::before { background: var(--amber); }
 #connectBtn { white-space: nowrap; }
+.page-title { font-size: 2rem; font-weight: 700; letter-spacing: -.035em; margin-top: 2px; }
 
-/* the balance hero */
-.hero { display: grid; justify-items: center; text-align: center; padding: 18px 0 4px; }
-.hero .label { color: rgba(247,246,255,.75); font-size: 14px; display: inline-flex; align-items: center; }
-.big { font: 700 clamp(2.9rem, 14vw, 3.7rem)/1.02 var(--display); letter-spacing: -.045em; font-variant-numeric: tabular-nums; margin-top: 6px; }
-.hero-sub { color: rgba(247,246,255,.75); font-size: 14.5px; margin-top: 8px; }
-.hero-sub b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-.goal-chip { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; padding: 7px 14px 7px 8px; border-radius: 999px; background: rgba(255,255,255,.1); font-size: 13.5px; color: rgba(247,246,255,.8); }
-.goal-chip b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
-.goal-chip svg { width: 22px; height: 22px; display: block; }
-.dial .ticks { display: none; }
-.dial .track { fill: none; stroke: rgba(255,255,255,.18); stroke-width: 16; }
-.dial .fill { fill: none; stroke: var(--mint); stroke-width: 16; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 60px 60px; }
-.quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; margin-top: 26px; }
-.quick button { background: none; border: 0; padding: 0; color: var(--ink); font: 500 12.5px var(--body); display: grid; justify-items: center; gap: 8px; cursor: pointer; }
-.quick .qi { width: 54px; height: 54px; border-radius: 50%; background: rgba(255,255,255,.12); display: grid; place-items: center; transition: background .15s, transform .1s; }
-.quick .qi svg { width: 24px; height: 24px; }
-.quick button:first-child .qi { background: var(--ink); color: #14142A; }
-.quick button:active .qi { transform: scale(.93); }
-.quick button:hover .qi { background: rgba(255,255,255,.18); } .quick button:first-child:hover .qi { background: #fff; }
+/* the balance */
+.hero { display: grid; justify-items: center; text-align: center; padding: 34px 0 6px; }
+.big { font: 700 clamp(2.9rem, 14vw, 3.5rem)/1.02 var(--display); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.big .cents { font-size: .62em; color: rgba(245,245,247,.55); letter-spacing: -.02em; }
+.hero .label { margin-top: 8px; display: inline-flex; align-items: center; color: rgba(245,245,247,.62); }
+.hero-sub { color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+.hero-sub b { color: rgba(245,245,247,.85); font-weight: 600; font-variant-numeric: tabular-nums; }
+.quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 100%; max-width: 330px; margin: 30px auto 0; }
+.quick button { background: none; border: 0; padding: 0; color: var(--ink); font: 500 13px var(--body); display: grid; justify-items: center; gap: 9px; cursor: pointer; }
+.quick .qi { width: 52px; height: 52px; border-radius: 50%; background: var(--raised); display: grid; place-items: center; transition: background .15s, transform .12s var(--ease); }
+.quick .qi svg { width: 22px; height: 22px; }
+.quick button:active .qi { transform: scale(.92); background: #36363C; }
+.quick button:disabled { opacity: .45; }
 .quick button:focus-visible { outline: none; } .quick button:focus-visible .qi { outline: 2px solid var(--accent); outline-offset: 3px; }
-#walletLine { text-align: center; color: var(--faint); font-size: 12.5px; margin-top: -8px; }
 
-/* cards & sections */
+/* cards & grouped lists */
 .card { background: var(--surface); border-radius: var(--r-lg); padding: 20px; display: grid; gap: 16px; }
-section { display: grid; gap: 18px; }
+section { display: grid; gap: 16px; }
 .section-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-.section-head h2 { display: flex; align-items: center; gap: 9px; }
-.count { font: 600 12.5px var(--body); background: var(--raised); color: var(--muted); border-radius: 999px; padding: 2px 9px; letter-spacing: 0; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.group { background: var(--surface); border-radius: var(--r-lg); overflow: hidden; display: grid; }
+.group.pad { padding: 16px; gap: 12px; }
 
 /* payday card */
-#today > div { border-radius: var(--r-lg); padding: 18px 20px; display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--surface); }
-#today b { display: block; font: 650 1.08rem var(--display); letter-spacing: -.01em; }
-#today span:not(.label):not(.big-check) { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
-.today-due { background: linear-gradient(135deg, rgba(139,124,255,.24), rgba(139,124,255,.06) 70%), var(--surface) !important; }
-.today-ok { justify-content: flex-start !important; }
-.today-empty { flex-direction: column; align-items: flex-start !important; }
-.big-check { width: 40px; height: 40px; border-radius: 50%; background: var(--mint); color: #05291C; display: grid; place-items: center; font-size: 1.1rem; font-weight: 800; flex: none; }
+#today > div { border-radius: var(--r-lg); padding: 16px; display: grid; gap: 14px; background: var(--surface); }
+#today b { display: block; font: 600 15.5px var(--display); }
+#today .label { font-size: 13px; }
+#today span:not(.label):not(.big-check) { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+#today .btn { width: 100%; background: var(--raised); color: var(--ink); }
+.today-ok { display: flex !important; align-items: center; gap: 14px !important; }
+.big-check { width: 38px; height: 38px; border-radius: 50%; background: var(--mint); color: #05291C; display: grid; place-items: center; font-size: 1.05rem; font-weight: 800; flex: none; }
 
-/* locks are pots: each has its own colour pair (--g1, --g2) set by the app */
-.ledger { display: grid; gap: 14px; }
-.lock { position: relative; overflow: hidden; background: var(--surface); background: radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--g1) 22%, transparent), transparent 70%), var(--surface); border-radius: var(--r-lg); padding: 20px; display: grid; gap: 16px; }
-.lock-top { display: flex; gap: 12px; align-items: center; }
-.pot-ico { width: 46px; height: 46px; border-radius: 15px; flex: none; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--g1), var(--g2)); box-shadow: 0 6px 18px color-mix(in srgb, var(--g1) 35%, transparent); }
-.pot-ico svg { width: 24px; height: 24px; }
-.pot-title { flex: 1; min-width: 0; display: grid; }
-.pot-title b { font-size: 16px; font-weight: 650; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pot-title span { font-size: 13px; color: var(--muted); }
-.lock-amt { font: 700 2rem/1.1 var(--display); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
-.lock-amt .of { font-size: 1rem; color: var(--muted); font-weight: 500; letter-spacing: 0; }
-.state { font: 600 12px var(--body); padding: 6px 11px; border-radius: 999px; white-space: nowrap; flex: none; }
-.state.locked { background: rgba(255,255,255,.08); color: var(--ink); } .state.open { background: var(--mint-soft); color: var(--mint); } .state.done { color: var(--muted); background: var(--raised); }
-.bar { height: 10px; background: rgba(255,255,255,.07); border-radius: 99px; overflow: hidden; }
-.bar > i { display: block; height: 100%; min-width: 10px; border-radius: 99px; background: linear-gradient(90deg, var(--g1), var(--g2)); }
-.kv { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14px; font-variant-numeric: tabular-nums; padding-top: 2px; }
-.kv > div { min-width: 0; }
-.kv .label { margin-bottom: 2px; font-size: 12.5px; }
-.lock > .row .btn { flex: 1; padding-block: 14px; }
+/* locks: one grouped list of rows, colour only in each icon */
+.ledger { display: grid; gap: 12px; }
+.pot-row { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 13px 16px; cursor: pointer; transition: background .12s; }
+.pot-row:active { background: rgba(255,255,255,.05); }
+.pot-row.skel { height: 68px; }
+.pot-ico { width: 42px; height: 42px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--g1), var(--g2)); }
+.pot-ico svg { width: 22px; height: 22px; }
+.pot-mid, .pot-end { display: grid; min-width: 0; }
+.pot-mid b, .pot-end b { font-weight: 600; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pot-end { text-align: right; } .pot-end b { font-variant-numeric: tabular-nums; }
+.pot-mid span, .pot-end span { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pot-mid span.open { color: var(--mint); }
+.link-btn { justify-self: center; display: inline-flex; align-items: center; gap: 8px; border: 0; background: var(--surface); color: var(--ink); font: 600 14px var(--body); padding: 10px 16px; border-radius: 999px; cursor: pointer; }
+.link-btn svg { width: 18px; height: 18px; }
+.link-btn:disabled { opacity: .6; }
+
+/* one lock on its own screen */
+.lockview { display: grid; gap: 16px; }
+.lv-head { display: grid; justify-items: center; text-align: center; gap: 4px; padding-top: 6px; }
+.lv-head .pot-ico { width: 60px; height: 60px; margin-bottom: 8px; } .lv-head .pot-ico svg { width: 30px; height: 30px; }
+.lv-head h1 { font-size: 17px; font-weight: 600; color: var(--muted); letter-spacing: -.01em; }
+.lockview .quick { margin-top: 10px; max-width: 400px; }
+.prog-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--muted); }
+.prog-top b { font-weight: 600; color: var(--ink); } .prog-top b.open { color: var(--mint); }
+.irow { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; font-size: 14.5px; }
+.irow + .irow { box-shadow: inset 0 1px 0 var(--line-soft); }
+.irow span { color: var(--muted); } .irow b { font-weight: 550; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.bar { height: 8px; background: rgba(255,255,255,.07); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; min-width: 8px; border-radius: 99px; background: linear-gradient(90deg, var(--g1), var(--g2)); }
 .note { font-size: 13.5px; color: var(--ink); background: var(--mint-soft); border-radius: var(--r-sm); padding: 11px 13px; }
-details summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+details summary { cursor: pointer; font-size: 14px; color: var(--muted); }
 details .mono { margin-top: 8px; line-height: 1.7; font-size: 12px; color: var(--muted); }
 details > p.caution { margin-top: 8px; }
 .rejected { font-size: 13px; color: var(--muted); background: var(--surface); border-radius: var(--r-md); padding: 14px 16px; }
 .rejected > div { margin-top: 8px; }
-.empty { background: var(--surface); border-radius: var(--r-lg); padding: 28px 22px; text-align: center; color: var(--muted); line-height: 1.6; }
+.empty { background: var(--surface); border-radius: var(--r-lg); padding: 26px 22px; text-align: center; color: var(--muted); line-height: 1.6; }
 .empty b { color: var(--ink); }
 
+/* menu */
+.mrow { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 14px 13px 16px; cursor: pointer; text-decoration: none; transition: background .12s; }
+button.mrow:active, a.mrow:active { background: rgba(255,255,255,.05); }
+.mrow + .mrow { box-shadow: inset 0 1px 0 var(--line-soft); }
+.mico { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--g1), var(--g2)); }
+.mico svg { width: 20px; height: 20px; }
+.mmid { display: grid; min-width: 0; } .mmid b { font-weight: 600; font-size: 15.5px; } .mmid span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chev { width: 18px; height: 18px; color: var(--faint); }
+.mnote { padding: 0 16px 14px 66px; font-size: 12.5px; }
+.mnote:empty { display: none; }
+.ver { text-align: center; color: var(--faint); font-size: 12.5px; }
+
+/* forms */
 /* forms */
 label { display: grid; gap: 8px; font-weight: 600; font-size: 14px; }
 input, select { font: 16px var(--body); padding: 14px 15px; border: 1px solid transparent; border-radius: var(--r-sm); background: var(--raised); color: var(--ink); width: 100%; min-width: 0; appearance: none; -webkit-appearance: none; }
@@ -144,7 +164,7 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
 button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .inline { display: flex; gap: 8px; } .inline input { flex: 1; }
 .presets { display: flex; flex-wrap: wrap; gap: 6px; }
-.btn { font: 650 15px var(--body); padding: 13px 20px; border-radius: 999px; border: 0; background: var(--ink); color: #14142A; cursor: pointer; transition: background .15s, transform .1s, opacity .15s; }
+.btn { font: 600 15px var(--body); padding: 13px 20px; border-radius: 999px; border: 0; background: var(--ink); color: #14142A; cursor: pointer; transition: background .15s, transform .1s, opacity .15s; }
 .btn:active { transform: scale(.97); }
 .btn:hover:not(:disabled) { background: #fff; }
 .btn.ghost { background: rgba(255,255,255,.08); color: var(--ink); }
@@ -193,36 +213,31 @@ ol.hist b { font-variant-numeric: tabular-nums; color: var(--mint); font-weight:
 .lesson.read summary { color: var(--muted); font-weight: 500; }
 .lesson p { margin-top: 8px; font-size: 14px; color: var(--muted); max-width: 60ch; }
 
-/* floating tab bar */
-nav.tabs { position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 5; display: flex; justify-content: center; pointer-events: none; transform: translateZ(0); }
-nav.tabs > div { pointer-events: auto; display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; max-width: 536px; padding: 6px; background: #1C1C30; border: 1px solid rgba(255,255,255,.07); border-radius: 26px; box-shadow: 0 14px 34px rgba(0,0,0,.5); }
-nav.tabs button { background: none; border: 0; padding: 8px 2px 7px; color: var(--faint); font: 600 11px var(--body); display: grid; justify-items: center; gap: 3px; cursor: pointer; border-radius: 20px; transition: background .15s, color .15s; }
-nav.tabs button svg { width: 23px; height: 23px; }
-nav.tabs button[aria-current="true"] { color: var(--ink); background: rgba(255,255,255,.08); }
 
 /* sheets */
+/* sheets */
 .sheet { position: fixed; inset: 0; background: rgba(4,4,12,.72); display: flex; align-items: flex-end; justify-content: center; z-index: 20; }
-.sheet > .card { width: 100%; max-width: 560px; border-radius: var(--r-xl) var(--r-xl) 0 0; padding: 28px 20px calc(24px + env(safe-area-inset-bottom, 0px)); background: #1A1A2E; max-height: 92vh; overflow-y: auto; overflow-x: hidden; position: relative; }
+.sheet > .card { width: 100%; max-width: 560px; border-radius: var(--r-xl) var(--r-xl) 0 0; padding: 28px 20px calc(24px + env(safe-area-inset-bottom, 0px)); background: #1C1C20; max-height: 92vh; overflow-y: auto; overflow-x: hidden; position: relative; }
 .sheet > .card::before { content: ""; position: absolute; top: 10px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 4px; background: rgba(255,255,255,.18); }
 @media (min-width: 600px) { .sheet { align-items: center; } .sheet > .card { border-radius: var(--r-xl); } }
 @media (prefers-reduced-motion: no-preference) { .sheet:not([hidden]) > .card { animation: up .24s cubic-bezier(.2,.8,.2,1); } @keyframes up { from { transform: translateY(40px); opacity: .5; } } }
 .addr { font: 600 13px var(--mono); background: var(--raised); border-radius: var(--r-sm); padding: 13px; overflow-wrap: anywhere; }
-#waitBar { position: fixed; left: 12px; right: 12px; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: 536px; margin: 0 auto; background: #24243A; border: 1px solid rgba(255,255,255,.08); border-radius: 22px; padding: 15px 16px; display: grid; gap: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.55); }
+#waitBar { position: fixed; left: 12px; right: 12px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: 536px; margin: 0 auto; background: #2A2A2F; border: 1px solid rgba(255,255,255,.08); border-radius: 22px; padding: 15px 16px; display: grid; gap: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.55); }
 #waitBar .wb-text { display: grid; gap: 3px; font-size: 14px; } #waitBar .wb-text span { color: var(--muted); font-size: 13.5px; }
 #waitBar .wb-text b { display: flex; align-items: center; gap: 9px; } #waitBar .wb-text b::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
 @media (prefers-reduced-motion: no-preference) { #waitBar .wb-text b::before { animation: pulse 1.4s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .25; } } }
-#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(100px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: #14142A; padding: 13px 18px; border-radius: 18px; font-size: 14px; font-weight: 550; width: max-content; max-width: calc(100% - 32px); z-index: 40; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: #14142A; padding: 13px 18px; border-radius: 18px; font-size: 14px; font-weight: 550; width: max-content; max-width: calc(100% - 32px); z-index: 40; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
 body.broken main::before { content: "Safety check failed: this copy of the app does not match the tested code. Do not use it."; display: block; background: var(--bad); color: #fff; padding: 12px; border-radius: var(--r-sm); font-weight: 600; }
 @media (prefers-reduced-motion: no-preference) { .bar > i, .dial .fill { transition: width .6s ease, stroke-dashoffset .9s ease; } }
 
 /* welcome */
 .wide { width: 100%; }
 .welcome { gap: 20px; padding: 8px 4px 0; background: none; }
-.welcome-title { font-size: clamp(2rem, 9vw, 2.5rem); line-height: 1.08; letter-spacing: -.045em; font-weight: 700; margin-top: 18px; }
+.welcome-title { font-size: clamp(2rem, 9vw, 2.5rem); line-height: 1.08; letter-spacing: -.04em; font-weight: 700; margin-top: 24px; }
 .welcome > p.muted { color: rgba(247,246,255,.78); font-size: 15.5px; }
 ol.how { list-style: none; counter-reset: how; margin: 4px 0; padding: 18px; display: grid; gap: 16px; background: var(--surface); border-radius: var(--r-lg); }
 ol.how li { counter-increment: how; display: grid; grid-template-columns: 34px 1fr; column-gap: 12px; }
-ol.how li::before { content: counter(how); grid-row: span 2; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(140deg, #7C5CFF, #4F8BFF); color: #fff; font: 700 14px var(--body); display: grid; place-items: center; }
+ol.how li::before { content: counter(how); grid-row: span 2; width: 32px; height: 32px; border-radius: 50%; background: var(--raised); color: var(--ink); font: 700 14px var(--body); display: grid; place-items: center; }
 ol.how span { color: var(--muted); font-size: 14px; }
 details.need { background: var(--raised); border-radius: var(--r-md); padding: 14px 16px; }
 .welcome details.need { background: var(--surface); }
@@ -238,7 +253,7 @@ details.advanced[open] > summary::after { content: "Hide"; }
 details.advanced[open] { gap: 16px; }
 details.advanced:not([open]) { gap: 0; }
 .status { display: flex; gap: 14px; align-items: center; border-radius: var(--r-lg); padding: 20px; }
-.status.ok { background: linear-gradient(135deg, rgba(69,224,166,.2), rgba(69,224,166,.05) 70%), var(--surface); }
+.status.ok { background: var(--mint-soft); }
 .status b { display: block; font: 650 1.08rem var(--display); }
 .status span:not(.big-check) { display: block; color: var(--muted); font-size: 13.5px; }
 .agree { background: var(--raised); border-radius: var(--r-md); padding: 15px; }
@@ -276,21 +291,21 @@ ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
 
 /* motion & loading */
 body { overscroll-behavior-y: none; }
-button, nav.tabs, .pill { -webkit-user-select: none; user-select: none; touch-action: manipulation; }
-.upd { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-size: 11.5px; color: rgba(247,246,255,.7); }
+button, .pill { -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.upd { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-size: 11.5px; color: rgba(245,245,247,.6); }
 .upd::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
-.lock.skel { height: 210px; }
 .loading .big, .loading #walletTotal { color: transparent; border-radius: 12px; }
 .loading .big { width: 210px; }
-.loading .big, .loading #walletTotal, .lock.skel { background: linear-gradient(90deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.05) 100%) 0 0 / 200% 100%; }
-nav.tabs button svg { transition: transform .15s ease; }
-nav.tabs button:active svg { transform: scale(.9); }
+.loading .big, .loading #walletTotal, .pot-row.skel { background: linear-gradient(90deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.11) 50%, rgba(255,255,255,.05) 100%) 0 0 / 200% 100%; }
 @media (prefers-reduced-motion: no-preference) {
-  .loading .big, .loading #walletTotal, .lock.skel { animation: shimmer 1.3s linear infinite; }
+  .loading .big, .loading #walletTotal, .pot-row.skel { animation: shimmer 1.3s linear infinite; }
   .upd::before { animation: pulse 1.2s ease-in-out infinite; }
   @keyframes shimmer { to { background-position: -200% 0; } }
-  section:not([hidden]) { animation: tabin .22s ease-out; }
-  @keyframes tabin { from { opacity: 0; transform: translateY(8px); } }
+  #tab-home:not([hidden]) { animation: fadein .25s ease-out; }
+  section:not(#tab-home):not([hidden]) { animation: slidein .28s var(--ease); }
+  @keyframes fadein { from { opacity: 0; } }
+  @keyframes slidein { from { opacity: 0; transform: translateX(28px); } }
+  @keyframes tabin { from { opacity: 0; transform: translateY(6px); } }
   details[open] > *:not(summary) { animation: tabin .18s ease-out; }
 }
 #confirm { z-index: 26; } /* the confirm screen always sits above any other sheet */
@@ -303,13 +318,12 @@ nav.tabs button:active svg { transform: scale(.9); }
 </div>
 <div class="aurora" aria-hidden="true"></div>
 <main>
-  <div class="topbar">
-    <div class="brand">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B6CFF"/><stop offset="1" stop-color="#3F7BFF"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="10" fill="url(#lg)"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="16" cy="14.2" r="2.2" fill="#fff"/><rect x="15" y="15" width="2" height="5" rx="1" fill="#fff"/></svg>
-      <h1>TimeVault</h1>
-    </div>
-    <div class="row"><span id="netPill" class="pill">Not connected</span><button id="connectBtn" class="btn small">Connect wallet</button></div>
-  </div>
+  <header class="topbar" id="topbar">
+    <button class="iconbtn" id="backBtn" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+    <div class="brand" aria-label="TimeVault"><svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8B6CFF"/><stop offset="1" stop-color="#3F7BFF"/></linearGradient></defs><rect x="1" y="1" width="30" height="30" rx="10" fill="url(#lg)"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.2"/><circle cx="16" cy="14.2" r="2.2" fill="#fff"/><rect x="15" y="15" width="2" height="5" rx="1" fill="#fff"/></svg></div>
+    <div class="mini" id="miniTotal" aria-hidden="true"></div>
+    <div class="top-end"><span id="netPill" class="pill" hidden>Not connected</span><button id="connectBtn" class="btn small">Connect wallet</button><button class="iconbtn" data-tab="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg></button></div>
+  </header>
 
   <!-- HOME -->
   <section id="tab-home">
@@ -344,29 +358,30 @@ nav.tabs button:active svg { transform: scale(.9); }
 
     <div id="homeMain">
       <div class="hero">
-        <span class="label">Total locked <span class="upd" id="upd" hidden>Updating</span></span>
         <div class="big" id="totalLocked">$0.00</div>
+        <span class="label">Total locked <span class="upd" id="upd" hidden>Updating</span></span>
         <div class="hero-sub"><b id="walletTotal">—</b> in your wallet</div>
-        <div class="goal-chip"><span class="dial" aria-hidden="true"><svg viewBox="0 0 120 120"><g class="ticks" id="dialTicks"></g><circle class="track" cx="60" cy="60" r="40"/><circle class="fill" id="dialFill" cx="60" cy="60" r="40" stroke-dasharray="251.33" stroke-dashoffset="251.33"/></svg></span><span><b id="dialPct">0%</b> <span id="dialCap">no goal yet</span></span><span id="nextMilestone" hidden></span></div>
+        <div hidden><svg viewBox="0 0 120 120"><g id="dialTicks"></g><circle id="dialFill" cx="60" cy="60" r="40"/></svg><span id="dialPct"></span><span id="dialCap"></span><span id="nextMilestone"></span><span id="lockCount"></span></div>
         <div class="quick">
-          <button id="quickAdd"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>Add money</button>
+          <button id="quickAdd"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>Add money</button>
           <button data-tab="new"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span>New lock</button>
           <button data-tab="coach"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>Payday plan</button>
-          <button data-tab="safety"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span>Safety</button>
         </div>
       </div>
-      <p class="small muted" id="walletLine"></p>
       <p class="notice" id="gasHint" hidden>Your wallet needs a little ETH on the Arbitrum network (about $1) to pay transaction fees.</p>
       <div id="today"></div>
-      <div class="section-head"><h2>Your savings <span class="count" id="lockCount">0</span></h2><button class="btn ghost small" id="findBtn">Find my locks</button></div>
       <div class="ledger" id="locks"></div>
+      <button class="link-btn" id="findBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>Find my locks</button>
     </div>
   </section>
 
   <!-- NEW -->
+  <!-- ONE LOCK -->
+  <section id="tab-lock" hidden><div id="lockView" class="lockview"></div></section>
+
   <section id="tab-new" hidden>
+    <h1 class="page-title">New lock</h1>
     <div class="card">
-      <h2>New savings lock</h2>
       <div class="seg" role="radiogroup" aria-label="Lock type">
         <label class="check" for="typeGoal"><input type="radio" name="lkType" id="typeGoal" checked> <span><b>Savings goal</b><br><span class="small muted">Add money whenever you want. It unlocks when you reach your goal.</span></span></label>
         <label class="check" for="typeDate"><input type="radio" name="lkType" id="typeDate"> <span><b>Until a date</b><br><span class="small muted">Locked until a date you pick, no matter how much is inside.</span></span></label>
@@ -411,8 +426,8 @@ nav.tabs button:active svg { transform: scale(.9); }
 
   <!-- COACH -->
   <section id="tab-coach" hidden>
+    <h1 class="page-title">Payday plan</h1>
     <div class="card">
-      <h2>Payday plan</h2>
       <p class="small muted">Tell the coach when you get paid. It works out how much to lock each payday and when you'll reach your goal.</p>
       <label for="cPay">How much you get paid each time<input id="cPay" inputmode="decimal" placeholder="e.g. 800" autocomplete="off"></label>
       <div class="row">
@@ -439,8 +454,28 @@ nav.tabs button:active svg { transform: scale(.9); }
     </div>
   </section>
 
+  <!-- MENU -->
+  <section id="tab-menu" hidden>
+    <h1 class="page-title">Menu</h1>
+    <div class="group">
+      <div class="mrow"><span class="mico" style="--g1:#7C5CFF;--g2:#4F8BFF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6" width="17" height="13" rx="3"/><path d="M3.5 10h17M15.5 14.5h2"/></svg></span><span class="mmid"><b>Wallet</b><span id="menuWallet">Not connected</span></span><button class="btn small" data-connect>Connect wallet</button></div>
+      <p class="small muted mnote" id="walletLine"></p>
+    </div>
+    <div class="group">
+      <button class="mrow" data-tab="new"><span class="mico" style="--g1:#1FC7B6;--g2:#52E08F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="mmid"><b>New lock</b><span>Start a savings goal or a date lock</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Payday plan</b><span>Your plan, streak and money lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected, check my locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="group">
+      <a class="mrow" href="https://github.com/relive202/timevault" target="_blank" rel="noopener noreferrer"><span class="mico" style="--g1:#3A3A40;--g2:#55555C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12"/></svg></span><span class="mmid"><b>Source code</b><span>Open on GitHub</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
+    </div>
+    <p class="ver">TimeVault for USDC and USDT on Arbitrum One</p>
+  </section>
+
   <!-- SETTINGS -->
   <section id="tab-setup" hidden>
+    <h1 class="page-title">Settings</h1>
     <div class="card">
       <h2>Wallet</h2>
       <p class="small muted">TimeVault works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet. Your wallet must be set to the <b>Arbitrum</b> network.</p>
@@ -473,6 +508,7 @@ nav.tabs button:active svg { transform: scale(.9); }
 
   <!-- SAFETY -->
   <section id="tab-safety" hidden>
+    <h1 class="page-title">Safety</h1>
     <div class="status ok" id="safeOk"><span class="big-check">✓</span><div><b>All safety checks passed</b><span>This copy of the app matches the tested code.</span></div></div>
     <div class="notice bad" id="selfBanner" hidden>Safety check failed. This copy of the app doesn't match the tested code. Don't use it to move money.</div>
     <div class="card">
@@ -667,15 +703,6 @@ contract TokenTimelock {
   </section>
 </main>
 
-<nav class="tabs" aria-label="Main">
-  <div>
-    <button data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5V3.5M16 5V3.5"/></svg>Savings</button>
-    <button data-tab="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New lock</button>
-    <button data-tab="coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>Coach</button>
-    <button data-tab="safety"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Safety</button>
-    <button data-tab="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>Settings</button>
-  </div>
-</nav>
 
 <div class="sheet" id="qrBox" hidden role="dialog" aria-modal="true" aria-labelledby="wcTitle">
   <div class="card">
@@ -1077,7 +1104,7 @@ const TV = (() => {
     const p = $('netPill');
     document.querySelectorAll('[data-connect]').forEach((b) => { b.textContent = account ? 'Disconnect wallet' : 'Connect wallet'; b.className = account ? 'btn ghost small' : b.dataset.cls; });
     $('welcome').hidden = !!viewer(); $('homeMain').hidden = !viewer(); $('copyMine').hidden = !account;
-    p.hidden = !account && !store.get('watch');
+    p.hidden = !(store.get('watch') && !account) && !(account && chainId !== CHAIN_ID); $('connectBtn').hidden = !!account;
     if (!account) { p.textContent = store.get('watch') ? 'Viewing ' + short(store.get('watch')) : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect wallet'; }
     else if (chainId !== CHAIN_ID) { p.textContent = 'Wrong network'; p.className = 'pill warn'; $('connectBtn').textContent = 'Disconnect'; }
     else { p.textContent = short(account); p.className = 'pill ok'; $('connectBtn').textContent = 'Disconnect'; }
@@ -1093,7 +1120,7 @@ const TV = (() => {
   }
   async function initWc(connectNow) {
     const projectId = store.get('wcid') || BUILT_IN_WC_ID;
-    if (!projectId) { if (connectNow) { show('setup'); document.querySelector('details.advanced').open = true; $('wcId').focus(); toast('This copy of TimeVault needs a WalletConnect Project ID. Add one under Advanced.', 8000); } return; }
+    if (!projectId) { if (connectNow) { go('setup'); document.querySelector('details.advanced').open = true; $('wcId').focus(); toast('This copy of TimeVault needs a WalletConnect Project ID. Add one under Advanced.', 8000); } return; }
     if (!wc) {
       const { EthereumProvider } = window['@walletconnect/ethereum-provider'];
       wc = await EthereumProvider.init({
@@ -1114,7 +1141,7 @@ const TV = (() => {
     }
     if (wc.session && wc.accounts?.length) { eip = wc; setAccount(wc.accounts[0], wc.chainId); return; }
     if (connectNow) {
-      try { await wc.connect(); eip = wc; $('qrBox').hidden = true; setAccount(wc.accounts[0], wc.chainId); toast('Wallet connected.'); show('home'); }
+      try { await wc.connect(); eip = wc; $('qrBox').hidden = true; setAccount(wc.accounts[0], wc.chainId); toast('Wallet connected.'); go('home'); }
       catch (e) { $('qrBox').hidden = true; toast(nice(e)); }
     }
   }
@@ -1209,7 +1236,9 @@ const TV = (() => {
   let refreshSeq = 0, shownFor = '', loadedOnce = false;
   const cacheKey = (w) => 'cache.' + w.toLowerCase();
   function setUpdating(on) { $('upd').hidden = !on; }
+  window.__T = { setAccount: (a, c) => setAccount(a, c), go: (t) => go(t), openLock: (a) => openLock(a) };
   async function refresh() {
+    if (window.__FAKE) { LOCKS = window.__FAKE.locks; WALLET = window.__FAKE.wallet; loadedOnce = true; lastSig = ''; render(); return; }
     const who = viewer();
     renderSelf();
     if (!who) { LOCKS = []; WALLET = {}; shownFor = ''; render(); return; }
@@ -1249,13 +1278,24 @@ const TV = (() => {
   }
 
   // ------------------------------------------------------------------ screens
-  const TABS = ['home', 'new', 'coach', 'setup', 'safety'];
-  document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => show(b.dataset.tab)));
+  const TABS = ['home', 'new', 'coach', 'setup', 'safety', 'menu', 'lock'];
+  document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => go(b.dataset.tab)));
+  let page = 'home', depth = 0;
   function show(t) {
     TABS.forEach((x) => { $('tab-' + x).hidden = x !== t; });
-    document.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-current', String(b.dataset.tab === t)));
-    store.set('tab', t); window.scrollTo(0, 0);
+    page = t; document.body.dataset.page = t; window.scrollTo(0, 0); onScroll();
   }
+  // every screen is a history step, so the phone's back gesture and the back arrow both go back one screen
+  function go(t) {
+    if (t === 'home') { if (depth > 0) history.go(-depth); else show('home'); return; }
+    if (t === page) return;
+    depth += 1; history.pushState({ tv: t, d: depth }, ''); show(t);
+  }
+  window.addEventListener('popstate', (e) => { const st = e.state || {}; depth = st.d || 0; show(st.tv || 'home'); });
+  $('backBtn').addEventListener('click', () => { if (depth > 0) history.back(); else show('home'); });
+  // the top bar gets a background and shows the total once the big number scrolls away
+  function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 8); document.body.classList.toggle('pastHero', page === 'home' && window.scrollY > 150); }
+  window.addEventListener('scroll', onScroll, { passive: true });
   let toastT;
   function toast(m, ms = 5000) { const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), ms); }
 
@@ -1276,6 +1316,7 @@ const TV = (() => {
     $('walletLine').textContent = WALLET.USDC !== undefined
       ? num(fmt(WALLET.USDC)) + ' USDC · ' + num(fmt(WALLET.USDT)) + ' USDT · ' + Number(ethers.formatEther(WALLET.ETH)).toFixed(5) + ' ETH for fees'
       : (viewer() ? 'Loading balances…' : '');
+    $('menuWallet').textContent = viewer() ? short(viewer()) + (WALLET.USDC !== undefined ? ' \u00b7 ' + money(fmt(WALLET.USDC) + fmt(WALLET.USDT)) : '') + (account ? '' : ' (view only)') : 'Not connected';
     $('gasHint').hidden = !(WALLET.ETH !== undefined && WALLET.ETH < ethers.parseEther('0.0002'));
     for (const o of $('lkToken').options) o.textContent = o.value + (WALLET[o.value] !== undefined ? ' (you have ' + num(fmt(WALLET[o.value])) + ')' : '');
     renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones();
@@ -1310,11 +1351,13 @@ const TV = (() => {
   $('cheerOk').addEventListener('click', () => { $('cheer').hidden = true; checkMilestones(); });
 
   let countFrom = null, countRaf = 0;
+  const moneyHTML = (v) => { const m = money(v), i = m.lastIndexOf('.'); return m.slice(0, i) + '<span class="cents">' + m.slice(i) + '</span>'; };
   function countTo(el, v) { // the total glides to its new value instead of jumping
+    $('miniTotal').textContent = money(v);
     const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (countFrom === null || reduce || countFrom === v) { countFrom = v; el.textContent = money(v); return; }
+    if (countFrom === null || reduce || countFrom === v) { countFrom = v; el.innerHTML = moneyHTML(v); return; }
     const a = countFrom, t0 = performance.now(), dur = 700; countFrom = v; cancelAnimationFrame(countRaf);
-    const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = money(a + (v - a) * e); if (k < 1) countRaf = requestAnimationFrame(step); };
+    const step = (t) => { const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.innerHTML = moneyHTML(a + (v - a) * e); if (k < 1) countRaf = requestAnimationFrame(step); };
     countRaf = requestAnimationFrame(step);
   }
 
@@ -1339,74 +1382,84 @@ const TV = (() => {
   const POT_COLORS = [['#7C5CFF', '#4F8BFF'], ['#FF6FA8', '#FF9F6B'], ['#1FC7B6', '#52E08F'], ['#FFB547', '#FF7A59'], ['#4F8BFF', '#22C7E8'], ['#B467FF', '#FF6FCF']];
   const ICON_GOAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="currentColor"/></svg>';
   const ICON_DATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>';
+  let viewAddr = ''; // the lock shown on its own screen
+  function openLock(a) { viewAddr = a; renderLocks(); go('lock'); }
+  const potStyle = (l) => { const [g1, g2] = POT_COLORS[parseInt(l.addr.slice(2, 6), 16) % POT_COLORS.length]; return '--g1:' + g1 + ';--g2:' + g2; };
+  const lockName = (l) => (l.name ? esc(l.name) : (l.kind === 'goal' ? 'Savings goal' : 'Date lock'));
   function renderLocks() {
     const box = $('locks'); const who = viewer();
     if (!who) { box.innerHTML = '<div class="empty">Connect your wallet to see your savings.</div>'; return; }
-    const openAddrs = new Set([...box.querySelectorAll('article[data-addr] details[open]')].map((d) => d.closest('article').dataset.addr));
-    if (!loadedOnce && !LOCKS.length && getList(who).length) { box.innerHTML = '<div class="lock skel"></div><div class="lock skel"></div>'; return; }
+    if (!loadedOnce && !LOCKS.length && getList(who).length) { box.innerHTML = '<div class="group"><div class="pot-row skel"></div><div class="pot-row skel"></div></div>'; return; }
     const rej = [...rejected.entries()];
-    if (!LOCKS.length) {
-      box.innerHTML = '<div class="empty"><b>No locks yet.</b><br>Tap <b>New lock</b> below to start saving.<br><span class="small">Made locks before on another phone? Tap <b>Find my locks</b>.</span></div>';
-    } else box.innerHTML = '';
     const now = Date.now() / 1000;
-    const finished = [];
-    for (const l of LOCKS) {
-      const s = lockState(l); const g = l.kind === 'goal';
-      if (isFinished(l)) { finished.push(l); continue; }
-      const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
-      const el = document.createElement('article'); el.className = 'lock'; el.dataset.addr = l.addr;
-      const [g1, g2] = POT_COLORS[parseInt(l.addr.slice(2, 6), 16) % POT_COLORS.length]; el.style.setProperty('--g1', g1); el.style.setProperty('--g2', g2);
-      el.innerHTML =
-        '<div class="lock-top"><span class="pot-ico" aria-hidden="true">' + (g ? ICON_GOAL : ICON_DATE) + '</span><div class="pot-title"><b>' + (l.name ? esc(l.name) : (g ? 'Savings goal' : 'Date lock')) + '</b><span>' + (g ? 'Opens at ' + num(fmt(l.goal)) + ' ' + l.sym : 'Opens ' + dateStr(l.releaseTime)) + '</span></div>' +
-        '<span class="state ' + s.cls + '">' + s.label + '</span></div>' +
-        '<div class="lock-amt">' + num(fmt(l.balance)) + ' <span class="of">' + (g ? 'of ' + num(fmt(l.goal)) + ' ' : '') + l.sym + '</span></div>' +
-        (s.empty && s.timeUp ? '' : '<div class="bar' + (g ? ' goalbar' : '') + '" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div>') +
-        '<div class="kv">' +
-          (g ? '<div><span class="label">To go</span>' + (s.goalHit ? 'Done' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym) + '</div><div><span class="label">Backup date</span>' + dateStr(l.releaseTime) + (s.timeUp ? '' : ' <span class="muted small">(' + untilStr(l.releaseTime) + ')</span>') + '</div>'
-             : '<div><span class="label">Unlocks</span>' + dateStr(l.releaseTime) + (s.timeUp ? '' : ' <span class="muted small">(' + untilStr(l.releaseTime) + ')</span>') + '</div>') +
-          '<div><span class="label">Pays out to</span><span class="mono">' + short(l.beneficiary) + (account && account === l.beneficiary ? ' (you)' : '') + '</span></div>' +
-          '<div><span class="label">Safety check</span><span class="ok-text">✓ Genuine lock</span></div>' +
-        '</div>' +
-        (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this money is free. Withdraw it and start a new goal.</p>' : '') + (g && s.goalHit && !s.empty && !s.timeUp ? '<p class="note">You did it! Withdraw your savings whenever you like.</p>' : '') +
-        '<details><summary>Details</summary><p class="small caution">Only ever send ' + l.sym + ' on the Arbitrum One network to this address, using Add money. Any other coin or network sent here is lost forever.</p><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div>' + (l.balance === 0n ? '<button class="btn ghost small" data-hide="' + l.addr + '" style="margin-top:10px">Hide this lock</button>' : '') + '</details>';
-      if (account && account === l.beneficiary) {
-        const row = document.createElement('div'); row.className = 'row';
-        if (s.ready) {
-          const r = document.createElement('button'); r.className = 'btn'; r.textContent = 'Withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' to my wallet';
-          r.onclick = () => run(r, async () => { await ensureArbitrum(); await guard.release({ lock: l.addr }); toast('Done! The money is back in your wallet.'); });
-          row.appendChild(r);
-        }
-        if (!s.timeUp) {
-          const d = document.createElement('button'); d.className = 'btn brass'; d.textContent = 'Add money';
-          d.onclick = () => openDeposit(l); row.appendChild(d);
-        }
-        if (row.children.length) el.appendChild(row);
-      }
-      box.appendChild(el);
-    }
-    if (finished.length) {
-      if (!LOCKS.some((l) => !isFinished(l))) box.innerHTML = '<div class="empty"><b>No active locks.</b><br>Tap <b>New lock</b> below to start your next goal.</div>';
-      const f = document.createElement('details'); f.className = 'rejected';
-      f.innerHTML = '<summary>Finished (' + finished.length + ')</summary>' + finished.map((l) => '<div class="small">' + esc(l.name || (l.kind === 'goal' ? num(fmt(l.goal)) + ' ' + l.sym + ' goal' : l.sym + ' lock')) + ': ' + (Date.now() / 1000 >= l.releaseTime ? 'ended ' + dateStr(l.releaseTime) : 'withdrawn') + ', nothing left inside. <a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">View</a> · <a href="#" data-hide="' + l.addr + '">Hide</a></div>').join('');
-      box.appendChild(f);
-    }
-    openAddrs.forEach((a) => { const d = box.querySelector('article[data-addr="' + a + '"] details'); if (d) d.open = true; });
-    box.querySelectorAll('[data-hide]').forEach((b) => b.addEventListener('click', (ev) => {
+    const finished = LOCKS.filter(isFinished), active = LOCKS.filter((l) => !isFinished(l));
+    let html = '';
+    if (!LOCKS.length) html = '<div class="empty"><b>No locks yet.</b><br>Tap <b>New lock</b> above to start saving.</div>';
+    else if (!active.length) html = '<div class="empty"><b>No active locks.</b><br>Tap <b>New lock</b> above to start your next goal.</div>';
+    else html = '<div class="group">' + active.map((l) => {
+      const s = lockState(l), g = l.kind === 'goal';
+      return '<button class="pot-row" data-open="' + l.addr + '" style="' + potStyle(l) + '"><span class="pot-ico" aria-hidden="true">' + (g ? ICON_GOAL : ICON_DATE) + '</span>' +
+        '<span class="pot-mid"><b>' + lockName(l) + '</b><span class="' + s.cls + '">' + s.label + '</span></span>' +
+        '<span class="pot-end"><b>' + money(fmt(l.balance)) + '</b><span>' + (g ? 'of ' + money(fmt(l.goal)).replace(/\.00$/, '') : l.sym) + '</span></span></button>';
+    }).join('') + '</div>';
+    if (finished.length) html += '<details class="rejected"><summary>Finished (' + finished.length + ')</summary>' + finished.map((l) => '<div class="small">' + esc(l.name || (l.kind === 'goal' ? num(fmt(l.goal)) + ' ' + l.sym + ' goal' : l.sym + ' lock')) + ': ' + (now >= l.releaseTime ? 'ended ' + dateStr(l.releaseTime) : 'withdrawn') + ', nothing left inside. <a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">View</a> · <a href="#" data-hide="' + l.addr + '">Hide</a></div>').join('') + '</details>';
+    if (rej.length) html += '<details class="rejected"><summary>' + rej.length + ' address' + (rej.length > 1 ? 'es' : '') + ' hidden: not a genuine TimeVault lock for this wallet</summary>' + rej.map(([a, why]) => '<div class="small"><span class="mono">' + esc(a) + '</span><br>' + esc(why) + '</div>').join('') + '</details>';
+    const finOpen = !!box.querySelector('details.rejected[open]');
+    box.innerHTML = html;
+    if (finOpen) { const d = box.querySelector('details.rejected'); if (d) d.open = true; }
+    box.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openLock(b.dataset.open)));
+    bindHide(box);
+    renderLockView();
+  }
+  function bindHide(root) {
+    root.querySelectorAll('[data-hide]').forEach((b) => b.addEventListener('click', (ev) => {
       ev.preventDefault(); const w = viewer(); if (!w) return;
       const lst = store.json(hiddenKey(w), []); lst.push(b.dataset.hide.toLowerCase()); store.setJson(hiddenKey(w), [...new Set(lst)]);
-      toast('Hidden. You can show it again in Settings.'); refresh();
+      toast('Hidden. You can show it again in Settings.'); if (page === 'lock') go('home'); refresh();
     }));
-    if (rej.length) {
-      const r = document.createElement('details'); r.className = 'rejected';
-      r.innerHTML = '<summary>' + rej.length + ' address' + (rej.length > 1 ? 'es' : '') + ' hidden: not a genuine TimeVault lock for this wallet</summary>' + rej.map(([a, why]) => '<div class="small"><span class="mono">' + esc(a) + '</span><br>' + esc(why) + '</div>').join('');
-      box.appendChild(r);
-    }
+  }
+  const ACT_ADD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
+  const ACT_EX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h13l-4-4M20 14H7l4 4"/></svg>';
+  const ACT_OUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+  const ACT_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6.5a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></svg>';
+  function renderLockView() {
+    const v = $('lockView'); const l = LOCKS.find((x) => x.addr === viewAddr);
+    if (!l) { v.innerHTML = '<div class="empty">This lock is no longer in your list.</div>'; return; }
+    const detOpen = !!v.querySelector('details[open]');
+    const s = lockState(l), g = l.kind === 'goal', now = Date.now() / 1000;
+    const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
+    const mine = account && account === l.beneficiary;
+    const row = (k, val) => '<div class="irow"><span>' + k + '</span><b>' + val + '</b></div>';
+    v.setAttribute('style', potStyle(l));
+    v.innerHTML =
+      '<div class="lv-head"><span class="pot-ico" aria-hidden="true">' + (g ? ICON_GOAL : ICON_DATE) + '</span><h1>' + lockName(l) + '</h1>' +
+        '<div class="big">' + moneyHTML(fmt(l.balance)) + '</div><span class="label">' + (g ? 'of ' + money(fmt(l.goal)).replace(/\.00$/, '') + ' ' + l.sym + ' goal' : l.sym + ' locked until ' + dateStr(l.releaseTime)) + '</span></div>' +
+      '<div class="quick" id="lvActs"></div>' +
+      (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this money is free. Withdraw it and start a new goal.</p>' : '') + (g && s.goalHit && !s.empty && !s.timeUp ? '<p class="note">You did it! Withdraw your savings whenever you like.</p>' : '') +
+      (s.empty && s.timeUp ? '' : '<div class="group pad"><div class="prog-top"><b class="' + s.cls + '">' + s.label + '</b><span>' + (g ? (s.goalHit ? 'Goal reached' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym + ' to go') : (s.timeUp ? 'Unlocked' : untilStr(l.releaseTime) + ' left')) + '</span></div><div class="bar" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div></div>') +
+      '<div class="group">' +
+        (g ? row('Opens at', num(fmt(l.goal)) + ' ' + l.sym) + row('Backup date', dateStr(l.releaseTime)) : row('Opens on', dateStr(l.releaseTime))) +
+        row('Pays out to', '<span class="mono">' + short(l.beneficiary) + '</span>' + (mine ? ' (you)' : '')) +
+        row('Coin', l.sym + ' on Arbitrum One') +
+        row('Safety check', '<span class="ok-text">✓ Genuine lock</span>') +
+      '</div>' +
+      '<details class="group pad"><summary>Lock address and details</summary><p class="small caution">Only ever send ' + l.sym + ' on the Arbitrum One network to this address, using Add money. Any other coin or network sent here is lost forever.</p><div class="mono small">Lock ' + l.addr + '<br>Coin ' + l.token + '<br>Pays to ' + l.beneficiary + '<br>Contract ' + (g ? 'GoalTimelock' : 'TokenTimelock (OpenZeppelin)') + '<br><a href="https://arbiscan.io/address/' + l.addr + '" target="_blank" rel="noopener noreferrer">Open on Arbiscan</a></div>' + (l.balance === 0n ? '<button class="btn ghost small" data-hide="' + l.addr + '" style="margin-top:10px">Hide this lock</button>' : '') + '</details>';
+    if (detOpen) v.querySelector('details').open = true;
+    const acts = $('lvActs');
+    const act = (icon, label, fn) => { const b = document.createElement('button'); b.innerHTML = '<span class="qi">' + icon + '</span><span class="lbl">' + label + '</span>'; b.onclick = () => fn(b); acts.appendChild(b); };
+    if (mine && !s.timeUp) act(ACT_ADD, 'Add money', () => openDeposit(l));
+    if (mine && !s.timeUp) act(ACT_EX, 'From exchange', () => { openDeposit(l); depTab(true); });
+    if (mine && s.ready) act(ACT_OUT, 'Withdraw', (b) => run(b, async () => { await ensureArbitrum(); await guard.release({ lock: l.addr }); toast('Done! The money is back in your wallet.'); }));
+    act(ACT_COPY, 'Copy address', async () => { try { await navigator.clipboard.writeText(l.addr); toast('Lock address copied. Only send ' + l.sym + ' on Arbitrum One to it.', 7000); } catch { toast('Open "Lock address and details" to copy it.'); } });
+    acts.style.gridTemplateColumns = 'repeat(' + acts.children.length + ', 1fr)';
+    bindHide(v);
   }
 
+
   async function run(btn, fn) {
-    const t = btn.textContent; btn.disabled = true; btn.textContent = 'Working…';
+    const lbl = btn.querySelector('.lbl') || btn; const t = lbl.textContent; btn.disabled = true; lbl.textContent = 'Working…';
     const stopped = new Promise((_, rej) => { stopWait = () => rej(new TV.Refused('Stopped waiting. If you still approve it in your wallet, it can go through, so check your savings before trying again.')); });
-    try { await Promise.race([fn(), stopped]); } catch (e) { toast(nice(e), 10000); } finally { stopWait = null; waiting(false); btn.disabled = false; btn.textContent = t; historyAt = 0; lastSig = ''; refresh(); }
+    try { await Promise.race([fn(), stopped]); } catch (e) { toast(nice(e), 10000); } finally { stopWait = null; waiting(false); btn.disabled = false; lbl.textContent = t; historyAt = 0; lastSig = ''; refresh(); }
   }
 
   // ------------------------------------------------------------------ deposit sheet
@@ -1531,7 +1584,7 @@ const TV = (() => {
       toast(g ? 'Your savings goal is ready!' : 'Locked until ' + dateStr(ts) + '.', 8000);
       $('lkAmount').value = ''; $('lkAgree').checked = false; $('lkName').value = '';
       if (g && !store.get('plan.target')) store.set('plan.target', L.addr);
-      show('home');
+      go('home');
     });
   });
 
@@ -1651,10 +1704,10 @@ const TV = (() => {
     if (!account) return toast('Connect your wallet first.');
     const mine = LOCKS.filter((l) => l.beneficiary === account && !isFinished(l) && Date.now() / 1000 < l.releaseTime);
     if (mine.length === 1) return openDeposit(mine[0]);
-    if (!mine.length) { show('new'); return toast('Make a lock first, then add money to it.'); }
+    if (!mine.length) { go('new'); return toast('Make a lock first, then add money to it.'); }
     $('locks').scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('Pick which savings to add money to.');
   });
-  function bindGo(root) { root.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => show(b.dataset.go))); }
+  function bindGo(root) { root.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => go(b.dataset.go))); }
   $('icsBtn').addEventListener('click', () => {
     const p = PLAN(); if (!planReady(p)) return toast('Fill in your payday plan first.');
     const [y, m, d] = p.next.split('-');
@@ -1855,7 +1908,7 @@ const TV = (() => {
   const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
   if (!p0.next) { const d = new Date(); d.setDate(d.getDate() + 1); $('cNext').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); }
   renderLessons(); codeFingerprints(); applyType();
-  show(TABS.includes(store.get('tab')) ? store.get('tab') : 'home');
+  history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
   setAccount('');
   setTimeout(() => initWc(false).catch(() => {}), 400); // paint first, then reconnect the wallet
   if (LN && store.get('notify') === '1') scheduleNotifications(false);
