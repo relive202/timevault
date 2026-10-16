@@ -3,7 +3,7 @@
 import glob, os, sys
 from PIL import Image, ImageDraw
 
-BRASS = (64, 110, 245, 255); DARK = (10, 16, 34, 255); WHITE = (255, 255, 255, 255)
+BRASS = (108, 116, 255, 255); DARK = (14, 14, 24, 255); WHITE = (255, 255, 255, 255)
 
 
 def lock_symbol(d, c, R, S):
@@ -51,7 +51,7 @@ def main(res):
         foreground(px * 108 // 48).save(os.path.join(folder, 'ic_launcher_foreground.png')); n += 3
     vals = os.path.join(res, 'values'); os.makedirs(vals, exist_ok=True)
     open(os.path.join(vals, 'ic_launcher_background.xml'), 'w').write(
-        '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#406EF5</color>\n</resources>\n')
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#6C74FF</color>\n</resources>\n')
     for f in glob.glob(os.path.join(res, 'drawable*', 'splash.png')):
         w, h = Image.open(f).size; splash(w, h).save(f); n += 1
     print('android resources written:', n, 'images')

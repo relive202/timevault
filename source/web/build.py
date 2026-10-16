@@ -20,13 +20,15 @@ for s in (core, app, tests, runner, sources): assert '</script' not in s.lower()
 LIBS = ['https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js',
         'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js',
         'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js']
+FONT_URL = 'https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2'  # Onest, SIL Open Font License
+FONT_SRI = 'sha384-eK/AAu5ejuTBWzZ9y0bAI6JHW9gA9KPGaWtZkXBV4ObhImcx0g4tUmJbA14iRflG'
 RPC_HOSTS = 'https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com'
 WC_HOSTS = 'wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com'
 app_csp = ("default-src 'none'; script-src " + ' '.join(h256(x) for x in (shim, sources, core, app)) + ' ' + ' '.join(LIBS) +
-           "; style-src 'unsafe-inline'; img-src 'self' data: blob:; connect-src " + RPC_HOSTS + ' ' + WC_HOSTS +
+           "; style-src 'unsafe-inline'; font-src " + FONT_URL + "; img-src 'self' data: blob:; connect-src " + RPC_HOSTS + ' ' + WC_HOSTS +
            "; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'")
 index = rd('index.template.html')
-for k, v in {'{{CSP}}': app_csp, '{{SHIM}}': shim, '{{SOURCES}}': sources, '{{CORE}}': core, '{{APP}}': app,
+for k, v in {'{{CSP}}': app_csp, '{{FONT_URL}}': FONT_URL, '{{SHIM}}': shim, '{{SOURCES}}': sources, '{{CORE}}': core, '{{APP}}': app,
              '{{GT_SOURCE_HTML}}': html.escape(goal_src), '{{TT_SOURCE_HTML}}': html.escape(oz['@openzeppelin/contracts/token/ERC20/utils/TokenTimelock.sol'])}.items():
     assert k in index, k; index = index.replace(k, v)
 
@@ -41,7 +43,7 @@ out = os.path.join(D, 'dist'); os.makedirs(out, exist_ok=True)
 open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(index)
 open(os.path.join(out, 'tests.html'), 'w', encoding='utf-8').write(tpage)
 json.dump({'name': 'TimeVault', 'short_name': 'TimeVault', 'description': 'Lock your savings until you reach your goal.', 'start_url': './', 'scope': './',
-           'display': 'standalone', 'background_color': '#0A1022', 'theme_color': '#0A1022',
+           'display': 'standalone', 'background_color': '#0E0E18', 'theme_color': '#0E0E18',
            'icons': [{'src': 'icon-192.png', 'sizes': '192x192', 'type': 'image/png'}, {'src': 'icon-512.png', 'sizes': '512x512', 'type': 'image/png'},
                      {'src': 'icon-512-maskable.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'}]},
           open(os.path.join(out, 'manifest.webmanifest'), 'w'), indent=2)
@@ -51,7 +53,11 @@ from PIL import Image, ImageDraw
 def icon(size, maskable=False):
     s = 4; S = size * s; im = Image.new('RGBA', (S, S), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
     pad = 0 if maskable else int(S * 0.06); r = 0 if maskable else int(S * 0.22)
-    d.rounded_rectangle([pad, pad, S - pad, S - pad], radius=r, fill=(64, 110, 245, 255))
+    g = Image.new('RGBA', (S, S)); gd = ImageDraw.Draw(g)
+    for i in range(2 * S):  # diagonal gradient #8B6CFF -> #3F7BFF
+        k = i / (2 * S); gd.line([(i, 0), (0, i)], fill=(int(139 + (63 - 139) * k), int(108 + (123 - 108) * k), 255, 255), width=2)
+    m = Image.new('L', (S, S), 0); ImageDraw.Draw(m).rounded_rectangle([pad, pad, S - pad, S - pad], radius=r, fill=255)
+    im.paste(g, (0, 0), m)
     c = S / 2; R = S * (0.25 if maskable else 0.29); w = int(S * 0.065)
     d.ellipse([c - R, c - R, c + R, c + R], outline=(255, 255, 255, 255), width=w)
     k = S * 0.068; d.ellipse([c - k, c - k * 1.6, c + k, c + k * 0.4], fill=(255, 255, 255, 255))
@@ -62,7 +68,7 @@ icon(512, True).save(os.path.join(out, 'icon-512-maskable.png'))
 
 # ---- Android app version: identical page, but libraries are bundled inside the app (no code loaded from the internet)
 aout = os.path.join(D, 'dist-android'); os.makedirs(aout, exist_ok=True)
-android_csp = app_csp.replace(' '.join(LIBS), "'self'")
+android_csp = app_csp.replace(' '.join(LIBS), "'self'").replace('font-src ' + FONT_URL, "font-src 'self'")
 assert android_csp != app_csp
 aindex = index.replace(app_csp, android_csp).replace('<link rel="manifest" href="manifest.webmanifest">', '')
 libs_txt = []
@@ -72,6 +78,8 @@ for u in LIBS:
     local = 'lib/' + {0: 'ethers.umd.min.js', 1: 'walletconnect-provider.umd.js', 2: 'qrcode.min.js'}[LIBS.index(u)]
     aindex = aindex.replace('src="' + u + '"', 'src="' + local + '"')
     libs_txt.append(' '.join((u, local, m.group(1))))
+aindex = aindex.replace('url(' + FONT_URL + ')', 'url(lib/onest.woff2)')
+libs_txt.append(' '.join((FONT_URL, 'lib/onest.woff2', FONT_SRI)))
 assert 'cdn.jsdelivr' not in aindex and 'cdnjs' not in aindex
 open(os.path.join(aout, 'index.html'), 'w', encoding='utf-8').write(aindex)
 open(os.path.join(aout, 'libs.txt'), 'w').write('\n'.join(libs_txt) + '\n')

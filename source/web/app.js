@@ -319,6 +319,10 @@
     return { ready, timeUp, goalHit, empty, label, cls };
   }
 
+  // each lock gets its own colour pair, picked from its address so it stays the same everywhere
+  const POT_COLORS = [['#7C5CFF', '#4F8BFF'], ['#FF6FA8', '#FF9F6B'], ['#1FC7B6', '#52E08F'], ['#FFB547', '#FF7A59'], ['#4F8BFF', '#22C7E8'], ['#B467FF', '#FF6FCF']];
+  const ICON_GOAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="currentColor"/></svg>';
+  const ICON_DATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>';
   function renderLocks() {
     const box = $('locks'); const who = viewer();
     if (!who) { box.innerHTML = '<div class="empty">Connect your wallet to see your savings.</div>'; return; }
@@ -335,10 +339,11 @@
       if (isFinished(l)) { finished.push(l); continue; }
       const pct = g ? Math.min(100, 100 * fmt(l.balance) / fmt(l.goal)) : Math.min(100, Math.max(0, l.created ? (now - l.created) / (l.releaseTime - l.created) * 100 : (s.timeUp ? 100 : 0)));
       const el = document.createElement('article'); el.className = 'lock'; el.dataset.addr = l.addr;
+      const [g1, g2] = POT_COLORS[parseInt(l.addr.slice(2, 6), 16) % POT_COLORS.length]; el.style.setProperty('--g1', g1); el.style.setProperty('--g2', g2);
       el.innerHTML =
-        '<div class="lock-top"><div><div class="label">' + (l.name ? esc(l.name) : (g ? 'Savings goal' : 'Locked until a date')) + '</div>' +
-        '<div class="lock-amt">' + num(fmt(l.balance)) + (g ? '<span class="of"> / ' + num(fmt(l.goal)) + '</span>' : '') + ' ' + l.sym + '</div></div>' +
+        '<div class="lock-top"><span class="pot-ico" aria-hidden="true">' + (g ? ICON_GOAL : ICON_DATE) + '</span><div class="pot-title"><b>' + (l.name ? esc(l.name) : (g ? 'Savings goal' : 'Date lock')) + '</b><span>' + (g ? 'Opens at ' + num(fmt(l.goal)) + ' ' + l.sym : 'Opens ' + dateStr(l.releaseTime)) + '</span></div>' +
         '<span class="state ' + s.cls + '">' + s.label + '</span></div>' +
+        '<div class="lock-amt">' + money(fmt(l.balance)) + (g ? ' <span class="of">of ' + money(fmt(l.goal)).replace(/\.00$/, '') + '</span>' : '') + '</div>' +
         (s.empty && s.timeUp ? '' : '<div class="bar' + (g ? ' goalbar' : '') + '" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div>') +
         '<div class="kv">' +
           (g ? '<div><span class="label">To go</span>' + (s.goalHit ? 'Done' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym) + '</div><div><span class="label">Backup date</span>' + dateStr(l.releaseTime) + (s.timeUp ? '' : ' <span class="muted small">(' + untilStr(l.releaseTime) + ')</span>') + '</div>'
@@ -356,7 +361,7 @@
           row.appendChild(r);
         }
         if (!s.timeUp) {
-          const d = document.createElement('button'); d.className = g ? 'btn brass' : 'btn ghost'; d.textContent = 'Add money';
+          const d = document.createElement('button'); d.className = 'btn brass'; d.textContent = 'Add money';
           d.onclick = () => openDeposit(l); row.appendChild(d);
         }
         if (row.children.length) el.appendChild(row);
@@ -626,6 +631,13 @@
     box.innerHTML = html;
     const go = $('todayGo'); if (go) go.onclick = () => openDeposit(L, String(S));
   }
+  $('quickAdd').addEventListener('click', () => { // add money: straight to the lock if there is only one you can add to
+    if (!account) return toast('Connect your wallet first.');
+    const mine = LOCKS.filter((l) => l.beneficiary === account && !isFinished(l) && Date.now() / 1000 < l.releaseTime);
+    if (mine.length === 1) return openDeposit(mine[0]);
+    if (!mine.length) { show('new'); return toast('Make a lock first, then add money to it.'); }
+    $('locks').scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('Pick which savings to add money to.');
+  });
   function bindGo(root) { root.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => show(b.dataset.go))); }
   $('icsBtn').addEventListener('click', () => {
     const p = PLAN(); if (!planReady(p)) return toast('Fill in your payday plan first.');
