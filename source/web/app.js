@@ -62,7 +62,7 @@
     document.querySelectorAll('[data-connect]').forEach((b) => { b.textContent = account ? 'Disconnect' : 'Connect wallet'; b.className = account ? 'btn ghost small' : b.dataset.cls; });
     $('welcome').hidden = !!viewer(); $('homeMain').hidden = !viewer(); $('copyMine').hidden = !account;
     p.hidden = !(store.get('watch') && !account) && !(account && chainId !== CHAIN_ID); $('connectBtn').hidden = !!account;
-    if (!account) { p.textContent = store.get('watch') ? 'Viewing ' + short(store.get('watch')) : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect wallet'; }
+    if (!account) { p.textContent = store.get('watch') ? 'View only' : 'Not connected'; p.className = 'pill'; $('connectBtn').textContent = 'Connect wallet'; }
     else if (chainId !== CHAIN_ID) { p.textContent = 'Wrong network'; p.className = 'pill warn'; $('connectBtn').textContent = 'Disconnect'; }
     else { p.textContent = short(account); p.className = 'pill ok'; $('connectBtn').textContent = 'Disconnect'; }
     refresh();
