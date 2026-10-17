@@ -323,7 +323,8 @@ button.chip { cursor: pointer; }
 #lockChart { --c1: var(--g1); }
 .ch-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .ch-label { display: block; font-size: 13px; color: var(--muted); }
-.ch-val { display: block; font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.ch-val .pct { font-size: 13px; font-weight: 600; color: var(--muted); }
+.ch-val { display: block; white-space: nowrap; font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .ranges { display: flex; gap: 2px; background: var(--raised); border-radius: 999px; padding: 3px; flex: none; }
 .ranges button { border: 0; background: none; color: var(--muted); font: 600 12px var(--body); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
 .ranges button[aria-pressed="true"] { background: var(--ink); color: #141418; }
@@ -1891,8 +1892,8 @@ const TV = (() => {
     const X = (t) => (t - start) / Math.max(1, now - start) * 300, Y = (v) => 100 - v / max * 100;
     const line = pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(2) + ' ' + Y(p[1]).toFixed(2)).join(' ');
     const label = { '1M': 'Last month', '3M': 'Last 3 months', '1Y': 'Last year', All: 'Since you started' }[range];
-    const d = v1 - v0, pct = v0 > 0 ? ' (' + (d >= 0 ? '+' : '') + Math.round(d / v0 * 100) + '%)' : '';
-    const head = () => { box.querySelector('.ch-label').textContent = label; box.querySelector('.ch-val').textContent = (d >= 0 ? '+' : '−') + money(Math.abs(d)) + pct; };
+    const d = v1 - v0, p = v0 > 0 ? Math.round(d / v0 * 100) : null, pct = p !== null && Math.abs(p) <= 999 ? ' <span class="pct">' + (p >= 0 ? '+' : '') + p + '%</span>' : '';
+    const head = () => { box.querySelector('.ch-label').textContent = label; box.querySelector('.ch-val').innerHTML = (d >= 0 ? '+' : '\u2212') + money(Math.abs(d)) + pct; };
     box.querySelector('.ch-plot').innerHTML =
       '<svg viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="cg' + box.id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c1);stop-opacity:.3"/><stop offset="1" style="stop-color:var(--c1);stop-opacity:0"/></linearGradient></defs>' +
       '<path d="' + line + ' L300 100 L0 100 Z" fill="url(#cg' + box.id + ')"/><path d="' + line + '" fill="none" style="stroke:var(--c1)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>' +
