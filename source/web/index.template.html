@@ -309,6 +309,52 @@ button, .pill { -webkit-user-select: none; user-select: none; touch-action: mani
   @keyframes tabin { from { opacity: 0; transform: translateY(6px); } }
   details[open] > *:not(summary) { animation: tabin .18s ease-out; }
 }
+
+/* chips under the balance */
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 12px; }
+.chips:not(:has(.chip:not([hidden]))) { display: none; }
+.chip { font: 550 12.5px var(--body); padding: 6px 11px; border-radius: 999px; background: rgba(255,255,255,.08); color: rgba(245,245,247,.8); border: 0; font-variant-numeric: tabular-nums; }
+button.chip { cursor: pointer; }
+.chip.up { color: var(--mint); background: var(--mint-soft); }
+.lv-head + .chip { justify-self: center; margin-top: -6px; }
+
+/* savings chart: one line, zero-based, scrub to read any day */
+.chart { --c1: var(--accent); gap: 10px; }
+#lockChart { --c1: var(--g1); }
+.ch-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ch-label { display: block; font-size: 13px; color: var(--muted); }
+.ch-val .pct { font-size: 13px; font-weight: 600; color: var(--muted); }
+.ch-val { display: block; white-space: nowrap; font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.ranges { display: flex; gap: 2px; background: var(--raised); border-radius: 999px; padding: 3px; flex: none; }
+.ranges button { border: 0; background: none; color: var(--muted); font: 600 12px var(--body); padding: 5px 9px; border-radius: 999px; cursor: pointer; }
+.ranges button[aria-pressed="true"] { background: var(--ink); color: #141418; }
+.ch-plot { position: relative; height: 130px; touch-action: pan-y; cursor: crosshair; }
+.ch-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ch-x { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.35); pointer-events: none; }
+.ch-dot { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--c1); box-shadow: 0 0 0 3px var(--surface); pointer-events: none; }
+.ch-axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); }
+.ch-empty { color: var(--muted); font-size: 13.5px; padding-top: 50px; text-align: center; }
+
+/* levels and badges */
+.badge-ico { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--g1), var(--g2)); flex: none; }
+.badge-ico svg { width: 22px; height: 22px; }
+.badge-ico.big { width: 84px; height: 84px; margin: 6px auto 0; } .badge-ico.big svg { width: 42px; height: 42px; }
+.cheer-pct:has(.badge-ico) { background: none; }
+.mrow.level { grid-template-columns: 42px minmax(0,1fr) auto; border: 0; padding: 14px 14px 14px 16px; background: var(--surface); }
+.lvbar { display: block; height: 4px; border-radius: 4px; background: rgba(255,255,255,.08); margin-top: 7px; overflow: hidden; }
+.lvbar i { display: block; height: 100%; border-radius: 4px; }
+.lvs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+.lv { display: grid; justify-items: center; text-align: center; gap: 4px; font-size: 11px; color: var(--faint); }
+.lv .badge-ico { width: 34px; height: 34px; } .lv .badge-ico svg { width: 17px; height: 17px; }
+.lv b { font-size: 11px; font-weight: 600; color: var(--muted); }
+.lv:not(.got) .badge-ico, .bdg:not(.got) .badge-ico { background: var(--raised); color: var(--faint); }
+.lv.got b { color: var(--ink); }
+.badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.bdg { background: var(--surface); border-radius: var(--r-md); padding: 14px 8px 12px; display: grid; justify-items: center; align-content: start; text-align: center; gap: 5px; }
+.bdg b { font-size: 13px; font-weight: 600; line-height: 1.25; }
+.bdg span:not(.badge-ico) { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+.bdg:not(.got) b { color: var(--muted); }
+.fx { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 #confirm { z-index: 26; } /* the confirm screen always sits above any other sheet */
 </style>
 </head>
@@ -362,6 +408,7 @@ button, .pill { -webkit-user-select: none; user-select: none; touch-action: mani
         <div class="big" id="totalLocked">$0.00</div>
         <span class="label">Total locked <span class="upd" id="upd" hidden>Updating</span></span>
         <div class="hero-sub"><b id="walletTotal">—</b> in your wallet</div>
+        <div class="chips"><span class="chip" id="monthLine" hidden></span><button class="chip" id="fxLine" hidden></button></div>
         <div hidden><svg viewBox="0 0 120 120"><g id="dialTicks"></g><circle id="dialFill" cx="60" cy="60" r="40"/></svg><span id="dialPct"></span><span id="dialCap"></span><span id="nextMilestone"></span><span id="lockCount"></span></div>
         <div class="quick">
           <button id="quickAdd"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>Add money</button>
@@ -369,8 +416,10 @@ button, .pill { -webkit-user-select: none; user-select: none; touch-action: mani
           <button data-tab="coach"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>Payday plan</button>
         </div>
       </div>
+      <div class="group pad chart" id="homeChart" hidden><div class="ch-top"><div><span class="ch-label"></span><b class="ch-val"></b></div><div class="ranges"><button data-range="1M">1M</button><button data-range="3M">3M</button><button data-range="1Y">1Y</button><button data-range="All">All</button></div></div><div class="ch-plot"></div><div class="ch-axis"></div></div>
       <p class="notice" id="gasHint" hidden>Your wallet needs a little ETH on the Arbitrum network (about $1) to pay transaction fees.</p>
       <div id="today"></div>
+      <button class="group mrow level" id="levelRow" hidden></button>
       <div class="ledger" id="locks"></div>
       <button class="link-btn" id="findBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>Find my locks</button>
     </div>
@@ -455,6 +504,15 @@ button, .pill { -webkit-user-select: none; user-select: none; touch-action: mani
     </div>
   </section>
 
+  <!-- ACHIEVEMENTS -->
+  <section id="tab-badges" hidden>
+    <h1 class="page-title">Achievements</h1>
+    <div class="group pad"><span class="label">Levels, by how much you have locked</span><div class="lvs" id="lvList"></div></div>
+    <div class="section-head"><h2>Badges</h2><span class="small muted" id="badgeCount"></span></div>
+    <div class="badges" id="badgeGrid"></div>
+    <p class="small muted">Badges and levels are just for fun. They never touch your money.</p>
+  </section>
+
   <!-- MENU -->
   <section id="tab-menu" hidden>
     <h1 class="page-title">Menu</h1>
@@ -465,6 +523,7 @@ button, .pill { -webkit-user-select: none; user-select: none; touch-action: mani
     <div class="group">
       <button class="mrow" data-tab="new"><span class="mico" style="--g1:#1FC7B6;--g2:#52E08F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="mmid"><b>New lock</b><span>Start a savings goal or a date lock</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Payday plan</b><span>Your plan, streak and money lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="badges"><span class="mico" style="--g1:#C9971C;--g2:#FFD66B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.5" r="5.5"/><path d="M8.5 9.8L6 3.5h4l2 4 2-4h4l-2.5 6.3"/></svg></span><span class="mmid"><b>Achievements</b><span>Your level and badges</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
@@ -477,6 +536,13 @@ button, .pill { -webkit-user-select: none; user-select: none; touch-action: mani
   <!-- SETTINGS -->
   <section id="tab-setup" hidden>
     <h1 class="page-title">Settings</h1>
+    <div class="card">
+      <h2>Show in my currency</h2>
+      <p class="small muted">Type today's rate and TimeVault also shows your savings in your own currency. Nothing is fetched from the internet: you choose the rate, so it is only as up to date as you keep it.</p>
+      <div class="fx"><label for="fxCode">Currency<select id="fxCode"><option>LYD</option><option>EGP</option><option>TND</option><option>DZD</option><option>MAD</option><option>EUR</option><option>GBP</option><option>TRY</option><option>AED</option><option>SAR</option></select></label><label for="fxRate">1 USD =<input id="fxRate" inputmode="decimal" placeholder="e.g. 7.5" autocomplete="off"></label></div>
+      <p class="small muted" id="fxNote">Leave the rate empty and save to turn it off.</p>
+      <div class="row"><button class="btn small" id="fxSave">Save rate</button></div>
+    </div>
     <div class="card">
       <h2>Wallet</h2>
       <p class="small muted">TimeVault works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet. Your wallet must be set to the <b>Arbitrum</b> network.</p>

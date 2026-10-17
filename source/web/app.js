@@ -233,12 +233,13 @@
   }
 
   // ------------------------------------------------------------------ screens
-  const TABS = ['home', 'new', 'coach', 'setup', 'safety', 'menu', 'lock'];
+  const TABS = ['home', 'new', 'coach', 'setup', 'safety', 'menu', 'lock', 'badges'];
   document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => go(b.dataset.tab)));
   let page = 'home', depth = 0;
   function show(t) {
     TABS.forEach((x) => { $('tab-' + x).hidden = x !== t; });
     page = t; document.body.dataset.page = t; window.scrollTo(0, 0); onScroll();
+    if (t === 'badges') renderBadges();
   }
   // every screen is a history step, so the phone's back gesture and the back arrow both go back one screen
   function go(t) {
@@ -274,7 +275,7 @@
     $('menuWallet').textContent = viewer() ? short(viewer()) + (account ? '' : ' (view only)') : 'Not connected';
     $('gasHint').hidden = !(WALLET.ETH !== undefined && WALLET.ETH < ethers.parseEther('0.0002'));
     for (const o of $('lkToken').options) o.textContent = o.value + (WALLET[o.value] !== undefined ? ' (you have ' + num(fmt(WALLET[o.value])) + ')' : '');
-    renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones();
+    renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones(); renderFun();
     const tgt = $('cTarget'); const cur = store.get('plan.target');
     tgt.innerHTML = '<option value="">Choose one of your goals</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
   }
@@ -303,7 +304,7 @@
       }
     }
   }
-  $('cheerOk').addEventListener('click', () => { $('cheer').hidden = true; checkMilestones(); });
+  $('cheerOk').addEventListener('click', () => { $('cheer').hidden = true; checkMilestones(); checkBadges(); });
 
   let countFrom = null, countRaf = 0;
   const moneyHTML = (v) => { const m = money(v), i = m.lastIndexOf('.'); return m.slice(0, i) + '<span class="cents">' + m.slice(i) + '</span>'; };
@@ -337,6 +338,7 @@
   const POT_COLORS = [['#7C5CFF', '#4F8BFF'], ['#FF6FA8', '#FF9F6B'], ['#1FC7B6', '#52E08F'], ['#FFB547', '#FF7A59'], ['#4F8BFF', '#22C7E8'], ['#B467FF', '#FF6FCF']];
   const ICON_GOAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="currentColor"/></svg>';
   const ICON_DATE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg>';
+  const CHART_HTML = (id) => '<div class="group pad chart" id="' + id + '"><div class="ch-top"><div><span class="ch-label"></span><b class="ch-val"></b></div><div class="ranges">' + ['1M', '3M', '1Y', 'All'].map((r) => '<button data-range="' + r + '">' + r + '</button>').join('') + '</div></div><div class="ch-plot"></div><div class="ch-axis"></div></div>';
   let viewAddr = ''; // the lock shown on its own screen
   function openLock(a) { viewAddr = a; renderLocks(); go('lock'); }
   const potStyle = (l) => { const [g1, g2] = POT_COLORS[[...l.addr.toLowerCase()].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7) % POT_COLORS.length]; return '--g1:' + g1 + ';--g2:' + g2; };
@@ -389,7 +391,9 @@
     v.innerHTML =
       '<div class="lv-head"><span class="pot-ico" aria-hidden="true">' + (g ? ICON_GOAL : ICON_DATE) + '</span><h1>' + lockName(l) + '</h1>' +
         '<div class="big">' + moneyHTML(fmt(l.balance)) + '</div><span class="label">' + (g ? 'of ' + money(fmt(l.goal)).replace(/\.00$/, '') + ' ' + l.sym + ' goal' : l.sym + ' locked until ' + dateStr(l.releaseTime)) + '</span></div>' +
+      (fxLine(fmt(l.balance)) ? '<span class="chip">' + fxLine(fmt(l.balance)) + '</span>' : '') +
       '<div class="quick" id="lvActs"></div>' +
+      CHART_HTML('lockChart') +
       (g && s.timeUp && !s.empty ? '<p class="note">The backup date has passed, so this money is free. Withdraw it and start a new goal.</p>' : '') + (g && s.goalHit && !s.empty && !s.timeUp ? '<p class="note">You did it! Withdraw your savings whenever you like.</p>' : '') +
       (s.empty && s.timeUp ? '' : '<div class="group pad"><div class="prog-top"><b class="' + s.cls + '">' + s.label + '</b><span>' + (g ? (s.goalHit ? 'Goal reached' : num(Math.max(0, fmt(l.goal) - fmt(l.balance))) + ' ' + l.sym + ' to go') : (s.timeUp ? 'Unlocked' : untilStr(l.releaseTime) + ' left')) + '</span></div><div class="bar" role="progressbar" aria-valuenow="' + pct.toFixed(0) + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct.toFixed(1) + '%"></i></div></div>') +
       '<div class="group">' +
@@ -408,6 +412,8 @@
     act(ACT_COPY, 'Copy address', async () => { try { await navigator.clipboard.writeText(l.addr); toast('Lock address copied. Only send ' + l.sym + ' on Arbitrum One to it.', 7000); } catch { toast('Open "Lock address and details" to copy it.'); } });
     acts.style.gridTemplateColumns = 'repeat(' + acts.children.length + ', 1fr)';
     bindHide(v);
+    v.querySelectorAll('[data-range]').forEach((b) => b.addEventListener('click', () => { store.set('range', b.dataset.range); renderCharts(); }));
+    renderCharts();
   }
 
 
@@ -716,7 +722,7 @@
   let historyAt = 0, historyLoaded = false;
   async function loadHistory(fromCacheOnly) {
     const who = viewer(); if (!who || !LOCKS.length) { history = []; renderHistory(); return; }
-    if (fromCacheOnly || !history) { history = buildHistory(who); renderHistory(); renderToday(); }
+    if (fromCacheOnly || !history) { history = buildHistory(who); renderHistory(); renderToday(); renderFun(); }
     if (fromCacheOnly) return;
     const key = who + LOCKS.map((l) => l.addr).join();
     if (historyFor === key && Date.now() - historyAt < 50000) return;
@@ -728,7 +734,7 @@
     } catch { historyFor = ''; historyFailed = true; renderHistory(); return; }
     historyFailed = false; historyLoaded = true;
     history = buildHistory(who);
-    renderHistory(); renderToday(); if (history.length !== before) renderLocks();
+    renderHistory(); renderToday(); if (history.length !== before) renderLocks(); renderFun();
   }
   function streak() {
     const p = PLAN(); if (!history || !planReady(p)) return 0;
@@ -750,6 +756,158 @@
     box.innerHTML = '<div class="small muted">' + history.length + ' deposits · ' + money(total) + ' saved in the last year</div>' +
       '<ol class="hist">' + history.slice(0, 12).map((h) => '<li><span>' + dateStr(h.time) + (h.fromMe ? '' : ' <span class="muted small">from exchange or other</span>') + '</span><b>+' + num(fmt(h.amount)) + ' ' + h.sym + '</b><a class="mono small" target="_blank" rel="noopener noreferrer" href="https://arbiscan.io/tx/' + h.tx + '">view</a></li>').join('') + '</ol>';
   }
+
+  // ------------------------------------------------------------------ savings over time (display only, built from deposit history)
+  // A lock's value at time t = its balance now minus everything deposited after t (never below zero).
+  const valueAt = (locks, t) => locks.reduce((s, l) => {
+    const after = (history || []).filter((h) => h.to === l.addr && h.time > t).reduce((a, h) => a + fmt(h.amount), 0);
+    return s + Math.max(0, fmt(l.balance) - after);
+  }, 0);
+  const RANGES = { '1M': 30, '3M': 91, '1Y': 365, All: 0 };
+  const shortDate = (t) => new Date(t * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  function drawChart(box, locks, range) {
+    if (!box) return;
+    if (!locks.length || !history) { box.hidden = !locks.length; if (locks.length) box.querySelector('.ch-plot').innerHTML = '<p class="ch-empty">Loading your history…</p>'; return; }
+    box.hidden = false;
+    const now = Math.floor(Date.now() / 1000), addrs = new Set(locks.map((l) => l.addr));
+    const deps = history.filter((h) => addrs.has(h.to) && h.time).map((h) => h.time).sort((a, b) => a - b);
+    const first = Math.min(deps[0] || now, ...locks.map((l) => l.created || now));
+    const start = RANGES[range] ? Math.max(now - RANGES[range] * DAY, Math.min(first, now - DAY)) : Math.min(first, now - DAY);
+    const pts = [[start, valueAt(locks, start)]];
+    for (const t of deps) if (t > start) { pts.push([t - 1, valueAt(locks, t - 1)], [t, valueAt(locks, t)]); }
+    pts.push([now, valueAt(locks, now)]);
+    const v0 = pts[0][1], v1 = pts[pts.length - 1][1], max = Math.max(1, ...pts.map((p) => p[1])) * 1.12;
+    const X = (t) => (t - start) / Math.max(1, now - start) * 300, Y = (v) => 100 - v / max * 100;
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(2) + ' ' + Y(p[1]).toFixed(2)).join(' ');
+    const label = { '1M': 'Last month', '3M': 'Last 3 months', '1Y': 'Last year', All: 'Since you started' }[range];
+    const d = v1 - v0, p = v0 > 0 ? Math.round(d / v0 * 100) : null, pct = p !== null && Math.abs(p) <= 999 ? ' <span class="pct">' + (p >= 0 ? '+' : '') + p + '%</span>' : '';
+    const head = () => { box.querySelector('.ch-label').textContent = label; box.querySelector('.ch-val').innerHTML = (d >= 0 ? '+' : '\u2212') + money(Math.abs(d)) + pct; };
+    box.querySelector('.ch-plot').innerHTML =
+      '<svg viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="cg' + box.id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c1);stop-opacity:.3"/><stop offset="1" style="stop-color:var(--c1);stop-opacity:0"/></linearGradient></defs>' +
+      '<path d="' + line + ' L300 100 L0 100 Z" fill="url(#cg' + box.id + ')"/><path d="' + line + '" fill="none" style="stroke:var(--c1)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>' +
+      '<i class="ch-x" hidden></i><i class="ch-dot" style="left:100%;top:' + Y(v1) + '%"></i>';
+    box.querySelector('.ch-axis').innerHTML = '<span>' + shortDate(start) + '</span><span>Today</span>';
+    box.querySelectorAll('[data-range]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.range === range)));
+    head();
+    const plot = box.querySelector('.ch-plot'), xl = plot.querySelector('.ch-x'), dot = plot.querySelector('.ch-dot');
+    const at = (ev) => { // scrub: the header shows the date and amount under your finger
+      const r = plot.getBoundingClientRect(), f = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), t = start + f * (now - start);
+      const v = valueAt(locks, t);
+      xl.hidden = false; xl.style.left = (f * 100) + '%'; dot.style.left = (f * 100) + '%'; dot.style.top = Y(v) + '%';
+      box.querySelector('.ch-label').textContent = f > 0.995 ? 'Today' : shortDate(t); box.querySelector('.ch-val').textContent = money(v);
+    };
+    plot.onpointermove = plot.onpointerdown = at;
+    plot.onpointerleave = plot.onpointercancel = plot.onpointerup = () => { xl.hidden = true; dot.style.left = '100%'; dot.style.top = Y(v1) + '%'; head(); };
+  }
+  const chartRange = () => (RANGES[store.get('range')] !== undefined ? store.get('range') : '3M');
+  document.querySelectorAll('[data-range]').forEach((b) => b.addEventListener('click', () => { store.set('range', b.dataset.range); renderCharts(); }));
+  function renderCharts() {
+    drawChart($('homeChart'), viewer() ? LOCKS.filter((l) => l.balance > 0n) : [], chartRange());
+    const l = LOCKS.find((x) => x.addr === viewAddr);
+    if (l && $('lockChart')) drawChart($('lockChart'), l.balance > 0n ? [l] : [], chartRange());
+  }
+  function monthLine() { // "+$180 locked this month"
+    const el = $('monthLine'); if (!el) return;
+    if (!viewer() || !history) { el.hidden = true; return; }
+    const m = new Date(); m.setDate(1); m.setHours(0, 0, 0, 0);
+    const sum = history.filter((h) => h.time * 1000 >= m.getTime()).reduce((s, h) => s + fmt(h.amount), 0);
+    el.hidden = false; el.className = 'chip' + (sum > 0 ? ' up' : '');
+    el.textContent = sum > 0 ? '+' + money(sum) + ' this month' : 'Nothing locked yet this month';
+  }
+
+  // ------------------------------------------------------------------ your own currency (rate typed in by you, nothing fetched)
+  const FX = () => store.json('fx', null);
+  function fxLine(usd) {
+    const f = FX(); if (!f || !(f.rate > 0)) return '';
+    const v = Math.floor(usd * f.rate);
+    return '≈ ' + v.toLocaleString() + ' ' + f.code;
+  }
+  function renderFx() {
+    const total = LOCKS.reduce((s, l) => s + fmt(l.balance), 0), f = FX();
+    const el = $('fxLine'); const t = viewer() ? fxLine(total) : '';
+    el.hidden = !t; el.textContent = t;
+    if (f) { $('fxCode').value = f.code; $('fxRate').value = f.rate; $('fxNote').textContent = 'Rate saved ' + dateStr(f.at) + '. Update it whenever the rate moves.'; }
+  }
+  $('fxSave').addEventListener('click', () => {
+    const code = $('fxCode').value, rate = Number(String($('fxRate').value).replace(/,/g, ''));
+    if (!(rate > 0) || rate > 1e7) { store.set('fx', ''); renderFx(); return toast('Cleared. Type a rate like 7.5 to show your savings in ' + code + '.'); }
+    store.setJson('fx', { code, rate, at: Math.floor(Date.now() / 1000) }); renderFx(); toast('Saved. Your savings now also show in ' + code + '.');
+  });
+  $('fxLine').addEventListener('click', () => go('setup'));
+
+  // ------------------------------------------------------------------ levels and badges (just for fun: they never touch your money)
+  const LEVELS = [['New saver', 0, '#6E6E78', '#8E8E96'], ['Bronze', 100, '#B0703C', '#E0A26A'], ['Silver', 500, '#8C96A8', '#D6DCE6'], ['Gold', 1000, '#C9971C', '#FFD66B'],
+    ['Platinum', 2500, '#5FB3C4', '#C6F1F7'], ['Diamond', 5000, '#4F8BFF', '#B79BFF'], ['Legend', 10000, '#FF6FA8', '#FFB547']];
+  const levelOf = (usd) => { let i = 0; LEVELS.forEach((x, k) => { if (usd >= x[1]) i = k; }); return i; };
+  const BI = (p) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
+  const B_ICONS = {
+    lock: BI('<rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>'), plus: BI('<path d="M12 5v14M5 12h14"/>'),
+    target: BI('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/>'), layers: BI('<path d="M12 4l9 5-9 5-9-5z"/><path d="M3 14l9 5 9-5"/>'),
+    flame: BI('<path d="M12 21c4 0 6.5-2.6 6.5-6.2 0-3.6-2.6-5.6-4-8.8-1.5 2-2 3.4-2.3 5-1.2-1-1.7-2.3-1.9-3.6C8 9.4 5.5 11.7 5.5 14.8 5.5 18.4 8 21 12 21z"/>'),
+    clock: BI('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'), cal: BI('<rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>'),
+    swap: BI('<path d="M4 10h13l-4-4M20 14H7l4 4"/>'), star: BI('<path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.7l-5.1 2.7 1-5.6-4.1-4 5.7-.8z"/>'),
+    medal: BI('<circle cx="12" cy="14.5" r="5.5"/><path d="M8.5 9.8L6 3.5h4l2 4 2-4h4l-2.5 6.3"/>'),
+  };
+  const BADGES = [
+    ['first-lock', 'First lock', 'Make your first lock.', 'lock', '#7C5CFF', '#4F8BFF', (c) => c.locks >= 1],
+    ['first-dep', 'First deposit', 'Put money into a lock.', 'plus', '#1FC7B6', '#52E08F', (c) => c.deps >= 1],
+    ['big-dep', 'Big move', 'Lock $100 or more in one go.', 'star', '#FFB547', '#FF7A59', (c) => c.biggest >= 100],
+    ['three-locks', 'Three goals', 'Have 3 locks saving at once.', 'layers', '#4F8BFF', '#22C7E8', (c) => c.active >= 3],
+    ['streak-3', 'On a roll', 'Save 3 paydays in a row.', 'flame', '#FF7A59', '#FFB547', (c) => c.streak >= 3],
+    ['streak-6', 'Habit', 'Save 6 paydays in a row.', 'flame', '#FF6FA8', '#FF7A59', (c) => c.streak >= 6],
+    ['streak-12', 'Unstoppable', 'Save 12 paydays in a row.', 'flame', '#B467FF', '#FF6FCF', (c) => c.streak >= 12],
+    ['months-3', 'Steady', 'Lock money in 3 different months.', 'cal', '#1FC7B6', '#4F8BFF', (c) => c.months >= 3],
+    ['patient-90', 'Patient', 'Keep money locked for 90 days.', 'clock', '#5FB3C4', '#4F8BFF', (c) => c.oldestDays >= 90],
+    ['patient-365', 'One year strong', 'Keep money locked for a full year.', 'clock', '#B467FF', '#4F8BFF', (c) => c.oldestDays >= 365],
+    ['direct', 'Straight in', 'Send money to a lock straight from an exchange.', 'swap', '#22B573', '#45E0A6', (c) => c.external >= 1],
+    ['goal-hit', 'Goal reached', 'Reach a savings goal.', 'target', '#22B573', '#45E0A6', (c) => c.goalHit],
+  ];
+  function badgeCtx() {
+    const now = Date.now() / 1000, h = history || [];
+    const live = LOCKS.filter((l) => l.balance > 0n), liveAddr = new Set(live.map((l) => l.addr));
+    const oldest = h.filter((x) => liveAddr.has(x.to) && x.time).reduce((m, x) => Math.min(m, x.time), now);
+    return { locks: LOCKS.length, deps: h.length, biggest: h.reduce((m, x) => Math.max(m, fmt(x.amount)), 0), active: LOCKS.filter((l) => !isFinished(l)).length,
+      streak: streak(), months: new Set(h.filter((x) => x.time).map((x) => new Date(x.time * 1000).toISOString().slice(0, 7))).size,
+      oldestDays: (now - oldest) / DAY, external: h.filter((x) => !x.fromMe).length, goalHit: LOCKS.some((l) => l.kind === 'goal' && l.balance > 0n && l.balance >= l.goal) };
+  }
+  const badgeKey = (w) => 'bdg.' + w.toLowerCase();
+  function earnedBadges() { // earned badges are remembered, so a badge stays yours after you withdraw
+    const w = viewer(); if (!w || !history) return new Set();
+    const c = badgeCtx(); const now = BADGES.filter((b) => b[6](c)).map((b) => b[0]);
+    const kept = account && w === account ? (store.json(badgeKey(w), null)?.ids || []) : [];
+    return new Set([...kept, ...now]);
+  }
+  function checkBadges() { // celebrate a new badge or level once, the first time you earn it
+    if (!account || viewer() !== account || !historyLoaded || !loadedOnce || !$('cheer').hidden) return;
+    const st = store.json(badgeKey(account), null); const ids = [...earnedBadges()];
+    const total = LOCKS.reduce((s, l) => s + fmt(l.balance), 0), lv = levelOf(total);
+    if (!st) { store.setJson(badgeKey(account), { ids, lv }); return; } // first look: no party for old progress
+    const fresh = ids.filter((i) => !st.ids.includes(i));
+    if (lv > (st.lv || 0)) { store.setJson(badgeKey(account), { ids: st.ids, lv }); return cheer(LEVELS[lv][2], LEVELS[lv][3], B_ICONS.medal, 'You are ' + (lv === 6 ? 'a Legend' : LEVELS[lv][0]) + '!', 'You have ' + money(total) + ' locked. ' + (LEVELS[lv + 1] ? money(LEVELS[lv + 1][1] - total) + ' to ' + LEVELS[lv + 1][0] + '.' : 'That is the top level.')); }
+    if (fresh.length) { const b = BADGES.find((x) => x[0] === fresh[0]); store.setJson(badgeKey(account), { ids: [...st.ids, fresh[0]], lv: Math.max(lv, st.lv || 0) }); return cheer(b[4], b[5], B_ICONS[b[3]], 'New badge: ' + b[1], b[2].replace(/\.$/, '') + ': done. See all your badges under Achievements.'); }
+  }
+  function cheer(c1, c2, icon, title, text) {
+    $('cheerPct').innerHTML = '<span class="badge-ico big" style="--g1:' + c1 + ';--g2:' + c2 + '">' + icon + '</span>';
+    $('cheerTitle').textContent = title; $('cheerText').textContent = text; $('cheerOk').textContent = 'Nice!'; $('cheer').hidden = false;
+  }
+  function renderLevel() {
+    const w = viewer(); const box = $('levelRow'); if (!box) return;
+    if (!w || !loadedOnce) { box.hidden = true; return; }
+    const total = LOCKS.reduce((s, l) => s + fmt(l.balance), 0), lv = levelOf(total), nx = LEVELS[lv + 1];
+    const pct = nx ? Math.min(100, (total - LEVELS[lv][1]) / (nx[1] - LEVELS[lv][1]) * 100) : 100;
+    const n = earnedBadges().size;
+    box.hidden = false;
+    box.innerHTML = '<span class="badge-ico" style="--g1:' + LEVELS[lv][2] + ';--g2:' + LEVELS[lv][3] + '">' + B_ICONS.medal + '</span><span class="mmid"><b>' + LEVELS[lv][0] + (lv ? ' saver' : '') + '</b><span>' + (nx ? money(nx[1] - total) + ' to ' + nx[0] : 'Top level reached') + ' · ' + n + ' of ' + BADGES.length + ' badges</span><span class="lvbar"><i style="width:' + pct.toFixed(1) + '%;background:linear-gradient(90deg,' + LEVELS[lv][2] + ',' + LEVELS[lv][3] + ')"></i></span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+  }
+  function renderBadges() {
+    const w = viewer(); const total = LOCKS.reduce((s, l) => s + fmt(l.balance), 0), lv = levelOf(total);
+    $('lvList').innerHTML = LEVELS.map((x, k) => '<div class="lv' + (k <= lv && w ? ' got' : '') + '"><span class="badge-ico" style="--g1:' + x[2] + ';--g2:' + x[3] + '">' + B_ICONS.medal + '</span><b>' + x[0] + '</b><span>' + (k ? money(x[1]).replace('.00', '') : 'Start') + '</span></div>').join('');
+    const got = earnedBadges();
+    $('badgeGrid').innerHTML = BADGES.map((b) => '<div class="bdg' + (got.has(b[0]) ? ' got' : '') + '"><span class="badge-ico" style="--g1:' + b[4] + ';--g2:' + b[5] + '">' + B_ICONS[b[3]] + '</span><b>' + b[1] + '</b><span>' + b[2] + '</span></div>').join('');
+    $('badgeCount').textContent = got.size + ' of ' + BADGES.length + ' earned';
+  }
+  $('levelRow').addEventListener('click', () => go('badges'));
+  function renderFun() { renderCharts(); monthLine(); renderFx(); renderLevel(); if (page === 'badges') renderBadges(); checkBadges(); }
 
   // ------------------------------------------------------------------ coach: lessons
   const LESSONS = [
