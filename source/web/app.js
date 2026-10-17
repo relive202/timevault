@@ -772,7 +772,7 @@
     const now = Math.floor(Date.now() / 1000), addrs = new Set(locks.map((l) => l.addr));
     const deps = history.filter((h) => addrs.has(h.to) && h.time).map((h) => h.time).sort((a, b) => a - b);
     const first = Math.min(deps[0] || now, ...locks.map((l) => l.created || now));
-    const start = RANGES[range] ? Math.max(now - RANGES[range] * DAY, Math.min(first, now - DAY)) : Math.min(first, now - DAY);
+    const begin = Math.min(first - DAY, now - DAY), start = RANGES[range] ? Math.max(now - RANGES[range] * DAY, begin) : begin; // start a day before the first deposit, so the line rises from zero
     const pts = [[start, valueAt(locks, start)]];
     for (const t of deps) if (t > start) { pts.push([t - 1, valueAt(locks, t - 1)], [t, valueAt(locks, t)]); }
     pts.push([now, valueAt(locks, now)]);
