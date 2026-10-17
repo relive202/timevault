@@ -1302,9 +1302,9 @@ const TV = (() => {
   let refreshSeq = 0, shownFor = '', loadedOnce = false;
   const cacheKey = (w) => 'cache.' + w.toLowerCase();
   function setUpdating(on) { $('upd').hidden = !on; }
-  window.__T = { setAccount: (a, c) => setAccount(a, c), go: (t) => go(t), openLock: (a) => openLock(a) };
+  window.__T = { setAccount: (a, c) => setAccount(a, c), go: (t) => go(t), openLock: (a) => openLock(a), cheer: (...a) => cheer(...a), B_ICONS: () => B_ICONS };
   async function refresh() {
-    if (window.__FAKE) { LOCKS = window.__FAKE.locks; WALLET = window.__FAKE.wallet; loadedOnce = true; lastSig = ''; render(); return; }
+    if (window.__FAKE) { LOCKS = window.__FAKE.locks; WALLET = window.__FAKE.wallet; loadedOnce = true; if (window.__FAKE.history) { history = window.__FAKE.history; historyLoaded = true; } lastSig = ''; render(); return; }
     const who = viewer();
     renderSelf();
     if (!who) { LOCKS = []; WALLET = {}; shownFor = ''; render(); return; }
