@@ -1,10 +1,22 @@
 # TimeVault
 
+**[العربية](README.ar.md)** · English
+
 A phone app that locks your USDC or USDT on Arbitrum One until you reach a savings goal, or until a backup date, whichever comes first. Nobody can take the money out early, including you. When it unlocks, it can only pay your own wallet.
 
 It also has a savings coach: a payday plan, a streak counter, calendar reminders and short money lessons.
 
 There is no server, no account and no company holding your coins. The app is a single web page that talks directly to the Arbitrum blockchain and to your wallet. It works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet.
+
+## بالعربية
+
+<div dir="rtl">
+
+**TimeVault** يقفل دولاراتك الرقمية (USDC أو USDT) على شبكة Arbitrum One حتى تصل إلى هدفك أو إلى تاريخ احتياطي، أيهما أسبق. لا يستطيع أحد إخراجها مبكرًا، ولا حتى أنت، وعندما يُفتح القفل يعود المال إلى محفظتك فقط. لا خادم ولا حساب ولا شركة تحتفظ بأموالك. التطبيق متوفر بالعربية: من القائمة (⋯) ← اللغة.
+
+نزّل التطبيق من [Releases](https://github.com/relive202/timevault/releases) أو افتحه من [المتصفح](https://relive202.github.io/timevault/). الشرح الكامل بالعربية في [README.ar.md](README.ar.md).
+
+</div>
 
 ## What's in this folder
 

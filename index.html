@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-jw9sUuIsS5VkDcpXFBTKTCVUS+oa7Vbu6SnaSjHlAF8=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mkWAQ8wULcqt9a0YQ0J5/KOJRR2Rd7tp9BnJ92k25Ts=' 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-dOVmc08UqEfBC3OYv6smZoSVSXHjjco/hY2lFtfLYK8=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0F0F12">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,6 +12,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>TimeVault</title>
+<script>try{var l=localStorage.getItem('tv3.lang');if(l!=='en'&&l!=='ar')l=/^ar/i.test(navigator.language||'')?'ar':'en';if(l==='ar'){var h=document.documentElement;h.lang='ar';h.dir='rtl';h.className+=' tr-wait';}}catch(e){}</script>
 <style>
 /* TimeVault visual system: quiet hardware-wallet style. Neutral greys, one soft glow behind the balance, colour only in the lock icons. */
 @font-face { font-family: "Onest"; src: url(https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
@@ -57,7 +58,7 @@ body[data-page="menu"] .top-end [data-tab="menu"] { visibility: hidden; }
 body.scrolled .topbar { background: rgba(15,15,18,.96); box-shadow: 0 1px 0 var(--line-soft); }
 .brand { display: flex; align-items: center; grid-column: 1; grid-row: 1; }
 .brand svg { width: 26px; height: 26px; display: block; }
-#backBtn { grid-column: 1; grid-row: 1; margin-left: -8px; }
+#backBtn { grid-column: 1; grid-row: 1; margin-inline-start: -8px; }
 body[data-page="home"] #backBtn, body:not([data-page="home"]) .brand { display: none; }
 .mini { grid-column: 2; text-align: center; font: 650 15px var(--body); font-variant-numeric: tabular-nums; opacity: 0; transform: translateY(6px); transition: opacity .2s ease, transform .2s var(--ease); }
 body.pastHero .mini { opacity: 1; transform: none; }
@@ -106,14 +107,14 @@ section { display: grid; gap: 16px; }
 
 /* locks: one grouped list of rows, colour only in each icon */
 .ledger { display: grid; gap: 12px; }
-.pot-row { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 13px 16px; cursor: pointer; transition: background .12s; }
+.pot-row { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: start; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 13px 16px; cursor: pointer; transition: background .12s; }
 .pot-row:active { background: rgba(255,255,255,.05); }
 .pot-row.skel { height: 68px; }
 .pot-ico { width: 42px; height: 42px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--g1), var(--g2)); }
 .pot-ico svg { width: 22px; height: 22px; }
 .pot-mid, .pot-end { display: grid; min-width: 0; }
 .pot-mid b, .pot-end b { font-weight: 600; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pot-end { text-align: right; } .pot-end b { font-variant-numeric: tabular-nums; }
+.pot-end { text-align: end; } .pot-end b { font-variant-numeric: tabular-nums; }
 .pot-mid span, .pot-end span { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pot-mid span.open { color: var(--mint); }
 .link-btn { justify-self: center; display: inline-flex; align-items: center; gap: 8px; border: 0; background: var(--surface); color: var(--ink); font: 600 14px var(--body); padding: 10px 16px; border-radius: 999px; cursor: pointer; }
@@ -130,7 +131,7 @@ section { display: grid; gap: 16px; }
 .prog-top b { font-weight: 600; color: var(--ink); } .prog-top b.open { color: var(--mint); }
 .irow { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; font-size: 14.5px; }
 .irow + .irow { box-shadow: inset 0 1px 0 var(--line-soft); }
-.irow > span { color: var(--muted); } .irow b { font-weight: 550; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.irow > span { color: var(--muted); } .irow b { font-weight: 550; text-align: end; min-width: 0; overflow-wrap: anywhere; }
 .bar { height: 8px; background: rgba(255,255,255,.07); border-radius: 99px; overflow: hidden; }
 .bar > i { display: block; height: 100%; min-width: 8px; border-radius: 99px; background: linear-gradient(90deg, var(--g1), var(--g2)); }
 .note { font-size: 13.5px; color: var(--ink); background: var(--mint-soft); border-radius: var(--r-sm); padding: 11px 13px; }
@@ -143,14 +144,14 @@ details > p.caution { margin-top: 8px; }
 .empty b { color: var(--ink); }
 
 /* menu */
-.mrow { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 14px 13px 16px; cursor: pointer; text-decoration: none; transition: background .12s; }
+.mrow { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: start; display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 14px 13px 16px; cursor: pointer; text-decoration: none; transition: background .12s; }
 button.mrow:active, a.mrow:active { background: rgba(255,255,255,.05); }
 .mrow + .mrow { box-shadow: inset 0 1px 0 var(--line-soft); }
 .mico { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--g1), var(--g2)); }
 .mico svg { width: 20px; height: 20px; }
 .mmid { display: grid; min-width: 0; } .mmid b { font-weight: 600; font-size: 15.5px; } .mmid span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chev { width: 18px; height: 18px; color: var(--faint); }
-.mnote { padding: 0 16px 14px 66px; font-size: 12.5px; }
+.mnote { padding: 0 16px 14px; padding-inline-start: 66px; font-size: 12.5px; }
 .mnote:empty { display: none; }
 .ver { text-align: center; color: var(--faint); font-size: 12.5px; }
 
@@ -243,7 +244,7 @@ ol.how span { color: var(--muted); font-size: 14px; }
 details.need { background: var(--raised); border-radius: var(--r-md); padding: 14px 16px; }
 .welcome details.need { background: var(--surface); }
 details.need summary { font-weight: 600; color: var(--ink); font-size: 14px; }
-details.need ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
+details.need ul { margin: 10px 0 0; padding-inline-start: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
 details.need ul b { color: var(--ink); }
 details.need > p, details.need > div { margin-top: 10px; }
 #homeMain { display: grid; gap: 22px; }
@@ -260,9 +261,9 @@ details.advanced:not([open]) { gap: 0; }
 .agree { background: var(--raised); border-radius: var(--r-md); padding: 15px; }
 .rules { background: var(--amber-soft); border-radius: var(--r-md); padding: 15px 17px; font-size: 14px; display: grid; gap: 8px; }
 .rules > b { color: var(--amber); }
-.rules ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: var(--muted); }
+.rules ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 7px; color: var(--muted); }
 .rules ul b { color: var(--ink); }
-ol.guide { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 9px; font-size: 14px; color: var(--muted); }
+ol.guide { margin: 10px 0 0; padding-inline-start: 20px; display: grid; gap: 9px; font-size: 14px; color: var(--muted); }
 ol.guide b { color: var(--ink); }
 .cheer { text-align: center; justify-items: center; overflow: hidden; }
 .cheer-pct { font: 700 4rem/1 var(--display); letter-spacing: -.05em; margin-top: 10px; background: linear-gradient(120deg, #45E0A6, #4F8BFF 55%, #B467FF); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -280,7 +281,7 @@ ol.guide b { color: var(--ink); }
 .tabs2 button { border: 0; background: none; color: var(--muted); font: 600 14px var(--body); padding: 10px 6px; border-radius: 999px; cursor: pointer; transition: background .15s, color .15s; }
 .tabs2 button[aria-selected="true"] { background: var(--ink); color: #14142A; }
 .sheet-body { display: grid; gap: 14px; }
-ol.exsteps { margin: 0; padding-left: 20px; display: grid; gap: 12px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
+ol.exsteps { margin: 0; padding-inline-start: 20px; display: grid; gap: 12px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
 ol.exsteps b { color: var(--ink); }
 ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
 #exQr { background: #fff; padding: 10px; border-radius: var(--r-md); width: max-content; margin-top: 8px; }
@@ -293,7 +294,7 @@ ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
 /* motion & loading */
 body { overscroll-behavior-y: none; }
 button, .pill { -webkit-user-select: none; user-select: none; touch-action: manipulation; }
-.upd { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-size: 11.5px; color: rgba(245,245,247,.6); }
+.upd { display: inline-flex; align-items: center; gap: 5px; margin-inline-start: 8px; font-size: 11.5px; color: rgba(245,245,247,.6); }
 .upd::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
 .loading .big, .loading #walletTotal { color: transparent; border-radius: 12px; }
 .loading .big { width: 210px; }
@@ -321,7 +322,9 @@ button.chip { cursor: pointer; }
 /* savings chart: one line, zero-based, scrub to read any day */
 .chart { --c1: var(--accent); gap: 10px; }
 #lockChart { --c1: var(--g1); }
-.ch-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ch-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ch-top > div:first-child { min-width: 0; }
+html[dir="rtl"] .ch-val { direction: ltr; text-align: right; }
 .ch-label { display: block; font-size: 13px; color: var(--muted); }
 .ch-val .pct { font-size: 13px; font-weight: 600; color: var(--muted); }
 .ch-val { display: block; white-space: nowrap; font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
@@ -355,6 +358,29 @@ button.chip { cursor: pointer; }
 .bdg span:not(.badge-ico) { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
 .bdg:not(.got) b { color: var(--muted); }
 .fx { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* language switch */
+.langswitch { display: inline-flex; gap: 2px; background: var(--raised); border-radius: 999px; padding: 3px; justify-self: end; }
+.langswitch button { border: 0; background: none; color: var(--muted); font: 600 12.5px var(--body); padding: 6px 11px; border-radius: 999px; cursor: pointer; }
+.langswitch button[aria-pressed="true"] { background: var(--ink); color: #141418; }
+.welcome > .langswitch { justify-self: end; margin-bottom: -10px; }
+
+/* Arabic: right to left. Amounts, addresses and the chart stay left to right. */
+html[lang="ar"] { --body: "Onest", "Noto Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif; }
+html[dir="rtl"] body { line-height: 1.6; }
+html[dir="rtl"] h1, html[dir="rtl"] h2, html[dir="rtl"] h3, html[dir="rtl"] .big, html[dir="rtl"] .page-title, html[dir="rtl"] .welcome-title { letter-spacing: 0; }
+html[dir="rtl"] #backBtn svg, html[dir="rtl"] .chev { transform: scaleX(-1); }
+.big, .lock-amt, .pot-end b, .ch-val, .mini, .mono, .addr, .uri, #walletTotal, .streak b, .cheer-pct { unicode-bidi: isolate; }
+.big, .mono, .addr, .uri, .ch-plot, .ch-axis, input.mono, #liveOut, #appFp { direction: ltr; }
+html[dir="rtl"] .ch-axis { flex-direction: row; }
+html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right: 15px; padding-left: 36px; }
+@media (prefers-reduced-motion: no-preference) {
+  html[dir="rtl"] section:not(#tab-home):not([hidden]) { animation-name: slidein-rtl; }
+  @keyframes slidein-rtl { from { opacity: 0; transform: translateX(-28px); } }
+}
+/* until the Arabic text is in place, hide the page (it shows anyway after a moment if something goes wrong) */
+.tr-wait main, .tr-wait .sheet { visibility: hidden; animation: tr-show 0s 2.5s forwards; }
+@keyframes tr-show { to { visibility: visible; } }
 #confirm { z-index: 26; } /* the confirm screen always sits above any other sheet */
 </style>
 </head>
@@ -375,6 +401,7 @@ button.chip { cursor: pointer; }
   <!-- HOME -->
   <section id="tab-home">
     <div id="welcome" class="card welcome">
+      <div class="langswitch notr"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div>
       <h2 class="welcome-title">Savings you can't touch until you reach your goal.</h2>
       <p class="muted">TimeVault locks your digital dollars (USDC or USDT) in a safe on the blockchain. Nobody can take them out early, not even you. When you reach your goal, the money goes back to your wallet.</p>
       <ol class="how">
@@ -421,7 +448,7 @@ button.chip { cursor: pointer; }
       <div id="today"></div>
       <button class="group mrow level" id="levelRow" hidden></button>
       <div class="ledger" id="locks"></div>
-      <button class="link-btn" id="findBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>Find my locks</button>
+      <button class="link-btn" id="findBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><span class="lbl">Find my locks</span></button>
     </div>
   </section>
 
@@ -528,6 +555,9 @@ button.chip { cursor: pointer; }
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
     <div class="group">
+      <div class="mrow"><span class="mico" style="--g1:#4F8BFF;--g2:#22C7E8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 3.6 5.4 3.6 8.5s-1.2 5.9-3.6 8.5c-2.4-2.6-3.6-5.4-3.6-8.5s1.2-5.9 3.6-8.5z"/></svg></span><span class="mmid"><b>Language</b><span class="notr">English · العربية</span></span><div class="langswitch notr"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div></div>
+    </div>
+    <div class="group">
       <a class="mrow" href="https://github.com/relive202/timevault" target="_blank" rel="noopener noreferrer"><span class="mico" style="--g1:#3A3A40;--g2:#55555C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12"/></svg></span><span class="mmid"><b>Source code</b><span>Open on GitHub</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
     </div>
     <p class="ver">TimeVault for USDC and USDT on Arbitrum One</p>
@@ -600,7 +630,7 @@ button.chip { cursor: pointer; }
       <pre class="wrap" id="appFp"></pre>
       <p class="small muted">These should match FINGERPRINTS.txt on GitHub. <a id="testsLink" href="tests.html" target="_blank" rel="noopener">Run the 49 safety tests yourself.</a></p>
       <span class="label">Publish a lock's code on Arbiscan</span>
-      <ol class="small" style="margin:0;padding-left:20px;display:grid;gap:4px">
+      <ol class="small" style="margin:0;padding-inline-start:20px;display:grid;gap:4px">
         <li>Get the file for your lock type below.</li>
         <li>On Arbiscan, open your lock address → Contract → Verify and Publish.</li>
         <li>Choose Solidity (Standard-Json-Input), compiler v0.8.24+commit.e11b9ed9, license MIT, and upload the file.</li>
@@ -1108,7 +1138,501 @@ const TV = (() => {
   });
 })();
 </script>
-<script id="appScript">// TimeVault app. All transactions go through TV.makeGuard (core.js). This file only builds the screens.
+<script id="appScript">// Arabic text for TimeVault, used when the app language is Arabic.
+// d: exact English text (or a sentence with its inline tags) -> Arabic.
+// p: [pattern, Arabic] for text that contains amounts, dates or names; $1, $2 are the parts that vary.
+const TV_AR = (() => {
+const D2 = {
+  // top bar, wallet
+  'Connect your wallet first.': 'اربط محفظتك أولًا.',
+  'Disconnect': 'فصل',
+  'View only': 'عرض فقط',
+  'Wrong network': 'شبكة خاطئة',
+  'Switch your wallet to Arbitrum One, then try again.': 'حوّل محفظتك إلى Arbitrum One، ثم حاول مرة أخرى.',
+  'This copy of TimeVault needs a WalletConnect Project ID. Add one under Advanced.': 'تحتاج هذه النسخة من TimeVault إلى معرّف WalletConnect. أضفه من قسم متقدم.',
+  'Use Copy link instead.': 'استخدم نسخ الرابط بدلًا من ذلك.',
+  'Wallet connected.': 'تم ربط المحفظة.',
+  'Wallet disconnected.': 'تم فصل المحفظة.',
+  'Saved. Now tap Connect wallet.': 'تم الحفظ. اضغط الآن ربط المحفظة.',
+  'Cleared. Using the built-in one.': 'تم المسح. يُستخدم المعرّف المدمج.',
+  'Copied. Now open your wallet app, find WalletConnect or the scan button, and paste.': 'تم النسخ. افتح الآن تطبيق محفظتك، وابحث عن WalletConnect أو زر المسح، ثم الصق.',
+  'Select the link text and copy it.': 'حدّد نص الرابط وانسخه.',
+  'Connection cancelled.': 'أُلغي الربط.',
+  'That is not a valid wallet address. It should start with 0x.': 'هذا ليس عنوان محفظة صالحًا. يجب أن يبدأ بـ 0x.',
+  'Cancelled in your wallet. Nothing was sent.': 'أُلغي في محفظتك. لم يُرسل أي شيء.',
+  'Not enough ETH on Arbitrum for the network fee.': 'لا يوجد ما يكفي من ETH على Arbitrum لرسوم الشبكة.',
+  'Open your wallet app to see the request.': 'افتح تطبيق محفظتك لترى الطلب.',
+  'Not showing up? Tap Open wallet and keep it open on its main screen for a few seconds. Still nothing? Tap Stop waiting and try again.': 'لم يظهر؟ اضغط افتح المحفظة وأبقها مفتوحة على شاشتها الرئيسية لبضع ثوانٍ. ما زال لا شيء؟ اضغط إيقاف الانتظار وحاول مرة أخرى.',
+  'Working…': 'جارٍ العمل…',
+  'Loading balances…': 'جارٍ تحميل الأرصدة…',
+  'Not connected': 'غير متصل',
+  // confirm screen
+  'Create your lock': 'أنشئ قفلك',
+  'Your wallet will ask you to approve a contract interaction with:': 'ستطلب منك محفظتك الموافقة على تعامل مع العقد:',
+  "This sets up your empty lock using Arbitrum's standard contract creator. No money moves yet. The network fee is a few cents of ETH.": 'هذا ينشئ قفلك الفارغ باستخدام منشئ العقود القياسي على Arbitrum. لا يتحرك أي مال بعد. رسوم الشبكة بضعة سنتات من ETH.',
+  'Add money to your lock': 'أضف مالًا إلى قفلك',
+  'Your wallet will show a transfer to your lock:': 'ستعرض محفظتك تحويلًا إلى قفلك:',
+  'Withdraw to your wallet': 'اسحب إلى محفظتك',
+  'Your wallet will ask you to approve a contract interaction with your lock:': 'ستطلب منك محفظتك الموافقة على تعامل مع قفلك:',
+  'Create your goal lock. No coins move in this step.': 'أنشئ قفل الهدف. لا تتحرك أي عملات في هذه الخطوة.',
+  'Create your fixed-date lock. No coins move in this step.': 'أنشئ القفل بتاريخ. لا تتحرك أي عملات في هذه الخطوة.',
+  // lock states and labels
+  'Finished': 'انتهى',
+  'Goal reached': 'تحقق الهدف',
+  'Backup date passed': 'مرّ التاريخ الاحتياطي',
+  'Ready': 'جاهز',
+  'Savings goal': 'هدف ادخار',
+  'Date lock': 'قفل بتاريخ',
+  'Unlocked': 'مفتوح',
+  'Opens at': 'يُفتح عند',
+  'Backup date': 'التاريخ الاحتياطي',
+  'Opens on': 'يُفتح في',
+  'Pays out to': 'يدفع إلى',
+  'Coin': 'العملة',
+  'Safety check': 'فحص الأمان',
+  '✓ Genuine lock': '✓ قفل أصلي',
+  '(you)': '(أنت)',
+  'Lock address and details': 'عنوان القفل والتفاصيل',
+  'Hide this lock': 'إخفاء هذا القفل',
+  'Add money': 'إيداع',
+  'From exchange': 'من منصة',
+  'Withdraw': 'سحب',
+  'Copy address': 'نسخ العنوان',
+  'Done! The money is back in your wallet.': 'تم! عاد المال إلى محفظتك.',
+  'Open "Lock address and details" to copy it.': 'افتح «عنوان القفل والتفاصيل» لنسخه.',
+  'Hidden. You can show it again in Settings.': 'تم الإخفاء. يمكنك إظهاره مجددًا من الإعدادات.',
+  'This lock is no longer in your list.': 'هذا القفل لم يعد في قائمتك.',
+  'Connect your wallet to see your savings.': 'اربط محفظتك لترى مدخراتك.',
+  'Stopped waiting. If you still approve it in your wallet, it can go through, so check your savings before trying again.': 'توقف الانتظار. إذا وافقت عليه في محفظتك لاحقًا فقد يتم، لذا تحقق من مدخراتك قبل المحاولة مجددًا.',
+  'Waiting for money to arrive…': 'بانتظار وصول المال…',
+  'Select the address and copy it.': 'حدّد العنوان وانسخه.',
+  'QR code not available. Use Copy address.': 'رمز QR غير متاح. استخدم نسخ العنوان.',
+  'Enter an amount like 25 or 25.50': 'أدخل مبلغًا مثل 25 أو 25.50',
+  'Enter an amount.': 'أدخل مبلغًا.',
+  'Goal reached! You can withdraw it now.': 'تحقق الهدف! يمكنك سحبه الآن.',
+  // new lock
+  'Add money now (optional)': 'أضف مالًا الآن (اختياري)',
+  'How much to lock': 'كم تقفل',
+  'Unlock date': 'تاريخ الفتح',
+  'Backup date ': 'التاريخ الاحتياطي',
+  'Enter the amount as a number, like 25 or 25.50.': 'أدخل المبلغ كرقم، مثل 25 أو 25.50.',
+  'Enter your goal as a number, like 1000.': 'أدخل هدفك كرقم، مثل 1000.',
+  'Enter how much to lock.': 'أدخل كم تريد أن تقفل.',
+  'Pick a goal.': 'اختر هدفًا.',
+  'Pick a date at least one day from now.': 'اختر تاريخًا بعد يوم واحد على الأقل من الآن.',
+  'The date can be at most 10 years from now.': 'يمكن أن يكون التاريخ بعد 10 سنوات كحد أقصى.',
+  'This amount already reaches your goal, so the lock would open straight away. Pick a bigger goal.': 'هذا المبلغ يصل إلى هدفك بالفعل، لذا سيُفتح القفل فورًا. اختر هدفًا أكبر.',
+  'Connect your wallet (button at the top).': 'اربط محفظتك (الزر في الأعلى).',
+  'Safety check failed. Do not use this copy of the app.': 'فشل فحص الأمان. لا تستخدم هذه النسخة من التطبيق.',
+  'your goal': 'هدفك',
+  'your wallet': 'محفظتك',
+  'nothing yet, add money later': 'لا شيء بعد، أضف المال لاحقًا',
+  'the date': 'التاريخ',
+  'No money added yet. Use Add money on the Savings screen any time.': 'لم يُضف أي مال بعد. استخدم إيداع في الشاشة الرئيسية في أي وقت.',
+  'Your savings goal is ready!': 'هدف ادخارك جاهز!',
+  // find / settings
+  'No other locks found. Locks you never added money to can only be added by address in Settings.': 'لم يُعثر على أقفال أخرى. الأقفال التي لم تضف إليها مالًا أبدًا لا يمكن إضافتها إلا بعنوانها من الإعدادات.',
+  'Find my locks': 'ابحث عن أقفالي',
+  'Connect or track a wallet first.': 'اربط محفظة أو تابع محفظة أولًا.',
+  'Checked: it is a genuine lock for your wallet. Added.': 'تم الفحص: إنه قفل أصلي لمحفظتك. تمت الإضافة.',
+  'No hidden locks.': 'لا توجد أقفال مخفية.',
+  'Source fingerprint mismatch. Not saving.': 'بصمة المصدر غير مطابقة. لن يُحفظ.',
+  // coach
+  'Fill in your pay and next payday to get a plan.': 'أدخل راتبك ويوم راتبك القادم لتحصل على خطة.',
+  'Choose a goal above to see when you will reach it. No goal yet? Make one in New lock.': 'اختر هدفًا في الأعلى لترى متى ستصل إليه. لا هدف بعد؟ أنشئ واحدًا من قفل جديد.',
+  'Choose one of your goals': 'اختر أحد أهدافك',
+  'Make a payday plan': 'ضع خطة ليوم الراتب',
+  'Tell the coach when you get paid. It tells you how much to lock each payday and reminds you.': 'أخبر المدرّب متى تستلم راتبك. سيخبرك كم تقفل في كل يوم راتب ويذكّرك.',
+  'Make my plan': 'ضع خطتي',
+  'Payday today': 'يوم الراتب اليوم',
+  'Saved this pay period.': 'ادّخرت في فترة الراتب هذه.',
+  'Make a lock first, then add money to it.': 'أنشئ قفلًا أولًا، ثم أضف إليه المال.',
+  'Pick which savings to add money to.': 'اختر أي مدخرات تريد الإضافة إليها.',
+  'Fill in your payday plan first.': 'املأ خطة يوم الراتب أولًا.',
+  'Open the downloaded file to add the reminders to your calendar.': 'افتح الملف الذي نُزّل لإضافة التذكيرات إلى تقويمك.',
+  'Copied to your clipboard. Paste it into a note or email to keep it.': 'نُسخ إلى الحافظة. الصقه في ملاحظة أو بريد لتحتفظ به.',
+  'Could not copy. Use the website version to download this file.': 'تعذّر النسخ. استخدم نسخة الموقع لتنزيل هذا الملف.',
+  'Start your streak this payday.': 'ابدأ سلسلتك في يوم الراتب هذا.',
+  'Could not load your deposits right now. It will try again in a minute.': 'تعذّر تحميل إيداعاتك الآن. سيحاول مرة أخرى بعد دقيقة.',
+  'Loading your deposits from the blockchain…': 'جارٍ تحميل إيداعاتك من البلوكتشين…',
+  'No deposits yet. Your first one starts the streak.': 'لا إيداعات بعد. أول إيداع يبدأ السلسلة.',
+  'from exchange or other': 'من منصة أو غيرها',
+  'view': 'عرض',
+  'Notifications are blocked. Turn them on in Android Settings → Apps → TimeVault → Notifications.': 'الإشعارات محظورة. فعّلها من إعدادات أندرويد ← التطبيقات ← TimeVault ← الإشعارات.',
+  'Open TimeVault and tap Lock to keep your streak going.': 'افتح TimeVault واضغط قفل لتحافظ على سلسلتك.',
+  'Reminders on for when your locks open. Fill in your plan above to also get payday reminders.': 'التذكيرات مفعّلة لمواعيد فتح أقفالك. املأ خطتك في الأعلى لتحصل أيضًا على تذكيرات يوم الراتب.',
+  'Reminders are on. Fill in your plan above to get payday reminders.': 'التذكيرات مفعّلة. املأ خطتك في الأعلى لتحصل على تذكيرات يوم الراتب.',
+  // chart, chips, currency
+  'Last month': 'الشهر الماضي',
+  'Last 3 months': 'آخر 3 أشهر',
+  'Last year': 'السنة الماضية',
+  'Since you started': 'منذ أن بدأت',
+  'Today': 'اليوم',
+  'Loading your history…': 'جارٍ تحميل سجلك…',
+  'Nothing locked yet this month': 'لم تقفل شيئًا هذا الشهر بعد',
+  // levels and badges
+  'New saver': 'مدّخر جديد', 'Bronze': 'برونزي', 'Silver': 'فضي', 'Gold': 'ذهبي', 'Platinum': 'بلاتيني', 'Diamond': 'ماسي', 'Legend': 'أسطورة',
+  'Bronze saver': 'مدّخر برونزي', 'Silver saver': 'مدّخر فضي', 'Gold saver': 'مدّخر ذهبي', 'Platinum saver': 'مدّخر بلاتيني', 'Diamond saver': 'مدّخر ماسي', 'Legend saver': 'مدّخر أسطوري',
+  'Start': 'البداية',
+  'First lock': 'أول قفل', 'Make your first lock.': 'أنشئ أول قفل لك.',
+  'First deposit': 'أول إيداع', 'Put money into a lock.': 'ضع مالًا في قفل.',
+  'Big move': 'خطوة كبيرة', 'Lock $100 or more in one go.': 'اقفل 100$ أو أكثر دفعة واحدة.',
+  'Three goals': 'ثلاثة أهداف', 'Have 3 locks saving at once.': 'امتلك 3 أقفال تدّخر في وقت واحد.',
+  'On a roll': 'على الطريق', 'Save 3 paydays in a row.': 'ادّخر في 3 أيام راتب متتالية.',
+  'Habit': 'عادة', 'Save 6 paydays in a row.': 'ادّخر في 6 أيام راتب متتالية.',
+  'Unstoppable': 'لا يتوقف', 'Save 12 paydays in a row.': 'ادّخر في 12 يوم راتب متتالية.',
+  'Steady': 'ثابت', 'Lock money in 3 different months.': 'اقفل مالًا في 3 أشهر مختلفة.',
+  'Patient': 'صبور', 'Keep money locked for 90 days.': 'أبقِ المال مقفلًا 90 يومًا.',
+  'One year strong': 'سنة كاملة', 'Keep money locked for a full year.': 'أبقِ المال مقفلًا سنة كاملة.',
+  'Straight in': 'مباشرة', 'Send money to a lock straight from an exchange.': 'أرسل مالًا إلى قفل مباشرة من منصة تداول.',
+  'Reach a savings goal.': 'حقّق هدف ادخار.',
+  'Top level reached': 'وصلت إلى أعلى مستوى',
+  'That is the top level.': 'هذا أعلى مستوى.',
+  'Nice!': 'رائع!',
+  'Keep going': 'استمر',
+  'Goal reached!': 'تحقق الهدف!',
+  'Almost there!': 'اقتربت!',
+  'Halfway there!': 'في منتصف الطريق!',
+  'Great start!': 'بداية رائعة!',
+  // lessons
+  'Pay yourself first': 'ادفع لنفسك أولًا',
+  'Lock your savings the day you get paid, before you spend anything. Saving what is left at the end of the month usually means saving nothing.': 'اقفل مدخراتك يوم استلام راتبك، قبل أن تنفق أي شيء. ادّخار ما يتبقى آخر الشهر يعني غالبًا ادّخار لا شيء.',
+  'Start with an emergency fund': 'ابدأ بصندوق للطوارئ',
+  'Aim for about 3 months of living costs that you can reach quickly. Keep that part flexible, not in a long lock. Lock the money beyond it.': 'اجعل هدفك مصروف 3 أشهر تقريبًا يمكنك الوصول إليه بسرعة. أبقِ هذا الجزء مرنًا، لا في قفل طويل. واقفل ما يزيد عنه.',
+  'Small and steady beats big and rare': 'القليل الدائم خير من الكثير النادر',
+  'Locking a fixed amount every payday builds the habit. The streak counter is here to help you keep going.': 'قفل مبلغ ثابت في كل يوم راتب يبني العادة. وعدّاد السلسلة موجود ليساعدك على الاستمرار.',
+  'The 24-hour rule': 'قاعدة الـ24 ساعة',
+  'Want to buy something you did not plan for? Wait a day. Most urges pass. If you still want it tomorrow, decide then.': 'تريد شراء شيء لم تخطط له؟ انتظر يومًا. معظم الرغبات تزول. إذا بقيت تريده غدًا، قرّر حينها.',
+  'Why a lock helps': 'لماذا يساعد القفل',
+  'Willpower runs out. A lock removes the choice, so the decision you made calmly is the one that sticks.': 'قوة الإرادة تنفد. القفل يزيل الخيار، فيبقى القرار الذي اتخذته بهدوء هو الثابت.',
+  'Stablecoins are not a bank account': 'العملات المستقرة ليست حسابًا مصرفيًا',
+  'USDC and USDT aim to stay at $1, but they are run by companies (Circle, Tether) that can freeze addresses. Spread large savings across more than one place.': 'تهدف USDC وUSDT إلى البقاء عند 1$، لكن تديرهما شركات (Circle وTether) يمكنها تجميد العناوين. وزّع المدخرات الكبيرة على أكثر من مكان.',
+  'Scams to watch for': 'احذر من الاحتيال',
+  'No real app will ask for your recovery phrase. Only open TimeVault from your saved home-screen icon, never from a link someone sends you.': 'لن يطلب منك أي تطبيق حقيقي عبارة الاسترداد. افتح TimeVault فقط من أيقونته على شاشتك الرئيسية، لا من رابط يرسله لك أحد.',
+  'Locked means locked': 'المقفل يعني مقفلًا',
+  'TimeVault has no early exit, on purpose. Before you lock, ask: could I need this money before the goal or the date? If yes, lock less.': 'لا يوجد في TimeVault خروج مبكر، وهذا مقصود. قبل أن تقفل، اسأل نفسك: هل قد أحتاج هذا المال قبل الهدف أو التاريخ؟ إذا كان الجواب نعم، فاقفل أقل.',
+  'Keep a small buffer': 'احتفظ باحتياطي صغير',
+  'Even living at home, things come up: a broken phone, a family need, a good opportunity. Keep 1 to 2 months of your spending outside the lock, and lock the rest.': 'حتى لو كنت تعيش في البيت، تحدث أمور: هاتف مكسور، حاجة عائلية، فرصة جيدة. احتفظ بمصروف شهر إلى شهرين خارج القفل، واقفل الباقي.',
+  'Look-alike address scams': 'احتيال العناوين الشبيهة',
+  "Scammers send you tiny amounts from addresses that start and end like yours or your lock's, hoping you copy the fake one from your history. Never copy an address from history. Copy it from TimeVault, and check the whole address.": 'يرسل لك المحتالون مبالغ صغيرة من عناوين تبدأ وتنتهي مثل عنوانك أو عنوان قفلك، على أمل أن تنسخ العنوان المزيف من سجلك. لا تنسخ عنوانًا من السجل أبدًا. انسخه من TimeVault، وتحقق من العنوان كاملًا.',
+  'Pick realistic goals': 'اختر أهدافًا واقعية',
+  'A goal you can reach in 3 to 6 months keeps you motivated. When you hit it, set the next one a bit higher.': 'الهدف الذي تصل إليه خلال 3 إلى 6 أشهر يبقيك متحمسًا. عندما تحققه، اجعل التالي أعلى قليلًا.',
+  // safety
+  'You have no locks to check yet.': 'ليس لديك أقفال لفحصها بعد.',
+  'Checking every lock on 4 independent servers. This takes a few seconds…': 'جارٍ فحص كل قفل على 4 خوادم مستقلة. يستغرق ذلك بضع ثوانٍ…',
+  '✓ deployer code fingerprint': '✓ بصمة شيفرة المُنشئ',
+  '✓ goal contract code fingerprint': '✓ بصمة شيفرة عقد الهدف',
+  '✓ date contract code fingerprint': '✓ بصمة شيفرة عقد التاريخ',
+  '✓ goal on-chain code template fingerprint': '✓ بصمة قالب شيفرة الهدف على السلسلة',
+  '✓ date on-chain code template fingerprint': '✓ بصمة قالب شيفرة التاريخ على السلسلة',
+  // safety core refusals
+  'Not a valid address.': 'عنوان غير صالح.',
+  'This address is not a TimeVault lock (its code does not match). Nothing was sent.': 'هذا العنوان ليس قفل TimeVault (شيفرته غير مطابقة). لم يُرسل أي شيء.',
+  'This address is not a genuine TimeVault lock: its code differs from the tested code. Nothing was sent.': 'هذا العنوان ليس قفل TimeVault أصليًا: شيفرته تختلف عن الشيفرة المختبرة. لم يُرسل أي شيء.',
+  'This lock holds a coin the app does not support. Nothing was sent.': 'هذا القفل يحتوي عملة لا يدعمها التطبيق. لم يُرسل أي شيء.',
+  'This lock pays a different wallet, not yours. Nothing was sent.': 'هذا القفل يدفع إلى محفظة أخرى، ليست محفظتك. لم يُرسل أي شيء.',
+  'Network fees look abnormally high right now. Nothing was sent. Try again later.': 'رسوم الشبكة مرتفعة بشكل غير طبيعي الآن. لم يُرسل أي شيء. حاول لاحقًا.',
+  'Wallet account changed. Reconnect and try again.': 'تغيّر حساب المحفظة. أعد الربط وحاول مجددًا.',
+  'Your wallet is not on Arbitrum One. Switch networks and try again. Nothing was sent.': 'محفظتك ليست على Arbitrum One. بدّل الشبكة وحاول مجددًا. لم يُرسل أي شيء.',
+  'Internal check failed: a transaction tried to send ETH. Stopped.': 'فشل فحص داخلي: معاملة حاولت إرسال ETH. تم الإيقاف.',
+  'Internal check failed: unexpected destination. Stopped.': 'فشل فحص داخلي: وجهة غير متوقعة. تم الإيقاف.',
+  'Unexpected gas use. Stopped.': 'استهلاك غاز غير متوقع. تم الإيقاف.',
+  'Cancelled.': 'أُلغي.',
+  'Unknown lock type.': 'نوع قفل غير معروف.',
+  'Unsupported coin.': 'عملة غير مدعومة.',
+  'The date must be at least an hour from now.': 'يجب أن يكون التاريخ بعد ساعة على الأقل من الآن.',
+  'The date can be at most 10 years away.': 'يمكن أن يكون التاريخ بعد 10 سنوات كحد أقصى.',
+  'The goal must be more than zero.': 'يجب أن يكون الهدف أكبر من صفر.',
+  'The standard deployer on this network looks wrong. Nothing was sent.': 'المُنشئ القياسي على هذه الشبكة يبدو غير صحيح. لم يُرسل أي شيء.',
+  'Address collision. Try again.': 'تعارض في العنوان. حاول مرة أخرى.',
+  'The new lock does not match what you asked for. No coins were moved.': 'القفل الجديد لا يطابق ما طلبته. لم تُحرّك أي عملات.',
+  "This lock's date has passed, so it no longer holds money back. Start a new lock instead. Nothing was sent.": 'مرّ تاريخ هذا القفل، فلم يعد يحجز المال. ابدأ قفلًا جديدًا بدلًا منه. لم يُرسل أي شيء.',
+  // placeholders
+  'e.g. 800': 'مثلًا 800',
+  'e.g. New car': 'مثلًا سيارة جديدة',
+  'e.g. 7.5': 'مثلًا 7.5',
+  'Wallet address 0x…': 'عنوان المحفظة 0x…',
+  'Leave empty to use the built-in one': 'اتركه فارغًا لاستخدام المدمج',
+  // language row
+  'Language': 'اللغة',
+};
+const P2 = [
+  [/^Only ever send (USDC|USDT) on the Arbitrum One network to this address, using Add money\. Any other coin or network sent here is lost forever\.$/, 'أرسل إلى هذا العنوان $1 على شبكة Arbitrum One فقط، باستخدام إيداع. أي عملة أو شبكة أخرى تُرسل إلى هنا تضيع إلى الأبد.'],
+  [/^…(\w{4}) \(full: (0x[0-9a-fA-F]+)\)$/, '…$1 (كاملًا: $2)'],
+  // amounts and states
+  [/^Saving · (\d+)%$/, 'ادخار · $1%'],
+  [/^Locked · (\d+) days? left$/, 'مقفل · متبقٍ $1 يوم'],
+  [/^of (\$[\d,.]+)$/, 'من $1'],
+  [/^of (\$[\d,.]+) (USDC|USDT) goal$/, 'من هدف $1 $2'],
+  [/^(USDC|USDT) locked until (.+)$/, '$1 مقفلة حتى $2'],
+  [/^Opens at ([\d,.]+) (USDC|USDT)$/, 'يُفتح عند $1 $2'],
+  [/^Opens (.+)$/, 'يُفتح $1'],
+  [/^([\d,.]+) (USDC|USDT) to go$/, 'متبقٍ $1 $2'],
+  [/^(.+) left$/, 'متبقٍ $1'],
+  [/^(USDC|USDT) on Arbitrum One$/, '$1 على Arbitrum One'],
+  [/^\+(\$[\d,.]+) this month$/, '+$1 هذا الشهر'],
+  [/^([\d,.]+) USDC · ([\d,.]+) USDT · ([\d.]+) ETH for fees$/, '$1 USDC · $2 USDT · $3 ETH للرسوم'],
+  [/^(.+) \(view only\)$/, '$1 (عرض فقط)'],
+  [/^(USDC|USDT) \(you have ([\d,.]+)\)$/, '$1 (لديك $2)'],
+  [/^(.+) · ([\d,.]+) (USDC|USDT) goal · (.+)$/, '$1 · هدف $2 $3 · $4'],
+  [/^([\d,.]+) (USDC|USDT) goal · (.+)$/, 'هدف $1 $2 · $3'],
+  [/^You have ([\d,.]+) (USDC|USDT) in your wallet\.$/, 'لديك $1 $2 في محفظتك.'],
+  [/^Add money to your ([\d,.]+) (USDC|USDT) goal$/, 'أضف مالًا إلى هدفك $1 $2'],
+  [/^Add money to your lock$/, 'أضف مالًا إلى قفلك'],
+  [/^Add money to (.+)$/, 'أضف مالًا إلى $1'],
+  [/^Arrived: \+([\d,.]+) (USDC|USDT)\. It is locked now\.$/, 'وصل: +$1 $2. إنه مقفل الآن.'],
+  [/^Lock address copied\. Pick (USDC|USDT) on the Arbitrum One network\.$/, 'نُسخ عنوان القفل. اختر $1 على شبكة Arbitrum One.'],
+  [/^Lock address copied\. Only send (USDC|USDT) on Arbitrum One to it\.$/, 'نُسخ عنوان القفل. أرسل إليه $1 على Arbitrum One فقط.'],
+  [/^Added ([\d.,]+) (USDC|USDT)\. Nice work!$/, 'أُضيف $1 $2. أحسنت!'],
+  [/^Copied (.+)\. Paste it as the withdrawal address and pick Arbitrum One\.$/, 'تم نسخ $1. الصقه كعنوان السحب واختر Arbitrum One.'],
+  [/^Could not start the wallet connection: (.+)$/, 'تعذّر بدء ربط المحفظة: $1'],
+  [/^Send ([\d.]+) (USDC|USDT) into your lock (0x[0-9a-fA-F]+)\.$/, 'أرسل $1 $2 إلى قفلك $3.'],
+  [/^Release everything in lock (0x[0-9a-fA-F]+) to your wallet (0x[0-9a-fA-F]+)\.$/, 'أخرج كل ما في القفل $1 إلى محفظتك $2.'],
+  [/^Finished \((\d+)\)$/, 'منتهية ($1)'],
+  [/^(\d+) address(?:es)? hidden: not a genuine TimeVault lock for this wallet$/, '$1 عنوان مخفي: ليست أقفال TimeVault أصلية لهذه المحفظة'],
+  [/^(.+): (?:ended (.+)|withdrawn), nothing left inside\. (<a .+>)View(<\/a>) · (<a .+>)Hide(<\/a>)$/, '$1: انتهى، لم يبقَ شيء بداخله. $3عرض$4 · $5إخفاء$6'],
+  [/^<b>Each payday:<\/b> lock (\$[\d,.]+) \(([\d.]+)% of (\$[\d,.]+)\)$/, '<b>في كل يوم راتب:</b> اقفل $1 ($2% من $3)'],
+  [/^<b>Each payday:<\/b> lock (\$[\d,.]+)$/, '<b>في كل يوم راتب:</b> اقفل $1'],
+  [/^<b>In a year:<\/b> (\$[\d,.]+)$/, '<b>خلال سنة:</b> $1'],
+  [/^<b>Goal reached!<\/b> Withdraw it on the Savings screen, then set your next goal\.$/, '<b>تحقق الهدف!</b> اسحبه من الشاشة الرئيسية، ثم حدّد هدفك التالي.'],
+  [/^<b>(\$[\d,.]+) to go:<\/b> about (\d+) more paydays?, around (.+)$/, '<b>متبقٍ $1:</b> حوالي $2 يوم راتب آخر، في حدود $3'],
+  [/^⚠ At this pace you will not reach it before the backup date \((.+)\)\. To make it, lock about (\$[\d,.]+) each payday\.$/, '⚠ بهذه الوتيرة لن تصل إليه قبل التاريخ الاحتياطي ($1). لتحقيقه، اقفل حوالي $2 في كل يوم راتب.'],
+  [/^Since payday (.+)$/, 'منذ يوم الراتب $1'],
+  [/^Lock (\$[\d,.]+) into your ([\d,.]+) (USDC|USDT) goal$/, 'اقفل $1 في هدفك $2 $3'],
+  [/^Lock (\$[\d,.]+)$/, 'اقفل $1'],
+  [/^Next payday: (.+?)\. (.+)$/, 'يوم الراتب القادم: $1. $2'],
+  [/^Streak: (\d+) paydays? in a row\.$/, 'السلسلة: $1 يوم راتب متتالٍ.'],
+  [/^(\d+) deposits? · (\$[\d,.]+) saved in the last year$/, '$1 إيداع · $2 ادّخرتها في السنة الماضية'],
+  [/^(\d+) \/ (\d+) read$/, 'قرأت $1 من $2'],
+  [/^(\d+) of (\d+) earned$/, 'حصلت على $1 من $2'],
+  [/^(\$[\d,.]+) to (\S+) · (\d+) of (\d+) badges$/, '$1 للوصول إلى $2 · $3 من $4 شارات'],
+  [/^Top level reached · (\d+) of (\d+) badges$/, 'وصلت إلى أعلى مستوى · $1 من $2 شارات'],
+  [/^You are a Legend!$/, 'أنت أسطورة!'],
+  [/^You are (\S+)!$/, 'وصلت إلى مستوى $1!'],
+  [/^You have (\$[\d,.]+) locked\. (\$[\d,.]+) to (\S+)\.$/, 'لديك $1 مقفلة. يتبقى $2 للوصول إلى $3.'],
+  [/^You have (\$[\d,.]+) locked\. That is the top level\.$/, 'لديك $1 مقفلة. هذا أعلى مستوى.'],
+  [/^New badge: (.+)$/, 'شارة جديدة: $1'],
+  [/^(.+): done\. See all your badges under Achievements\.$/, '$1: تم. شاهد كل شاراتك في الإنجازات.'],
+  [/^You saved ([\d,.]+) (USDC|USDT) for (.+)\. You can withdraw it whenever you like, or keep going and set a bigger goal\.$/, 'ادّخرت $1 $2 لـ $3. يمكنك سحبه متى شئت، أو الاستمرار وتحديد هدف أكبر.'],
+  [/^You have saved ([\d,.]+) of ([\d,.]+) (USDC|USDT) for (.+)\. ([\d,.]+) to go\.$/, 'ادّخرت $1 من $2 $3 لـ $4. يتبقى $5.'],
+  [/^your ([\d,.]+) (USDC|USDT) goal$/, 'هدفك $1 $2'],
+  [/^your (USDC|USDT) lock$/, 'قفل $1 الخاص بك'],
+  // new lock summary
+  [/^<b>Goal:<\/b> (.+)$/, '<b>الهدف:</b> $1'],
+  [/^<b>Locking:<\/b> (.+)$/, '<b>المبلغ المقفل:</b> $1'],
+  [/^<b>Adding now:<\/b> (.+)$/, '<b>الإضافة الآن:</b> $1'],
+  [/^<b>Opens:<\/b> when it reaches (.+?), or on (.+) if that comes first$/, '<b>يُفتح:</b> عندما يصل إلى $1، أو في $2 أيهما أسبق'],
+  [/^<b>Opens:<\/b> (.+) \(in (\d+) days\)$/, '<b>يُفتح:</b> $1 (بعد $2 يوم)'],
+  [/^<b>Pays out to:<\/b> your wallet (<span class="mono">.+<\/span>)$/, '<b>يدفع إلى:</b> محفظتك $1'],
+  [/^<b>Pays out to:<\/b> your wallet$/, '<b>يدفع إلى:</b> محفظتك'],
+  [/^→ (.+)$/, '← $1'],
+  [/^● You are locking most of your (USDC|USDT)\. Keep enough outside for the next month or two\.$/, '● أنت تقفل معظم ما لديك من $1. أبقِ ما يكفي خارجه للشهر أو الشهرين القادمين.'],
+  [/^⚠ That is more (USDC|USDT) than you have in your wallet\.$/, '⚠ هذا أكثر من الـ $1 الموجود في محفظتك.'],
+  [/^⚠ (.+)$/, '⚠ $1'],
+  [/^I understand that nobody, not even me, can take this money out until it reaches (.+?) or (.+) arrives\.$/, 'أفهم أنه لا أحد، ولا حتى أنا، يستطيع إخراج هذا المال حتى يصل إلى $1 أو يحين $2.'],
+  [/^I understand that nobody, not even me, can take this money out until it reaches (.+)\.$/, 'أفهم أنه لا أحد، ولا حتى أنا، يستطيع إخراج هذا المال حتى يصل إلى $1.'],
+  [/^I understand that nobody, not even me, can take this money out before (.+)\.$/, 'أفهم أنه لا أحد، ولا حتى أنا، يستطيع إخراج هذا المال قبل $1.'],
+  [/^Add ([\d.,]+) (USDC|USDT) to the lock \(approve in your wallet\)$/, 'أضف $1 $2 إلى القفل (وافق في محفظتك)'],
+  [/^Locked until (.+)\.$/, 'مقفل حتى $1.'],
+  [/^Searching (\d+)%…$/, 'جارٍ البحث $1%…'],
+  [/^Found (\d+) locks?\.$/, 'وُجد $1 قفل.'],
+  [/^Search failed: (.+)$/, 'فشل البحث: $1'],
+  [/^Showing (\d+) hidden locks? again\.$/, 'إظهار $1 قفل مخفي مجددًا.'],
+  // currency
+  [/^Rate saved (.+)\. Update it whenever the rate moves\.$/, 'حُفظ السعر في $1. حدّثه كلما تغيّر السعر.'],
+  [/^Cleared\. Type a rate like 7\.5 to show your savings in (\w+)\.$/, 'تم المسح. اكتب سعرًا مثل 7.5 لعرض مدخراتك بـ $1.'],
+  [/^Saved\. Your savings now also show in (\w+)\.$/, 'تم الحفظ. تظهر مدخراتك الآن أيضًا بـ $1.'],
+  // safety core
+  [/^Could not reach enough Arbitrum servers to double-check (.+) \((\d+) of (\d+)\)\. Nothing was sent\. Try again in a minute\.$/, 'تعذّر الوصول إلى عدد كافٍ من خوادم Arbitrum للتحقق المزدوج ($2 من $3). لم يُرسل أي شيء. حاول بعد دقيقة.'],
+  [/^Arbitrum servers disagree about (.+)\. Stopping to be safe\. Nothing was sent\.$/, 'خوادم Arbitrum غير متفقة. توقفنا احتياطًا. لم يُرسل أي شيء.'],
+  [/^Dry run failed, so nothing was sent: (.+)$/, 'فشلت التجربة المسبقة، لذا لم يُرسل أي شيء: $1'],
+  [/^That is more (USDC|USDT) than your wallet has\.$/, 'هذا أكثر من الـ $1 الموجود في محفظتك.'],
+  [/^Reminders on\. Next payday reminder: (.+) at 9:00\. You will also get a reminder before each lock opens\.$/, 'التذكيرات مفعّلة. تذكير يوم الراتب القادم: $1 الساعة 9:00. وستحصل أيضًا على تذكير قبل فتح كل قفل.'],
+  [/^Could not set notifications: (.+)$/, 'تعذّر ضبط الإشعارات: $1'],
+  [/^Payday: lock (\$[\d,.]+)$/, 'يوم الراتب: اقفل $1'],
+  [/^Tomorrow: (.+) reaches its backup date$/, 'غدًا: $1 يبلغ تاريخه الاحتياطي'],
+  [/^Tomorrow: (.+) opens$/, 'غدًا: يُفتح $1'],
+  [/^It holds ([\d,.]+) (USDC|USDT)\.$/, 'يحتوي $1 $2.'],
+  [/^(.+) is open$/, '$1 مفتوح الآن'],
+  [/^You can withdraw ([\d,.]+) (USDC|USDT) in TimeVault, or leave it and keep saving\.$/, 'يمكنك سحب $1 $2 في TimeVault، أو تركه ومواصلة الادخار.'],
+];
+
+  const d = {
+ "Approve in your wallet": "وافق في محفظتك",
+ "Your wallet app should open with the request. It can take a few seconds to show up.": "سيفتح تطبيق محفظتك وفيه الطلب. قد يستغرق ظهوره بضع ثوانٍ.",
+ "Open wallet": "افتح المحفظة",
+ "Stop waiting": "إيقاف الانتظار",
+ "Back": "رجوع",
+ "Not connected": "غير متصل",
+ "Connect wallet": "ربط المحفظة",
+ "Menu": "القائمة",
+ "Savings you can't touch until you reach your goal.": "مدخرات لا يمكنك لمسها حتى تصل إلى هدفك.",
+ "TimeVault locks your digital dollars (USDC or USDT) in a safe on the blockchain. Nobody can take them out early, not even you. When you reach your goal, the money goes back to your wallet.": "يقفل TimeVault دولاراتك الرقمية (USDC أو USDT) في خزنة على البلوكتشين. لا يستطيع أحد إخراجها مبكرًا، ولا حتى أنت. عندما تصل إلى هدفك، تعود الأموال إلى محفظتك.",
+ "Connect your wallet": "اربط محفظتك",
+ "Any wallet app that supports WalletConnect.": "أي تطبيق محفظة يدعم WalletConnect.",
+ "Set a goal": "حدّد هدفًا",
+ "For example $1,000, plus a backup date in case you never get there.": "مثلًا 1,000$، مع تاريخ احتياطي في حال لم تصل إليه.",
+ "Add money every payday": "أضف مالًا كل يوم راتب",
+ "The coach tells you how much. It unlocks when you hit the goal.": "يخبرك المدرّب بالمبلغ. ويُفتح القفل عندما تصل إلى الهدف.",
+ "What do I need?": "ماذا أحتاج؟",
+ "<b>A crypto wallet app</b> such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet.": "<b>تطبيق محفظة رقمية</b> مثل MetaMask أو Trust Wallet أو Tangem أو Rainbow أو Coinbase Wallet.",
+ "<b>USDC or USDT on the Arbitrum network.</b> Most exchanges let you withdraw straight to Arbitrum.": "<b>USDC أو USDT على شبكة Arbitrum.</b> معظم منصات التداول تسمح لك بالسحب مباشرة إلى Arbitrum.",
+ "<b>About $1 of ETH on Arbitrum</b> to pay the small network fees (a few cents each time).": "<b>ما يعادل 1$ تقريبًا من ETH على Arbitrum</b> لدفع رسوم الشبكة الصغيرة (بضعة سنتات في كل مرة).",
+ "How do I get USDC on Arbitrum?": "كيف أحصل على USDC على Arbitrum؟",
+ "<b>Get a wallet app</b> that supports WalletConnect, such as MetaMask, Trust Wallet or Tangem, and write down its recovery phrase on paper.": "<b>احصل على تطبيق محفظة</b> يدعم WalletConnect، مثل MetaMask أو Trust Wallet أو Tangem، واكتب عبارة الاسترداد الخاصة بها على ورقة.",
+ "<b>Buy USDT or USDC on an exchange.</b> Many people buy with local money through the exchange's <b>P2P</b> market (for example on Binance, Bybit or OKX).": "<b>اشترِ USDT أو USDC من منصة تداول.</b> كثير من الناس يشترون بالعملة المحلية عبر سوق <b>P2P</b> في المنصة (مثل Binance أو Bybit أو OKX).",
+ "<b>Withdraw to your wallet on the Arbitrum network.</b> Paste your wallet address and choose the network <b>Arbitrum One</b>. Any other network and the coins won't show up here.": "<b>اسحب إلى محفظتك على شبكة Arbitrum.</b> الصق عنوان محفظتك واختر الشبكة <b>Arbitrum One</b>. على أي شبكة أخرى لن تظهر العملات هنا.",
+ "<b>Also withdraw a little ETH on Arbitrum One</b>, about $1 to $2. It pays the network fees, which are a few cents each time.": "<b>اسحب أيضًا قليلًا من ETH على Arbitrum One</b>، من 1$ إلى 2$ تقريبًا. هذا لدفع رسوم الشبكة، وهي بضعة سنتات في كل مرة.",
+ "<b>Send a small test first</b>, like $5, and check it arrives before sending more.": "<b>أرسل مبلغًا تجريبيًا صغيرًا أولًا</b>، مثل 5$، وتأكد من وصوله قبل إرسال المزيد.",
+ "Total locked <span class=\"upd\" id=\"upd\" hidden=\"\">Updating</span>": "إجمالي المقفل <span class=\"upd\" id=\"upd\" hidden=\"\">جارٍ التحديث</span>",
+ "<b id=\"walletTotal\">—</b> in your wallet": "<b id=\"walletTotal\">—</b> في محفظتك",
+ "Add money": "إيداع",
+ "New lock": "قفل جديد",
+ "Payday plan": "خطة الراتب",
+ "1M": "شهر",
+ "3M": "3 أشهر",
+ "1Y": "سنة",
+ "All": "الكل",
+ "Your wallet needs a little ETH on the Arbitrum network (about $1) to pay transaction fees.": "تحتاج محفظتك إلى قليل من ETH على شبكة Arbitrum (حوالي 1$) لدفع رسوم المعاملات.",
+ "Find my locks": "ابحث عن أقفالي",
+ "Lock type": "نوع القفل",
+ "Savings goal": "هدف ادخار",
+ "Add money whenever you want. It unlocks when you reach your goal.": "أضف المال متى شئت. يُفتح عندما تصل إلى هدفك.",
+ "Until a date": "حتى تاريخ",
+ "Locked until a date you pick, no matter how much is inside.": "مقفل حتى تاريخ تختاره، مهما كان المبلغ بداخله.",
+ "Your goal (in dollars)": "هدفك (بالدولار)",
+ "First time? Try a small goal like $5 to see how it works.": "أول مرة؟ جرّب هدفًا صغيرًا مثل 5$ لترى كيف يعمل.",
+ "Backup date": "التاريخ الاحتياطي",
+ "3 months": "3 أشهر",
+ "6 months": "6 أشهر",
+ "1 year": "سنة",
+ "2 years": "سنتان",
+ "If you haven't reached the goal by this date, the lock opens anyway, so your money is never stuck forever.": "إذا لم تصل إلى الهدف بحلول هذا التاريخ، يُفتح القفل على أي حال، فلا تبقى أموالك عالقة إلى الأبد.",
+ "Which coin": "أي عملة",
+ "Both are worth $1 each. Pick the one you have.": "كلاهما يساوي 1$. اختر التي لديك.",
+ "Add money now (optional)": "أضف مالًا الآن (اختياري)",
+ "Name it (optional)": "سمِّه (اختياري)",
+ "Before you lock": "قبل أن تقفل",
+ "<b>There is no early exit.</b> Not for emergencies, not for anyone. Only lock money you know you won't need.": "<b>لا يوجد خروج مبكر.</b> لا للطوارئ ولا لأي أحد. اقفل فقط المال الذي تعرف أنك لن تحتاجه.",
+ "<b>Keep a buffer outside.</b> Leave at least 1 to 2 months of spending in your wallet.": "<b>احتفظ باحتياطي خارج القفل.</b> اترك في محفظتك مصروف شهر إلى شهرين على الأقل.",
+ "<b>Anyone can add to your goal.</b> If someone sends coins to your lock and it reaches the goal, it opens early. The money still only goes to you.": "<b>يمكن لأي شخص الإضافة إلى هدفك.</b> إذا أرسل أحد عملات إلى قفلك ووصل إلى الهدف، يُفتح مبكرًا. لكن المال يذهب إليك أنت فقط.",
+ "<b>Only the lock's own coin, on Arbitrum One.</b> You can add money from your wallet or straight from an exchange. Any other coin or network sent to a lock is lost forever.": "<b>فقط عملة القفل نفسها، على Arbitrum One.</b> يمكنك الإضافة من محفظتك أو مباشرة من منصة تداول. أي عملة أو شبكة أخرى تُرسل إلى القفل تضيع إلى الأبد.",
+ "Create lock": "إنشاء القفل",
+ "Create the lock (approve in your wallet)": "إنشاء القفل (وافق في محفظتك)",
+ "Check the new lock is genuine": "التحقق من أن القفل الجديد أصلي",
+ "Add the money (approve in your wallet)": "إضافة المال (وافق في محفظتك)",
+ "Tell the coach when you get paid. It works out how much to lock each payday and when you'll reach your goal.": "أخبر المدرّب متى تستلم راتبك. سيحسب كم تقفل في كل يوم راتب ومتى تصل إلى هدفك.",
+ "How much you get paid each time": "كم تستلم في كل مرة",
+ "How often": "كم مرة",
+ "Every week": "كل أسبوع",
+ "Every 2 weeks": "كل أسبوعين",
+ "1st and 15th": "يوم 1 و15",
+ "Once a month": "مرة في الشهر",
+ "Next payday": "يوم الراتب القادم",
+ "How much to save": "كم تدّخر",
+ "A percent of my pay": "نسبة من راتبي",
+ "The same amount every time": "المبلغ نفسه في كل مرة",
+ "Percent": "النسبة",
+ "Amount each payday": "المبلغ في كل يوم راتب",
+ "Save into": "ادّخر في",
+ "Remind me every payday": "ذكّرني في كل يوم راتب",
+ "Add reminders to my calendar": "أضف التذكيرات إلى تقويمي",
+ "Your plan stays on this phone. It never moves money by itself.": "خطتك تبقى على هذا الهاتف. ولا تحرّك المال بنفسها أبدًا.",
+ "Your streak": "سلسلتك",
+ "paydays in a row you saved": "أيام راتب متتالية ادّخرت فيها",
+ "Money lessons": "دروس مالية",
+ "Achievements": "الإنجازات",
+ "Levels, by how much you have locked": "المستويات، حسب المبلغ المقفل",
+ "Badges": "الشارات",
+ "Badges and levels are just for fun. They never touch your money.": "الشارات والمستويات للمتعة فقط. ولا تلمس أموالك أبدًا.",
+ "Wallet": "المحفظة",
+ "Start a savings goal or a date lock": "ابدأ هدف ادخار أو قفلًا بتاريخ",
+ "Your plan, streak and money lessons": "خطتك وسلسلتك ودروس مالية",
+ "Your level and badges": "مستواك وشاراتك",
+ "Safety": "الأمان",
+ "How your money is protected": "كيف تُحمى أموالك",
+ "Settings": "الإعدادات",
+ "Wallet help, backups, hidden locks": "مساعدة المحفظة، النسخ الاحتياطي، الأقفال المخفية",
+ "Source code": "الشيفرة المصدرية",
+ "Open on GitHub": "افتح على GitHub",
+ "TimeVault for USDC and USDT on Arbitrum One": "TimeVault لـ USDC وUSDT على Arbitrum One",
+ "Show in my currency": "العرض بعملتي",
+ "Type today's rate and TimeVault also shows your savings in your own currency. Nothing is fetched from the internet: you choose the rate, so it is only as up to date as you keep it.": "اكتب سعر اليوم ليعرض TimeVault مدخراتك أيضًا بعملتك. لا شيء يُجلب من الإنترنت: أنت من يحدد السعر، لذا يبقى محدّثًا بقدر ما تحدّثه.",
+ "Currency": "العملة",
+ "1 USD =": "1 دولار =",
+ "Leave the rate empty and save to turn it off.": "اترك السعر فارغًا واحفظ لإيقاف ذلك.",
+ "Save rate": "حفظ السعر",
+ "TimeVault works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet. Your wallet must be set to the <b>Arbitrum</b> network.": "يعمل TimeVault مع أي تطبيق محفظة يدعم WalletConnect، مثل MetaMask أو Trust Wallet أو Tangem أو Rainbow أو Coinbase Wallet. يجب ضبط محفظتك على شبكة <b>Arbitrum</b>.",
+ "Copy my wallet address": "نسخ عنوان محفظتي",
+ "Your locks": "أقفالك",
+ "Your money is kept on the blockchain, not in this app. If you lose your phone, install TimeVault again, connect the same wallet and tap <b>Find my locks</b> on the Savings screen.": "أموالك محفوظة على البلوكتشين، لا في هذا التطبيق. إذا فقدت هاتفك، ثبّت TimeVault من جديد، واربط المحفظة نفسها، واضغط <b>ابحث عن أقفالي</b> في الشاشة الرئيسية.",
+ "Add a lock by its address": "أضف قفلًا بعنوانه",
+ "Check & add": "تحقق وأضف",
+ "Save a backup list": "حفظ قائمة احتياطية",
+ "Show hidden locks": "إظهار الأقفال المخفية",
+ "Advanced": "متقدم",
+ "View someone's savings (read-only)": "عرض مدخرات شخص آخر (للقراءة فقط)",
+ "View": "عرض",
+ "Your own WalletConnect Project ID": "معرّف WalletConnect الخاص بك",
+ "Only needed if you run your own copy of TimeVault. Get one free at <a href=\"https://cloud.reown.com\" target=\"_blank\" rel=\"noopener noreferrer\">cloud.reown.com</a>.": "تحتاجه فقط إذا كنت تشغّل نسختك الخاصة من TimeVault. احصل على واحد مجانًا من <a href=\"https://cloud.reown.com\" target=\"_blank\" rel=\"noopener noreferrer\">cloud.reown.com</a>.",
+ "Save": "حفظ",
+ "All safety checks passed": "نجحت كل فحوصات الأمان",
+ "This copy of the app matches the tested code.": "هذه النسخة من التطبيق مطابقة للشيفرة المختبرة.",
+ "Safety check failed. This copy of the app doesn't match the tested code. Don't use it to move money.": "فشل فحص الأمان. هذه النسخة من التطبيق لا تطابق الشيفرة المختبرة. لا تستخدمها لتحريك المال.",
+ "Nobody can take it out early": "لا أحد يستطيع إخراجها مبكرًا",
+ "Not you, not the people who made this app, not a hacker. The lock is a contract on the blockchain with no owner, no admin and no back door. It can only pay out to your wallet.": "لا أنت، ولا صانعو هذا التطبيق، ولا أي مخترق. القفل عقد على البلوكتشين بلا مالك ولا مشرف ولا باب خلفي. ولا يدفع إلا إلى محفظتك.",
+ "Proven, tested code": "شيفرة مجرّبة ومختبرة",
+ "Built on OpenZeppelin's widely used, audited timelock contract and tested 49 ways, including 560 random actions and attacks on the app.": "مبني على عقد القفل الزمني المعروف والمدقَّق من OpenZeppelin، ومختبر بـ49 طريقة، منها 560 عملية عشوائية وهجمات على التطبيق.",
+ "Fake locks are refused": "الأقفال المزيفة تُرفض",
+ "Before every deposit, the app checks that the lock's code matches the tested code exactly, using 4 separate servers.": "قبل كل إيداع، يتحقق التطبيق من أن شيفرة القفل مطابقة تمامًا للشيفرة المختبرة، باستخدام 4 خوادم منفصلة.",
+ "You approve everything": "أنت توافق على كل شيء",
+ "The app can't move money by itself. Every action needs your approval in your wallet, and the app shows you the address first.": "لا يستطيع التطبيق تحريك المال بنفسه. كل عملية تحتاج موافقتك في محفظتك، ويعرض لك التطبيق العنوان أولًا.",
+ "Check my locks": "افحص أقفالي",
+ "Re-checks every lock you have against 4 independent servers.": "يعيد فحص كل أقفالك على 4 خوادم مستقلة.",
+ "Run check": "تشغيل الفحص",
+ "Technical details": "تفاصيل تقنية",
+ "Code fingerprints": "بصمات الشيفرة",
+ "These should match FINGERPRINTS.txt on GitHub. <a id=\"testsLink\" href=\"tests.html\" target=\"_blank\" rel=\"noopener\">Run the 49 safety tests yourself.</a>": "يجب أن تطابق الملف FINGERPRINTS.txt على GitHub. <a id=\"testsLink\" href=\"tests.html\" target=\"_blank\" rel=\"noopener\">شغّل اختبارات الأمان الـ49 بنفسك.</a>",
+ "Publish a lock's code on Arbiscan": "نشر شيفرة القفل على Arbiscan",
+ "Get the file for your lock type below.": "نزّل ملف نوع قفلك من الأسفل.",
+ "On Arbiscan, open your lock address → Contract → Verify and Publish.": "على Arbiscan، افتح عنوان قفلك ← Contract ← Verify and Publish.",
+ "Choose Solidity (Standard-Json-Input), compiler v0.8.24+commit.e11b9ed9, license MIT, and upload the file.": "اختر Solidity (Standard-Json-Input)، والمترجم v0.8.24+commit.e11b9ed9، والترخيص MIT، ثم ارفع الملف.",
+ "Goal lock file": "ملف قفل الهدف",
+ "Date lock file": "ملف قفل التاريخ",
+ "Read the goal lock contract": "اقرأ عقد قفل الهدف",
+ "Read the date lock contract (OpenZeppelin)": "اقرأ عقد قفل التاريخ (OpenZeppelin)",
+ "Open my wallet app": "افتح تطبيق محفظتي",
+ "Approve the connection in your wallet, then come back here.": "وافق على الربط في محفظتك، ثم عد إلى هنا.",
+ "Wallet didn't open?": "لم تُفتح المحفظة؟",
+ "Tap <b>Copy link</b>. In your wallet app, find <b>WalletConnect</b> (often a scan button in the top corner) and paste the link.": "اضغط <b>نسخ الرابط</b>. في تطبيق محفظتك، ابحث عن <b>WalletConnect</b> (غالبًا زر مسح في الزاوية العلوية) والصق الرابط.",
+ "Copy link": "نسخ الرابط",
+ "Wallet on another device?": "المحفظة على جهاز آخر؟",
+ "Scan this code with your wallet app's WalletConnect scanner.": "امسح هذا الرمز بماسح WalletConnect في تطبيق محفظتك.",
+ "Cancel": "إلغاء",
+ "Your wallet should show this same address. If it shows anything different, reject it in your wallet.": "يجب أن تعرض محفظتك العنوان نفسه. إذا عرضت أي شيء مختلف، ارفض الطلب في محفظتك.",
+ "Continue to my wallet": "متابعة إلى محفظتي",
+ "From my wallet": "من محفظتي",
+ "From an exchange": "من منصة تداول",
+ "Amount": "المبلغ",
+ "Once it's in, it stays locked until the lock opens.": "بعد إضافته، يبقى مقفلًا حتى يُفتح القفل.",
+ "Send straight from Binance, Bybit, OKX or any exchange into this lock. Follow every step: a mistake here can't be undone.": "أرسل مباشرة من Binance أو Bybit أو OKX أو أي منصة إلى هذا القفل. اتبع كل خطوة: الخطأ هنا لا يمكن التراجع عنه.",
+ "On the exchange, choose <b>Withdraw</b> and pick the coin <b id=\"exCoin\">USDC</b>.": "في المنصة، اختر <b>سحب</b> واختر العملة <b id=\"exCoin\">USDC</b>.",
+ "Pick the network <b>Arbitrum One</b>. Not Ethereum, not Arbitrum Nova, not any other.": "اختر الشبكة <b>Arbitrum One</b>. ليست Ethereum، ولا Arbitrum Nova، ولا أي شبكة أخرى.",
+ "Paste this lock's address:": "الصق عنوان هذا القفل:",
+ "Copy address": "نسخ العنوان",
+ "Show QR code": "إظهار رمز QR",
+ "Check the coin is right. If the exchange shows the coin's contract, it must end in <b id=\"exContract\"></b>. If it says <b>USDC.e</b> or <b>Bridged USDC</b>, stop: that coin would be stuck forever.": "تأكد من العملة. إذا أظهرت المنصة عقد العملة، يجب أن ينتهي بـ <b id=\"exContract\"></b>. إذا كُتب <b>USDC.e</b> أو <b>Bridged USDC</b>، توقف: تلك العملة ستعلق إلى الأبد.",
+ "<b>Send a small test first</b>, like $5, and wait for it to show up here.": "<b>أرسل مبلغًا تجريبيًا صغيرًا أولًا</b>، مثل 5$، وانتظر حتى يظهر هنا.",
+ "Only copy the address from this screen. Never copy it from your wallet's or exchange's history: scammers send tiny amounts from look-alike addresses so a fake one shows up there.": "انسخ العنوان من هذه الشاشة فقط. لا تنسخه أبدًا من سجل محفظتك أو المنصة: يرسل المحتالون مبالغ صغيرة من عناوين شبيهة لكي يظهر عنوان مزيف هناك.",
+ "Waiting for money to arrive…": "بانتظار وصول المال…",
+ "Done": "تم",
+ "Keep going": "استمر"
+};
+  Object.assign(d, D2);
+  return { d, p: P2 };
+})();
+
+// TimeVault app. All transactions go through TV.makeGuard (core.js). This file only builds the screens.
 (() => {
   'use strict';
   const CHAIN_ID = 42161;
@@ -1126,17 +1650,59 @@ const TV = (() => {
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const short = (a) => (a ? a.slice(0, 8) + '…' + a.slice(-7) : ''); // long enough that look-alike scam addresses don't match
   const fmt = (x) => Number(ethers.formatUnits(x, 6));
-  const money = (n) => '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const num = (n, d = 2) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
-  const dateStr = (s) => new Date(Number(s) * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  const untilStr = (ts) => { const d = (Number(ts) - Date.now() / 1000) / 86400; if (d <= 0) return 'now'; if (d < 1) return 'today'; if (d < 61) return Math.ceil(d) + (Math.ceil(d) === 1 ? ' day' : ' days'); if (d < 730) return Math.round(d / 30.44) + ' months'; return (Math.round(d / 36.5) / 10) + ' years'; };
-  const dayStr = (d) => d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   const store = {
     get(k, d = '') { try { const v = localStorage.getItem('tv3.' + k); return v === null ? d : v; } catch { return d; } },
     set(k, v) { try { v === '' || v == null ? localStorage.removeItem('tv3.' + k) : localStorage.setItem('tv3.' + k, v); } catch {} },
     json(k, d) { try { return JSON.parse(this.get(k, '')) ?? d; } catch { return d; } },
     setJson(k, v) { this.set(k, JSON.stringify(v)); },
   };
+
+  // ------------------------------------------------------------------ language: English, or Arabic written right to left
+  // The screens are written in English; in Arabic every piece of text is looked up in TV_AR (i18n_ar.js) as it appears.
+  const LANG = (() => { const v = store.get('lang'); return v === 'ar' || v === 'en' ? v : (/^ar/i.test(navigator.language || '') ? 'ar' : 'en'); })();
+  const AR = LANG === 'ar' && typeof TV_AR === 'object';
+  const NUMLOC = AR ? 'en-US' : undefined, DATELOC = AR ? 'ar-LY-u-nu-latn' : undefined;
+  const squash = (x) => x.replace(/\s+/g, ' ').trim();
+  function tr(text) { // Arabic for an English string, or null when there is none
+    if (!AR) return null;
+    const k = squash(text); if (!k) return null;
+    if (Object.prototype.hasOwnProperty.call(TV_AR.d, k)) return TV_AR.d[k];
+    for (const [re, out] of TV_AR.p) { const m = k.match(re); if (m) return out.replace(/\$(\d)/g, (_, i) => { const g = m[Number(i)] || ''; const t = tr(g); return t === null ? g : t; }); }
+    return null;
+  }
+  const T = (text) => { const t = tr(text); return t === null ? text : t; };
+  const INLINE = /^(B|STRONG|I|EM|A|BR|SPAN|CODE|SMALL)$/, SKIPTAG = /^(SCRIPT|STYLE|PRE|TEXTAREA|INPUT|SVG|svg)$/, LATIN = /[A-Za-z]/;
+  function trNode(n) {
+    if (!n) return;
+    if (n.nodeType === 3) {
+      const v = n.nodeValue; if (!LATIN.test(v) || (n.parentElement && n.parentElement.closest('.mono,.addr,.uri,.notr,script,style,pre'))) return;
+      const o = tr(v); if (o !== null && o !== squash(v)) n.nodeValue = v.match(/^\s*/)[0] + o + v.match(/\s*$/)[0]; // only real changes, so this never loops
+      return;
+    }
+    if (n.nodeType !== 1) return;
+    for (const a of ['placeholder', 'aria-label']) { const v = n.getAttribute(a); if (v && LATIN.test(v)) { const o = tr(v); if (o !== null && o !== v) n.setAttribute(a, o); } }
+    if (SKIPTAG.test(n.tagName) || n.closest('.mono,.addr,.uri,.notr')) return;
+    if (n.children.length && LATIN.test(n.textContent) && [...n.childNodes].some((c) => c.nodeType === 3 && c.nodeValue.trim()) && [...n.querySelectorAll('*')].every((c) => INLINE.test(c.tagName) && ![...c.attributes].some((x) => x.name.startsWith('data-')))) {
+      const o = tr(n.innerHTML); if (o !== null && o !== squash(n.innerHTML)) { n.innerHTML = o; return; } // a sentence with bold words or links is translated as one piece
+    }
+    for (const c of [...n.childNodes]) trNode(c);
+  }
+  if (AR) {
+    document.documentElement.lang = 'ar'; document.documentElement.dir = 'rtl';
+    trNode(document.body);
+    new MutationObserver((ms) => { for (const m of ms) trNode(m.target); })
+      .observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+  document.documentElement.classList.remove('tr-wait');
+
+  const money = (n) => '$' + Number(n).toLocaleString(NUMLOC, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const num = (n, d = 2) => Number(n).toLocaleString(NUMLOC, { maximumFractionDigits: d });
+  const dateStr = (s) => new Date(Number(s) * 1000).toLocaleDateString(DATELOC, { year: 'numeric', month: 'short', day: 'numeric' });
+  const plural = (n, one, many) => (AR ? (n === 1 ? one.ar1 : n === 2 ? one.ar2 : n <= 10 ? n + ' ' + many.ar3 : n + ' ' + many.ar11) : n + ' ' + (n === 1 ? one.en : many.en));
+  const U_DAY = [{ en: 'day', ar1: 'يوم واحد', ar2: 'يومان' }, { en: 'days', ar3: 'أيام', ar11: 'يومًا' }];
+  const U_MON = [{ en: 'month', ar1: 'شهر واحد', ar2: 'شهران' }, { en: 'months', ar3: 'أشهر', ar11: 'شهرًا' }];
+  const untilStr = (ts) => { const d = (Number(ts) - Date.now() / 1000) / 86400; if (d <= 0) return AR ? 'الآن' : 'now'; if (d < 1) return AR ? 'اليوم' : 'today'; if (d < 61) return plural(Math.ceil(d), ...U_DAY); if (d < 730) return plural(Math.round(d / 30.44), ...U_MON); const y = Math.round(d / 36.5) / 10; return AR ? y + ' سنة' : y + ' years'; };
+  const dayStr = (d) => d.toLocaleDateString(DATELOC, { weekday: 'short', month: 'short', day: 'numeric' });
 
   // ------------------------------------------------------------------ startup self check (blocks money actions if it fails)
   // Running inside the Android app? (Capacitor injects window.Capacitor before this script runs.)
@@ -1677,7 +2243,7 @@ const TV = (() => {
         const logs = onlyToken ? await getLogsRetry(q) : await main.send('eth_getLogs', [q]).catch(() => []);
         out.push(...logs);
       }
-      if (progress) $('findBtn').textContent = 'Searching ' + Math.round((w + 1) / windows * 100) + '%…';
+      if (progress) $('findBtn').querySelector('.lbl').textContent = 'Searching ' + Math.round((w + 1) / windows * 100) + '%…';
     }
     return out;
   }
@@ -1696,7 +2262,7 @@ const TV = (() => {
       }
       toast(found ? 'Found ' + found + ' lock' + (found > 1 ? 's' : '') + '.' : 'No other locks found. Locks you never added money to can only be added by address in Settings.', 8000);
       refresh();
-    } catch (e) { toast('Search failed: ' + nice(e)); } finally { b.disabled = false; b.textContent = 'Find my locks'; }
+    } catch (e) { toast('Search failed: ' + nice(e)); } finally { b.disabled = false; b.querySelector('.lbl').textContent = 'Find my locks'; }
   });
   $('addLockBtn').addEventListener('click', async () => {
     const who = viewer(), v = $('addLock').value.trim();
@@ -1786,8 +2352,8 @@ const TV = (() => {
     const start = p.freq === 'twice' ? (Number(d) >= 15 ? y + m + '15' : y + m + '01') : y + m + d;
     const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TimeVault//Coach//EN', 'BEGIN:VEVENT', 'UID:timevault-payday-' + Date.now() + '@timevault',
       'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', 'DTSTART:' + start + 'T090000', 'RRULE:' + rule,
-      'SUMMARY:Payday: lock ' + money(saveAmount(p)) + ' in TimeVault', 'DESCRIPTION:Open TimeVault and tap Lock on the home screen.',
-      'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:Payday: lock your savings', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+      'SUMMARY:' + (AR ? 'يوم الراتب: اقفل ' + money(saveAmount(p)) + ' في TimeVault' : 'Payday: lock ' + money(saveAmount(p)) + ' in TimeVault'), 'DESCRIPTION:' + (AR ? 'افتح TimeVault واضغط قفل في الشاشة الرئيسية.' : 'Open TimeVault and tap Lock on the home screen.'),
+      'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:' + (AR ? 'يوم الراتب: اقفل مدخراتك' : 'Payday: lock your savings'), 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
     download('timevault-payday.ics', ics, 'text/calendar');
     toast('Open the downloaded file to add the reminders to your calendar.');
   });
@@ -1874,7 +2440,7 @@ const TV = (() => {
     return s + Math.max(0, fmt(l.balance) - after);
   }, 0);
   const RANGES = { '1M': 30, '3M': 91, '1Y': 365, All: 0 };
-  const shortDate = (t) => new Date(t * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const shortDate = (t) => new Date(t * 1000).toLocaleDateString(DATELOC, { month: 'short', day: 'numeric' });
   function drawChart(box, locks, range) {
     if (!box) return;
     if (!locks.length || !history) { box.hidden = !locks.length; if (locks.length) box.querySelector('.ch-plot').innerHTML = '<p class="ch-empty">Loading your history…</p>'; return; }
@@ -1930,7 +2496,7 @@ const TV = (() => {
   function fxLine(usd) {
     const f = FX(); if (!f || !(f.rate > 0)) return '';
     const v = Math.floor(usd * f.rate);
-    return '≈ ' + v.toLocaleString() + ' ' + f.code;
+    return '≈ ' + v.toLocaleString(NUMLOC) + ' ' + f.code;
   }
   function renderFx() {
     const total = LOCKS.reduce((s, l) => s + fmt(l.balance), 0), f = FX();
@@ -2055,12 +2621,12 @@ const TV = (() => {
   }
   $('liveCheck').addEventListener('click', async () => {
     const who = viewer(); const box = $('liveOut');
-    if (!who || !LOCKS.length) { box.textContent = 'You have no locks to check yet.'; return; }
-    box.textContent = 'Checking every lock on 4 independent servers. This takes a few seconds…';
+    if (!who || !LOCKS.length) { box.textContent = T('You have no locks to check yet.'); return; }
+    box.textContent = T('Checking every lock on 4 independent servers. This takes a few seconds…');
     const lines = [];
     for (const l of LOCKS) {
-      try { await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, l.addr, { beneficiary: who }); lines.push('✓ ' + (l.name || short(l.addr)) + ': genuine, pays only ' + short(who)); }
-      catch (e) { lines.push('✗ ' + short(l.addr) + ' · ' + e.message); }
+      try { await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, l.addr, { beneficiary: who }); lines.push('✓ ' + (l.name || short(l.addr)) + (AR ? ': أصلي، يدفع فقط إلى ' : ': genuine, pays only ') + short(who)); }
+      catch (e) { lines.push('✗ ' + short(l.addr) + ' · ' + T(e.message)); }
     }
     box.textContent = lines.join('\n');
   });
@@ -2098,7 +2664,7 @@ const TV = (() => {
         const { k } = lastAndNext(p); const S = money(saveAmount(p));
         for (let i = 0; list.length < 26 && i < 80; i++) {
           const d = payday(p, k + i); d.setHours(9, 0, 0, 0);
-          if (d.getTime() > now + 60000) list.push({ id: 1000 + list.length, title: 'Payday: lock ' + S, body: 'Open TimeVault and tap Lock to keep your streak going.', schedule: { at: d, allowWhileIdle: true } });
+          if (d.getTime() > now + 60000) list.push({ id: 1000 + list.length, title: T('Payday: lock ' + S), body: T('Open TimeVault and tap Lock to keep your streak going.'), schedule: { at: d, allowWhileIdle: true } });
         }
       }
       // reminders the day before and the moment a lock opens (date locks, and goal locks' backup dates)
@@ -2108,8 +2674,8 @@ const TV = (() => {
         const name = l.name || (l.kind === 'goal' ? 'your ' + num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'your ' + l.sym + ' lock');
         const open = new Date(l.releaseTime * 1000), before = new Date(open.getTime() - 86400000);
         const what = l.kind === 'goal' ? 'reaches its backup date' : 'opens';
-        if (before.getTime() > now + 60000) list.push({ id: 2000 + n++, title: 'Tomorrow: ' + name + ' ' + what, body: 'It holds ' + num(fmt(l.balance)) + ' ' + l.sym + '.', schedule: { at: before, allowWhileIdle: true } });
-        if (open.getTime() > now + 60000) list.push({ id: 2000 + n++, title: name.charAt(0).toUpperCase() + name.slice(1) + ' is open', body: 'You can withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' in TimeVault, or leave it and keep saving.', schedule: { at: open, allowWhileIdle: true } });
+        if (before.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T('Tomorrow: ' + name + ' ' + what), body: T('It holds ' + num(fmt(l.balance)) + ' ' + l.sym + '.'), schedule: { at: before, allowWhileIdle: true } });
+        if (open.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T(name.charAt(0).toUpperCase() + name.slice(1) + ' is open'), body: T('You can withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' in TimeVault, or leave it and keep saving.'), schedule: { at: open, allowWhileIdle: true } });
       }
       if (list.length) await LN.schedule({ notifications: list });
       const nextPay = list.find((x) => x.id < 2000);
@@ -2122,6 +2688,12 @@ const TV = (() => {
   function planChanged() { if (LN && store.get('notify') === '1') { clearTimeout(planT); planT = setTimeout(() => scheduleNotifications(false), 1500); } }
   $('notifyBtn').addEventListener('click', () => scheduleNotifications(true));
   if (LN) { $('icsBtn').hidden = true; $('notifyBtn').hidden = store.get('notify') === '1'; }
+
+  // ------------------------------------------------------------------ language switch
+  document.querySelectorAll('[data-lang]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.lang === LANG));
+    b.addEventListener('click', () => { if (b.dataset.lang === LANG) return; store.set('lang', b.dataset.lang); location.reload(); });
+  });
 
   // ------------------------------------------------------------------ boot
   bindGo(document);

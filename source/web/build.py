@@ -6,13 +6,15 @@ h256 = lambda s: "'sha256-" + base64.b64encode(hashlib.sha256(s.encode('utf-8'))
 
 core = rd('core.js').replace("'__TT_BYTECODE__'", "'" + rr('tt_bytecode.txt').strip() + "'").replace("'__GT_BYTECODE__'", "'" + rr('gt_bytecode.txt').strip() + "'")
 assert '__TT_BYTECODE__' not in core and '__GT_BYTECODE__' not in core
-app = rd('app.js'); tests = rd('tests.js')
+app = (rd('i18n_ar.js') + '\n' if os.path.exists(os.path.join(D, 'i18n_ar.js')) else '') + rd('app.js'); tests = rd('tests.js')
 _wc = rd('walletconnect_project_id.txt').strip() if os.path.exists(os.path.join(D, 'walletconnect_project_id.txt')) else ''
 assert _wc == '' or re.fullmatch(r'[0-9a-f]{32}', _wc), 'walletconnect_project_id.txt must hold a 32-character Project ID'
 if _wc: app = app.replace('__WC_PROJECT_ID__', _wc)
 oz = json.loads(rd('oz.json'), object_pairs_hook=dict)
 goal_src = rr('GoalTimelock.sol')
 shim = "window.process = { env: { NODE_ENV: 'production' } };"
+# runs first, in <head>: sets Arabic right-to-left before anything is drawn (the page stays hidden until the text is translated)
+headjs = "try{var l=localStorage.getItem('tv3.lang');if(l!=='en'&&l!=='ar')l=/^ar/i.test(navigator.language||'')?'ar':'en';if(l==='ar'){var h=document.documentElement;h.lang='ar';h.dir='rtl';h.className+=' tr-wait';}}catch(e){}"
 sources = 'window.TV_SOURCES = ' + json.dumps({'oz': oz, 'goal': goal_src}, ensure_ascii=False).replace('</', '<\\/') + ';'
 runner = rd('runner.js').replace('__MOCK_BYTECODE__', rr('mock_bytecode.txt').strip()).replace('__FAKE_BYTECODE__', rd('fake_bytecode.txt').strip())
 for s in (core, app, tests, runner, sources): assert '</script' not in s.lower()
@@ -24,11 +26,11 @@ FONT_URL = 'https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/
 FONT_SRI = 'sha384-eK/AAu5ejuTBWzZ9y0bAI6JHW9gA9KPGaWtZkXBV4ObhImcx0g4tUmJbA14iRflG'
 RPC_HOSTS = 'https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com'
 WC_HOSTS = 'wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com'
-app_csp = ("default-src 'none'; script-src " + ' '.join(h256(x) for x in (shim, sources, core, app)) + ' ' + ' '.join(LIBS) +
+app_csp = ("default-src 'none'; script-src " + ' '.join(h256(x) for x in (headjs, shim, sources, core, app)) + ' ' + ' '.join(LIBS) +
            "; style-src 'unsafe-inline'; font-src " + FONT_URL + "; img-src 'self' data: blob:; connect-src " + RPC_HOSTS + ' ' + WC_HOSTS +
            "; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'")
 index = rd('index.template.html')
-for k, v in {'{{CSP}}': app_csp, '{{FONT_URL}}': FONT_URL, '{{SHIM}}': shim, '{{SOURCES}}': sources, '{{CORE}}': core, '{{APP}}': app,
+for k, v in {'{{CSP}}': app_csp, '{{HEADJS}}': headjs, '{{FONT_URL}}': FONT_URL, '{{SHIM}}': shim, '{{SOURCES}}': sources, '{{CORE}}': core, '{{APP}}': app,
              '{{GT_SOURCE_HTML}}': html.escape(goal_src), '{{TT_SOURCE_HTML}}': html.escape(oz['@openzeppelin/contracts/token/ERC20/utils/TokenTimelock.sol'])}.items():
     assert k in index, k; index = index.replace(k, v)
 

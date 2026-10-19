@@ -12,6 +12,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>TimeVault</title>
+<script>{{HEADJS}}</script>
 <style>
 /* TimeVault visual system: quiet hardware-wallet style. Neutral greys, one soft glow behind the balance, colour only in the lock icons. */
 @font-face { font-family: "Onest"; src: url({{FONT_URL}}) format("woff2"); font-weight: 100 900; font-display: swap; }
@@ -57,7 +58,7 @@ body[data-page="menu"] .top-end [data-tab="menu"] { visibility: hidden; }
 body.scrolled .topbar { background: rgba(15,15,18,.96); box-shadow: 0 1px 0 var(--line-soft); }
 .brand { display: flex; align-items: center; grid-column: 1; grid-row: 1; }
 .brand svg { width: 26px; height: 26px; display: block; }
-#backBtn { grid-column: 1; grid-row: 1; margin-left: -8px; }
+#backBtn { grid-column: 1; grid-row: 1; margin-inline-start: -8px; }
 body[data-page="home"] #backBtn, body:not([data-page="home"]) .brand { display: none; }
 .mini { grid-column: 2; text-align: center; font: 650 15px var(--body); font-variant-numeric: tabular-nums; opacity: 0; transform: translateY(6px); transition: opacity .2s ease, transform .2s var(--ease); }
 body.pastHero .mini { opacity: 1; transform: none; }
@@ -106,14 +107,14 @@ section { display: grid; gap: 16px; }
 
 /* locks: one grouped list of rows, colour only in each icon */
 .ledger { display: grid; gap: 12px; }
-.pot-row { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 13px 16px; cursor: pointer; transition: background .12s; }
+.pot-row { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: start; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 13px 16px; cursor: pointer; transition: background .12s; }
 .pot-row:active { background: rgba(255,255,255,.05); }
 .pot-row.skel { height: 68px; }
 .pot-ico { width: 42px; height: 42px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--g1), var(--g2)); }
 .pot-ico svg { width: 22px; height: 22px; }
 .pot-mid, .pot-end { display: grid; min-width: 0; }
 .pot-mid b, .pot-end b { font-weight: 600; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pot-end { text-align: right; } .pot-end b { font-variant-numeric: tabular-nums; }
+.pot-end { text-align: end; } .pot-end b { font-variant-numeric: tabular-nums; }
 .pot-mid span, .pot-end span { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pot-mid span.open { color: var(--mint); }
 .link-btn { justify-self: center; display: inline-flex; align-items: center; gap: 8px; border: 0; background: var(--surface); color: var(--ink); font: 600 14px var(--body); padding: 10px 16px; border-radius: 999px; cursor: pointer; }
@@ -130,7 +131,7 @@ section { display: grid; gap: 16px; }
 .prog-top b { font-weight: 600; color: var(--ink); } .prog-top b.open { color: var(--mint); }
 .irow { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; font-size: 14.5px; }
 .irow + .irow { box-shadow: inset 0 1px 0 var(--line-soft); }
-.irow > span { color: var(--muted); } .irow b { font-weight: 550; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.irow > span { color: var(--muted); } .irow b { font-weight: 550; text-align: end; min-width: 0; overflow-wrap: anywhere; }
 .bar { height: 8px; background: rgba(255,255,255,.07); border-radius: 99px; overflow: hidden; }
 .bar > i { display: block; height: 100%; min-width: 8px; border-radius: 99px; background: linear-gradient(90deg, var(--g1), var(--g2)); }
 .note { font-size: 13.5px; color: var(--ink); background: var(--mint-soft); border-radius: var(--r-sm); padding: 11px 13px; }
@@ -143,14 +144,14 @@ details > p.caution { margin-top: 8px; }
 .empty b { color: var(--ink); }
 
 /* menu */
-.mrow { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 14px 13px 16px; cursor: pointer; text-decoration: none; transition: background .12s; }
+.mrow { width: 100%; border: 0; background: none; color: var(--ink); font: inherit; text-align: start; display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 13px 14px 13px 16px; cursor: pointer; text-decoration: none; transition: background .12s; }
 button.mrow:active, a.mrow:active { background: rgba(255,255,255,.05); }
 .mrow + .mrow { box-shadow: inset 0 1px 0 var(--line-soft); }
 .mico { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; color: #fff; background: linear-gradient(140deg, var(--g1), var(--g2)); }
 .mico svg { width: 20px; height: 20px; }
 .mmid { display: grid; min-width: 0; } .mmid b { font-weight: 600; font-size: 15.5px; } .mmid span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chev { width: 18px; height: 18px; color: var(--faint); }
-.mnote { padding: 0 16px 14px 66px; font-size: 12.5px; }
+.mnote { padding: 0 16px 14px; padding-inline-start: 66px; font-size: 12.5px; }
 .mnote:empty { display: none; }
 .ver { text-align: center; color: var(--faint); font-size: 12.5px; }
 
@@ -243,7 +244,7 @@ ol.how span { color: var(--muted); font-size: 14px; }
 details.need { background: var(--raised); border-radius: var(--r-md); padding: 14px 16px; }
 .welcome details.need { background: var(--surface); }
 details.need summary { font-weight: 600; color: var(--ink); font-size: 14px; }
-details.need ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
+details.need ul { margin: 10px 0 0; padding-inline-start: 18px; display: grid; gap: 8px; font-size: 14px; color: var(--muted); }
 details.need ul b { color: var(--ink); }
 details.need > p, details.need > div { margin-top: 10px; }
 #homeMain { display: grid; gap: 22px; }
@@ -260,9 +261,9 @@ details.advanced:not([open]) { gap: 0; }
 .agree { background: var(--raised); border-radius: var(--r-md); padding: 15px; }
 .rules { background: var(--amber-soft); border-radius: var(--r-md); padding: 15px 17px; font-size: 14px; display: grid; gap: 8px; }
 .rules > b { color: var(--amber); }
-.rules ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: var(--muted); }
+.rules ul { margin: 0; padding-inline-start: 18px; display: grid; gap: 7px; color: var(--muted); }
 .rules ul b { color: var(--ink); }
-ol.guide { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 9px; font-size: 14px; color: var(--muted); }
+ol.guide { margin: 10px 0 0; padding-inline-start: 20px; display: grid; gap: 9px; font-size: 14px; color: var(--muted); }
 ol.guide b { color: var(--ink); }
 .cheer { text-align: center; justify-items: center; overflow: hidden; }
 .cheer-pct { font: 700 4rem/1 var(--display); letter-spacing: -.05em; margin-top: 10px; background: linear-gradient(120deg, #45E0A6, #4F8BFF 55%, #B467FF); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -280,7 +281,7 @@ ol.guide b { color: var(--ink); }
 .tabs2 button { border: 0; background: none; color: var(--muted); font: 600 14px var(--body); padding: 10px 6px; border-radius: 999px; cursor: pointer; transition: background .15s, color .15s; }
 .tabs2 button[aria-selected="true"] { background: var(--ink); color: #14142A; }
 .sheet-body { display: grid; gap: 14px; }
-ol.exsteps { margin: 0; padding-left: 20px; display: grid; gap: 12px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
+ol.exsteps { margin: 0; padding-inline-start: 20px; display: grid; gap: 12px; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
 ol.exsteps b { color: var(--ink); }
 ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
 #exQr { background: #fff; padding: 10px; border-radius: var(--r-md); width: max-content; margin-top: 8px; }
@@ -293,7 +294,7 @@ ol.exsteps .addr { margin: 8px 0; color: var(--ink); }
 /* motion & loading */
 body { overscroll-behavior-y: none; }
 button, .pill { -webkit-user-select: none; user-select: none; touch-action: manipulation; }
-.upd { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-size: 11.5px; color: rgba(245,245,247,.6); }
+.upd { display: inline-flex; align-items: center; gap: 5px; margin-inline-start: 8px; font-size: 11.5px; color: rgba(245,245,247,.6); }
 .upd::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
 .loading .big, .loading #walletTotal { color: transparent; border-radius: 12px; }
 .loading .big { width: 210px; }
@@ -321,7 +322,9 @@ button.chip { cursor: pointer; }
 /* savings chart: one line, zero-based, scrub to read any day */
 .chart { --c1: var(--accent); gap: 10px; }
 #lockChart { --c1: var(--g1); }
-.ch-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ch-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ch-top > div:first-child { min-width: 0; }
+html[dir="rtl"] .ch-val { direction: ltr; text-align: right; }
 .ch-label { display: block; font-size: 13px; color: var(--muted); }
 .ch-val .pct { font-size: 13px; font-weight: 600; color: var(--muted); }
 .ch-val { display: block; white-space: nowrap; font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
@@ -355,6 +358,29 @@ button.chip { cursor: pointer; }
 .bdg span:not(.badge-ico) { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
 .bdg:not(.got) b { color: var(--muted); }
 .fx { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* language switch */
+.langswitch { display: inline-flex; gap: 2px; background: var(--raised); border-radius: 999px; padding: 3px; justify-self: end; }
+.langswitch button { border: 0; background: none; color: var(--muted); font: 600 12.5px var(--body); padding: 6px 11px; border-radius: 999px; cursor: pointer; }
+.langswitch button[aria-pressed="true"] { background: var(--ink); color: #141418; }
+.welcome > .langswitch { justify-self: end; margin-bottom: -10px; }
+
+/* Arabic: right to left. Amounts, addresses and the chart stay left to right. */
+html[lang="ar"] { --body: "Onest", "Noto Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif; }
+html[dir="rtl"] body { line-height: 1.6; }
+html[dir="rtl"] h1, html[dir="rtl"] h2, html[dir="rtl"] h3, html[dir="rtl"] .big, html[dir="rtl"] .page-title, html[dir="rtl"] .welcome-title { letter-spacing: 0; }
+html[dir="rtl"] #backBtn svg, html[dir="rtl"] .chev { transform: scaleX(-1); }
+.big, .lock-amt, .pot-end b, .ch-val, .mini, .mono, .addr, .uri, #walletTotal, .streak b, .cheer-pct { unicode-bidi: isolate; }
+.big, .mono, .addr, .uri, .ch-plot, .ch-axis, input.mono, #liveOut, #appFp { direction: ltr; }
+html[dir="rtl"] .ch-axis { flex-direction: row; }
+html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right: 15px; padding-left: 36px; }
+@media (prefers-reduced-motion: no-preference) {
+  html[dir="rtl"] section:not(#tab-home):not([hidden]) { animation-name: slidein-rtl; }
+  @keyframes slidein-rtl { from { opacity: 0; transform: translateX(-28px); } }
+}
+/* until the Arabic text is in place, hide the page (it shows anyway after a moment if something goes wrong) */
+.tr-wait main, .tr-wait .sheet { visibility: hidden; animation: tr-show 0s 2.5s forwards; }
+@keyframes tr-show { to { visibility: visible; } }
 #confirm { z-index: 26; } /* the confirm screen always sits above any other sheet */
 </style>
 </head>
@@ -375,6 +401,7 @@ button.chip { cursor: pointer; }
   <!-- HOME -->
   <section id="tab-home">
     <div id="welcome" class="card welcome">
+      <div class="langswitch notr"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div>
       <h2 class="welcome-title">Savings you can't touch until you reach your goal.</h2>
       <p class="muted">TimeVault locks your digital dollars (USDC or USDT) in a safe on the blockchain. Nobody can take them out early, not even you. When you reach your goal, the money goes back to your wallet.</p>
       <ol class="how">
@@ -421,7 +448,7 @@ button.chip { cursor: pointer; }
       <div id="today"></div>
       <button class="group mrow level" id="levelRow" hidden></button>
       <div class="ledger" id="locks"></div>
-      <button class="link-btn" id="findBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>Find my locks</button>
+      <button class="link-btn" id="findBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><span class="lbl">Find my locks</span></button>
     </div>
   </section>
 
@@ -528,6 +555,9 @@ button.chip { cursor: pointer; }
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
     <div class="group">
+      <div class="mrow"><span class="mico" style="--g1:#4F8BFF;--g2:#22C7E8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 3.6 5.4 3.6 8.5s-1.2 5.9-3.6 8.5c-2.4-2.6-3.6-5.4-3.6-8.5s1.2-5.9 3.6-8.5z"/></svg></span><span class="mmid"><b>Language</b><span class="notr">English · العربية</span></span><div class="langswitch notr"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div></div>
+    </div>
+    <div class="group">
       <a class="mrow" href="https://github.com/relive202/timevault" target="_blank" rel="noopener noreferrer"><span class="mico" style="--g1:#3A3A40;--g2:#55555C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13.5 6l-3 12"/></svg></span><span class="mmid"><b>Source code</b><span>Open on GitHub</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
     </div>
     <p class="ver">TimeVault for USDC and USDT on Arbitrum One</p>
@@ -600,7 +630,7 @@ button.chip { cursor: pointer; }
       <pre class="wrap" id="appFp"></pre>
       <p class="small muted">These should match FINGERPRINTS.txt on GitHub. <a id="testsLink" href="tests.html" target="_blank" rel="noopener">Run the 49 safety tests yourself.</a></p>
       <span class="label">Publish a lock's code on Arbiscan</span>
-      <ol class="small" style="margin:0;padding-left:20px;display:grid;gap:4px">
+      <ol class="small" style="margin:0;padding-inline-start:20px;display:grid;gap:4px">
         <li>Get the file for your lock type below.</li>
         <li>On Arbiscan, open your lock address → Contract → Verify and Publish.</li>
         <li>Choose Solidity (Standard-Json-Input), compiler v0.8.24+commit.e11b9ed9, license MIT, and upload the file.</li>

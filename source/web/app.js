@@ -16,17 +16,59 @@
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const short = (a) => (a ? a.slice(0, 8) + '…' + a.slice(-7) : ''); // long enough that look-alike scam addresses don't match
   const fmt = (x) => Number(ethers.formatUnits(x, 6));
-  const money = (n) => '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const num = (n, d = 2) => Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
-  const dateStr = (s) => new Date(Number(s) * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  const untilStr = (ts) => { const d = (Number(ts) - Date.now() / 1000) / 86400; if (d <= 0) return 'now'; if (d < 1) return 'today'; if (d < 61) return Math.ceil(d) + (Math.ceil(d) === 1 ? ' day' : ' days'); if (d < 730) return Math.round(d / 30.44) + ' months'; return (Math.round(d / 36.5) / 10) + ' years'; };
-  const dayStr = (d) => d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   const store = {
     get(k, d = '') { try { const v = localStorage.getItem('tv3.' + k); return v === null ? d : v; } catch { return d; } },
     set(k, v) { try { v === '' || v == null ? localStorage.removeItem('tv3.' + k) : localStorage.setItem('tv3.' + k, v); } catch {} },
     json(k, d) { try { return JSON.parse(this.get(k, '')) ?? d; } catch { return d; } },
     setJson(k, v) { this.set(k, JSON.stringify(v)); },
   };
+
+  // ------------------------------------------------------------------ language: English, or Arabic written right to left
+  // The screens are written in English; in Arabic every piece of text is looked up in TV_AR (i18n_ar.js) as it appears.
+  const LANG = (() => { const v = store.get('lang'); return v === 'ar' || v === 'en' ? v : (/^ar/i.test(navigator.language || '') ? 'ar' : 'en'); })();
+  const AR = LANG === 'ar' && typeof TV_AR === 'object';
+  const NUMLOC = AR ? 'en-US' : undefined, DATELOC = AR ? 'ar-LY-u-nu-latn' : undefined;
+  const squash = (x) => x.replace(/\s+/g, ' ').trim();
+  function tr(text) { // Arabic for an English string, or null when there is none
+    if (!AR) return null;
+    const k = squash(text); if (!k) return null;
+    if (Object.prototype.hasOwnProperty.call(TV_AR.d, k)) return TV_AR.d[k];
+    for (const [re, out] of TV_AR.p) { const m = k.match(re); if (m) return out.replace(/\$(\d)/g, (_, i) => { const g = m[Number(i)] || ''; const t = tr(g); return t === null ? g : t; }); }
+    return null;
+  }
+  const T = (text) => { const t = tr(text); return t === null ? text : t; };
+  const INLINE = /^(B|STRONG|I|EM|A|BR|SPAN|CODE|SMALL)$/, SKIPTAG = /^(SCRIPT|STYLE|PRE|TEXTAREA|INPUT|SVG|svg)$/, LATIN = /[A-Za-z]/;
+  function trNode(n) {
+    if (!n) return;
+    if (n.nodeType === 3) {
+      const v = n.nodeValue; if (!LATIN.test(v) || (n.parentElement && n.parentElement.closest('.mono,.addr,.uri,.notr,script,style,pre'))) return;
+      const o = tr(v); if (o !== null && o !== squash(v)) n.nodeValue = v.match(/^\s*/)[0] + o + v.match(/\s*$/)[0]; // only real changes, so this never loops
+      return;
+    }
+    if (n.nodeType !== 1) return;
+    for (const a of ['placeholder', 'aria-label']) { const v = n.getAttribute(a); if (v && LATIN.test(v)) { const o = tr(v); if (o !== null && o !== v) n.setAttribute(a, o); } }
+    if (SKIPTAG.test(n.tagName) || n.closest('.mono,.addr,.uri,.notr')) return;
+    if (n.children.length && LATIN.test(n.textContent) && [...n.childNodes].some((c) => c.nodeType === 3 && c.nodeValue.trim()) && [...n.querySelectorAll('*')].every((c) => INLINE.test(c.tagName) && ![...c.attributes].some((x) => x.name.startsWith('data-')))) {
+      const o = tr(n.innerHTML); if (o !== null && o !== squash(n.innerHTML)) { n.innerHTML = o; return; } // a sentence with bold words or links is translated as one piece
+    }
+    for (const c of [...n.childNodes]) trNode(c);
+  }
+  if (AR) {
+    document.documentElement.lang = 'ar'; document.documentElement.dir = 'rtl';
+    trNode(document.body);
+    new MutationObserver((ms) => { for (const m of ms) trNode(m.target); })
+      .observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+  document.documentElement.classList.remove('tr-wait');
+
+  const money = (n) => '$' + Number(n).toLocaleString(NUMLOC, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const num = (n, d = 2) => Number(n).toLocaleString(NUMLOC, { maximumFractionDigits: d });
+  const dateStr = (s) => new Date(Number(s) * 1000).toLocaleDateString(DATELOC, { year: 'numeric', month: 'short', day: 'numeric' });
+  const plural = (n, one, many) => (AR ? (n === 1 ? one.ar1 : n === 2 ? one.ar2 : n <= 10 ? n + ' ' + many.ar3 : n + ' ' + many.ar11) : n + ' ' + (n === 1 ? one.en : many.en));
+  const U_DAY = [{ en: 'day', ar1: 'يوم واحد', ar2: 'يومان' }, { en: 'days', ar3: 'أيام', ar11: 'يومًا' }];
+  const U_MON = [{ en: 'month', ar1: 'شهر واحد', ar2: 'شهران' }, { en: 'months', ar3: 'أشهر', ar11: 'شهرًا' }];
+  const untilStr = (ts) => { const d = (Number(ts) - Date.now() / 1000) / 86400; if (d <= 0) return AR ? 'الآن' : 'now'; if (d < 1) return AR ? 'اليوم' : 'today'; if (d < 61) return plural(Math.ceil(d), ...U_DAY); if (d < 730) return plural(Math.round(d / 30.44), ...U_MON); const y = Math.round(d / 36.5) / 10; return AR ? y + ' سنة' : y + ' years'; };
+  const dayStr = (d) => d.toLocaleDateString(DATELOC, { weekday: 'short', month: 'short', day: 'numeric' });
 
   // ------------------------------------------------------------------ startup self check (blocks money actions if it fails)
   // Running inside the Android app? (Capacitor injects window.Capacitor before this script runs.)
@@ -567,7 +609,7 @@
         const logs = onlyToken ? await getLogsRetry(q) : await main.send('eth_getLogs', [q]).catch(() => []);
         out.push(...logs);
       }
-      if (progress) $('findBtn').textContent = 'Searching ' + Math.round((w + 1) / windows * 100) + '%…';
+      if (progress) $('findBtn').querySelector('.lbl').textContent = 'Searching ' + Math.round((w + 1) / windows * 100) + '%…';
     }
     return out;
   }
@@ -586,7 +628,7 @@
       }
       toast(found ? 'Found ' + found + ' lock' + (found > 1 ? 's' : '') + '.' : 'No other locks found. Locks you never added money to can only be added by address in Settings.', 8000);
       refresh();
-    } catch (e) { toast('Search failed: ' + nice(e)); } finally { b.disabled = false; b.textContent = 'Find my locks'; }
+    } catch (e) { toast('Search failed: ' + nice(e)); } finally { b.disabled = false; b.querySelector('.lbl').textContent = 'Find my locks'; }
   });
   $('addLockBtn').addEventListener('click', async () => {
     const who = viewer(), v = $('addLock').value.trim();
@@ -676,8 +718,8 @@
     const start = p.freq === 'twice' ? (Number(d) >= 15 ? y + m + '15' : y + m + '01') : y + m + d;
     const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TimeVault//Coach//EN', 'BEGIN:VEVENT', 'UID:timevault-payday-' + Date.now() + '@timevault',
       'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', 'DTSTART:' + start + 'T090000', 'RRULE:' + rule,
-      'SUMMARY:Payday: lock ' + money(saveAmount(p)) + ' in TimeVault', 'DESCRIPTION:Open TimeVault and tap Lock on the home screen.',
-      'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:Payday: lock your savings', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+      'SUMMARY:' + (AR ? 'يوم الراتب: اقفل ' + money(saveAmount(p)) + ' في TimeVault' : 'Payday: lock ' + money(saveAmount(p)) + ' in TimeVault'), 'DESCRIPTION:' + (AR ? 'افتح TimeVault واضغط قفل في الشاشة الرئيسية.' : 'Open TimeVault and tap Lock on the home screen.'),
+      'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:' + (AR ? 'يوم الراتب: اقفل مدخراتك' : 'Payday: lock your savings'), 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
     download('timevault-payday.ics', ics, 'text/calendar');
     toast('Open the downloaded file to add the reminders to your calendar.');
   });
@@ -764,7 +806,7 @@
     return s + Math.max(0, fmt(l.balance) - after);
   }, 0);
   const RANGES = { '1M': 30, '3M': 91, '1Y': 365, All: 0 };
-  const shortDate = (t) => new Date(t * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const shortDate = (t) => new Date(t * 1000).toLocaleDateString(DATELOC, { month: 'short', day: 'numeric' });
   function drawChart(box, locks, range) {
     if (!box) return;
     if (!locks.length || !history) { box.hidden = !locks.length; if (locks.length) box.querySelector('.ch-plot').innerHTML = '<p class="ch-empty">Loading your history…</p>'; return; }
@@ -820,7 +862,7 @@
   function fxLine(usd) {
     const f = FX(); if (!f || !(f.rate > 0)) return '';
     const v = Math.floor(usd * f.rate);
-    return '≈ ' + v.toLocaleString() + ' ' + f.code;
+    return '≈ ' + v.toLocaleString(NUMLOC) + ' ' + f.code;
   }
   function renderFx() {
     const total = LOCKS.reduce((s, l) => s + fmt(l.balance), 0), f = FX();
@@ -945,12 +987,12 @@
   }
   $('liveCheck').addEventListener('click', async () => {
     const who = viewer(); const box = $('liveOut');
-    if (!who || !LOCKS.length) { box.textContent = 'You have no locks to check yet.'; return; }
-    box.textContent = 'Checking every lock on 4 independent servers. This takes a few seconds…';
+    if (!who || !LOCKS.length) { box.textContent = T('You have no locks to check yet.'); return; }
+    box.textContent = T('Checking every lock on 4 independent servers. This takes a few seconds…');
     const lines = [];
     for (const l of LOCKS) {
-      try { await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, l.addr, { beneficiary: who }); lines.push('✓ ' + (l.name || short(l.addr)) + ': genuine, pays only ' + short(who)); }
-      catch (e) { lines.push('✗ ' + short(l.addr) + ' · ' + e.message); }
+      try { await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, l.addr, { beneficiary: who }); lines.push('✓ ' + (l.name || short(l.addr)) + (AR ? ': أصلي، يدفع فقط إلى ' : ': genuine, pays only ') + short(who)); }
+      catch (e) { lines.push('✗ ' + short(l.addr) + ' · ' + T(e.message)); }
     }
     box.textContent = lines.join('\n');
   });
@@ -988,7 +1030,7 @@
         const { k } = lastAndNext(p); const S = money(saveAmount(p));
         for (let i = 0; list.length < 26 && i < 80; i++) {
           const d = payday(p, k + i); d.setHours(9, 0, 0, 0);
-          if (d.getTime() > now + 60000) list.push({ id: 1000 + list.length, title: 'Payday: lock ' + S, body: 'Open TimeVault and tap Lock to keep your streak going.', schedule: { at: d, allowWhileIdle: true } });
+          if (d.getTime() > now + 60000) list.push({ id: 1000 + list.length, title: T('Payday: lock ' + S), body: T('Open TimeVault and tap Lock to keep your streak going.'), schedule: { at: d, allowWhileIdle: true } });
         }
       }
       // reminders the day before and the moment a lock opens (date locks, and goal locks' backup dates)
@@ -998,8 +1040,8 @@
         const name = l.name || (l.kind === 'goal' ? 'your ' + num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'your ' + l.sym + ' lock');
         const open = new Date(l.releaseTime * 1000), before = new Date(open.getTime() - 86400000);
         const what = l.kind === 'goal' ? 'reaches its backup date' : 'opens';
-        if (before.getTime() > now + 60000) list.push({ id: 2000 + n++, title: 'Tomorrow: ' + name + ' ' + what, body: 'It holds ' + num(fmt(l.balance)) + ' ' + l.sym + '.', schedule: { at: before, allowWhileIdle: true } });
-        if (open.getTime() > now + 60000) list.push({ id: 2000 + n++, title: name.charAt(0).toUpperCase() + name.slice(1) + ' is open', body: 'You can withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' in TimeVault, or leave it and keep saving.', schedule: { at: open, allowWhileIdle: true } });
+        if (before.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T('Tomorrow: ' + name + ' ' + what), body: T('It holds ' + num(fmt(l.balance)) + ' ' + l.sym + '.'), schedule: { at: before, allowWhileIdle: true } });
+        if (open.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T(name.charAt(0).toUpperCase() + name.slice(1) + ' is open'), body: T('You can withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' in TimeVault, or leave it and keep saving.'), schedule: { at: open, allowWhileIdle: true } });
       }
       if (list.length) await LN.schedule({ notifications: list });
       const nextPay = list.find((x) => x.id < 2000);
@@ -1012,6 +1054,12 @@
   function planChanged() { if (LN && store.get('notify') === '1') { clearTimeout(planT); planT = setTimeout(() => scheduleNotifications(false), 1500); } }
   $('notifyBtn').addEventListener('click', () => scheduleNotifications(true));
   if (LN) { $('icsBtn').hidden = true; $('notifyBtn').hidden = store.get('notify') === '1'; }
+
+  // ------------------------------------------------------------------ language switch
+  document.querySelectorAll('[data-lang]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.lang === LANG));
+    b.addEventListener('click', () => { if (b.dataset.lang === LANG) return; store.set('lang', b.dataset.lang); location.reload(); });
+  });
 
   // ------------------------------------------------------------------ boot
   bindGo(document);
