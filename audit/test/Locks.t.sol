@@ -5,7 +5,7 @@ pragma solidity 0.8.24;
 // They try, with random amounts, times and callers, to get money out early or to anyone but the owner.
 
 import "forge-std/Test.sol";
-import {GoalTimelock} from "../../source/GoalTimelock.sol";
+import {GoalTimelock} from "../src/GoalTimelock.sol"; // copied from source/ by the workflow
 import {TokenTimelock} from "@openzeppelin/contracts/token/ERC20/utils/TokenTimelock.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

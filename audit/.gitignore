@@ -4,3 +4,4 @@ out/
 cache/
 *.txt
 !src/README.txt
+src/GoalTimelock.sol
