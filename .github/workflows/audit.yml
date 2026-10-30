@@ -49,7 +49,7 @@ jobs:
       - name: 3. Foundry attack tests (fuzz + invariants)
         run: |
           cp ../source/GoalTimelock.sol src/GoalTimelock.sol   # exact copy of the contract under test
-          forge test -vv 2>&1 | tee forge.txt
+          forge test 2>&1 | tee forge.txt
 
       - name: Report Foundry results
         if: always()
@@ -63,13 +63,13 @@ jobs:
       - name: 2. Slither static analysis
         if: always()
         run: |
-          pip install --quiet slither-analyzer==0.10.4 solc-select==1.0.4
-          solc-select install 0.8.24 && solc-select use 0.8.24
-          R="@openzeppelin/contracts/=$PWD/node_modules/@openzeppelin/contracts/"
-          cp ../source/GoalTimelock.sol src/GoalTimelock.sol
-          for f in src/GoalTimelock.sol node_modules/@openzeppelin/contracts/token/ERC20/utils/TokenTimelock.sol; do
-            echo "=== Slither: $f" | tee -a slither.txt
-            slither "$f" --compile-force-framework solc --solc-remaps "$R" --exclude-dependencies --fail-none 2>&1 | tee -a slither.txt
+          pip install --quiet slither-analyzer==0.10.4
+          SOLC=$(ls ~/.svm/0.8.24/solc-0.8.24)   # the exact compiler Foundry already downloaded
+          NM="$PWD/node_modules"; OUT="$PWD/slither.txt"
+          mkdir -p /tmp/sl && cp src/GoalTimelock.sol /tmp/sl/ && cd /tmp/sl   # outside the Foundry project, plain solc mode
+          for f in GoalTimelock.sol "$NM/@openzeppelin/contracts/token/ERC20/utils/TokenTimelock.sol"; do
+            echo "=== Slither: $(basename "$f")" | tee -a "$OUT"
+            slither "$f" --solc "$SOLC" --solc-remaps "@openzeppelin/contracts/=$NM/@openzeppelin/contracts/" --exclude-dependencies --fail-none 2>&1 | tee -a "$OUT"
           done
 
       - name: Report Slither results
