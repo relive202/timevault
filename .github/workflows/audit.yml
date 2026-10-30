@@ -74,7 +74,9 @@ jobs:
 
       - name: Report Slither results
         if: always()
-        run: scripts/report.sh "Slither" slither.txt
+        run: |
+          awk '/^=== Slither/{print; next} /Detector-Documentation#/{sub(/.*#/, "  finding: "); print}' slither.txt > slither-summary.txt
+          scripts/report.sh "Slither findings by contract" slither-summary.txt
 
       - name: Summary
         if: always()
