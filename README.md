@@ -85,6 +85,12 @@ Compiler settings: solc 0.8.24, optimizer on (200 runs), EVM version paris.
 
 ## How to check it yourself
 
+- **Automatic safety audit** ([Actions → Safety audit](https://github.com/relive202/timevault/actions/workflows/audit.yml)): runs on every change and every Monday. It:
+  - rebuilds both locks from this source with solc 0.8.24 and checks they match the app's code byte for byte;
+  - checks the embedded OpenZeppelin files are the official 4.9.6 ones;
+  - runs Slither on the contracts;
+  - runs Foundry attack tests (20,000 random tries per test, plus 60,000 random deposits, waits and release attempts by anyone) that try to get money out early or to anyone but the owner;
+  - runs the 49 app safety tests in a browser.
 - **Safety tab:** all self checks show ✓. The two fingerprints shown match `FINGERPRINTS.txt`. "Run check" verifies every lock on 4 servers.
 - **Run `tests.html`:** it should say **49 of 49 tests passed**. The tests cover:
   - Both contracts, early-release attempts and strangers pressing release.
