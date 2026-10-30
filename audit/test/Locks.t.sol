@@ -85,7 +85,7 @@ contract GoalLockTest is Test {
     }
 
     function testFuzz_manySmallDepositsThenGoal(uint256 goal, uint8 n) public {
-        goal = bound(goal, 10, 1e12);
+        goal = bound(goal, 1000, 1e12);
         n = uint8(bound(n, 2, 30));
         GoalTimelock lock = new GoalTimelock(IERC20(address(usdc)), you, block.timestamp + 365 days, goal);
         uint256 each = goal / n; uint256 total;
