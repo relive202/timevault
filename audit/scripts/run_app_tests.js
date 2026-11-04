@@ -1,4 +1,4 @@
-// Opens tests.html in a headless browser, runs the 49 safety tests and fails unless all pass.
+// Opens tests.html in a headless browser, runs the 53 safety tests and fails unless all pass.
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..', '..');
@@ -17,5 +17,5 @@ const server = http.createServer((req, res) => {
   console.log(sum); failed.forEach((f) => console.log('FAILED: ' + f));
   await browser.close(); server.close();
   const m = sum.match(/(\d+) of (\d+)/);
-  process.exit(m && m[1] === m[2] && Number(m[2]) >= 49 ? 0 : 1);
+  process.exit(m && m[1] === m[2] && Number(m[2]) >= 53 ? 0 : 1);
 });

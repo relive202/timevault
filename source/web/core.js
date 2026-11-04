@@ -51,6 +51,7 @@ const TV = (() => {
   const ERC20_ABI = ['function balanceOf(address) view returns (uint256)', 'function transfer(address,uint256) returns (bool)'];
   const SEL_TRANSFER = '0xa9059cbb', SEL_RELEASE = '0x86d1a69f';
   const MAX_LOCK_SECONDS = 10 * 365 * 86400;
+  const MIN_LOCK_SECONDS = 21 * 3600; // the screens ask for "at least one day"; this leaves room for a slow wallet
 
   class Refused extends Error { constructor(msg) { super(msg); this.name = 'Refused'; this.refused = true; } }
   const refuse = (msg) => { throw new Refused(msg); };
@@ -128,7 +129,8 @@ const TV = (() => {
   // ------------------------------------------------------------------------------------------- the guard
   // cfg: { providers: [read providers, 2+ independent], need: how many must agree, tokens: {SYM:{address,decimals}},
   //        chainId, getSigner: async () => ethers Signer, getAccount: () => address, maxBaseFee (wei),
-  //        onAsk(summary) -> Promise<bool> user confirmation shown BEFORE the wallet is asked }
+  //        onAsk(summary) -> Promise<bool> user confirmation shown BEFORE the wallet is asked,
+  //        onSent(hash, summary) optional, called as soon as the wallet hands back a transaction hash }
   function makeGuard(ethers, cfg) {
     const main = cfg.providers[0];
     const now = async () => Number((await main.getBlock('latest')).timestamp);
@@ -144,10 +146,13 @@ const TV = (() => {
     async function walletChecks() {
       const account = cfg.getAccount(); if (!account) refuse('Connect your wallet first.');
       const signer = await cfg.getSigner();
-      if (lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
+      await signerChecks(signer, account);
+      return { account: ethers.getAddress(account), signer };
+    }
+    async function signerChecks(signer, account) {
+      if (lc(cfg.getAccount()) !== lc(account) || lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
       const chain = Number(await signer.provider.send('eth_chainId', []));
       if (chain !== cfg.chainId) refuse('Your wallet is not on Arbitrum One. Switch networks and try again. Nothing was sent.');
-      return { account: ethers.getAddress(account), signer };
     }
 
     // The single place a transaction is handed to the wallet. Final structural check on the exact bytes.
@@ -162,7 +167,11 @@ const TV = (() => {
       catch { gasLimit = 3_000_000n; }
       if (gasLimit > 5_000_000n) refuse('Unexpected gas use. Stopped.');
       if (cfg.onAsk && !(await cfg.onAsk(summary))) refuse('Cancelled.');
-      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, ...(await fees()) });
+      // The confirm screen can stay open a long time: check the wallet again right before it is asked.
+      await signerChecks(signer, account);
+      // chainId is part of the request, so the wallet itself refuses if it is on any other network.
+      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, chainId: BigInt(cfg.chainId), ...(await fees()) });
+      if (cfg.onSent) { try { cfg.onSent(sent.hash, summary); } catch {} }
       const rc = await waitReceipt(sent.hash);
       if (!rc || rc.status !== 1) throw new Error('The transaction failed on chain. ' + (summary.failNote || ''));
       return rc;
@@ -178,15 +187,18 @@ const TV = (() => {
       throw new Error('Timed out waiting for the transaction. Check your wallet history before trying again.');
     }
 
-    async function create({ kind, sym, releaseTime, goal, onStep }) {
+    async function create({ kind, sym, releaseTime, goal, firstDeposit, onStep }) {
       if (!CONTRACTS[kind]) refuse('Unknown lock type.');
       const t = cfg.tokens[sym]; if (!t) refuse('Unsupported coin.');
       const { account, signer } = await walletChecks();
       const chainNow = await now();
       releaseTime = Number(releaseTime);
-      if (!(releaseTime > chainNow + 3600)) refuse('The date must be at least an hour from now.');
+      if (!(releaseTime > chainNow + MIN_LOCK_SECONDS)) refuse('The date must be at least one day from now.');
       if (releaseTime > chainNow + MAX_LOCK_SECONDS) refuse('The date can be at most 10 years away.');
-      if (kind === 'goal') { goal = BigInt(goal); if (goal <= 0n) refuse('The goal must be more than zero.'); }
+      if (kind === 'goal') {
+        goal = BigInt(goal); if (goal <= 0n) refuse('The goal must be more than zero.');
+        if (firstDeposit !== undefined && BigInt(firstDeposit) >= goal) refuse('That first deposit already reaches the goal, so the lock would open straight away. Pick a bigger goal.');
+      }
       const deployerCode = lc(await quorum(cfg.providers, (p) => p.getCode(DEPLOYER), cfg.need, 'the deployer'));
       if (ethers.keccak256(deployerCode) !== DEPLOYER_CODEHASH) refuse('The standard deployer on this network looks wrong. Nothing was sent.');
       const params = { token: t.address, beneficiary: account, releaseTime, goal: goal ?? 0n };
@@ -224,6 +236,7 @@ const TV = (() => {
       await sendTx(signer, account, { to: tok.address, data }, [tok.address], {
         action: 'deposit', to: tok.address, toLabel: L.sym + ' token contract', recipient: L.addr,
         text: 'Send ' + ethers.formatUnits(amount, tok.decimals) + ' ' + L.sym + ' into your lock ' + L.addr + '.',
+        lock: { kind: L.kind, sym: L.sym, goal: L.goal, releaseTime: L.releaseTime }, // freshly verified settings, shown on the confirm screen
         failNote: 'Your coins are still in your wallet.',
       });
       const after = await retry(async () => { const a = await erc.balanceOf(L.addr); if (a < before + amount) throw new Error('not yet'); return a; });
@@ -253,6 +266,6 @@ const TV = (() => {
 
   return Object.freeze({
     DEPLOYER, DEPLOYER_CODEHASH, DEPLOYER_RUNTIME, CONTRACTS, LOCK_ABI, ERC20_ABI,
-    selfCheck, expectedRuntime, initcode, verifyLock, makeGuard, Refused,
+    MIN_LOCK_SECONDS, MAX_LOCK_SECONDS, selfCheck, expectedRuntime, initcode, verifyLock, makeGuard, Refused,
   });
 })();

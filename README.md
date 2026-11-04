@@ -23,7 +23,7 @@ There is no server, no account and no company holding your coins. The app is a s
 | File | What it is |
 |---|---|
 | `index.html` | The app. |
-| `tests.html` | 49 safety tests you can run on your phone. They use a private simulated blockchain and fake coins. |
+| `tests.html` | 53 safety tests you can run on your phone. They use a private simulated blockchain and fake coins. |
 | `FINGERPRINTS.txt` | The fingerprints the app and tests must show. |
 | `manifest.webmanifest`, `icon-*.png` | Lets you add the app to your home screen. |
 | `source/` | Contract source code, the app source, and `build.py`, which rebuilds `index.html` and `tests.html` byte for byte. |
@@ -73,7 +73,7 @@ Compiler settings: solc 0.8.24, optimizer on (200 runs), EVM version paris.
    - the amount is more than you have
    - the lock's date has passed
    - the goal is zero
-   - the date is less than an hour or more than 10 years away
+   - the date is less than a day or more than 10 years away
    - the standard deployer has been tampered with
    - the fee is too high
 7. **Self check at start-up.** Contract bytecode is checked against the fingerprints above. If anything differs, money actions are blocked.
@@ -90,13 +90,13 @@ Compiler settings: solc 0.8.24, optimizer on (200 runs), EVM version paris.
   - checks the embedded OpenZeppelin files are the official 4.9.6 ones;
   - runs Slither on the contracts;
   - runs Foundry attack tests (20,000 random tries per test, plus 60,000 random deposits, waits and release attempts by anyone) that try to get money out early or to anyone but the owner;
-  - runs the 49 app safety tests in a browser.
+  - runs the 53 app safety tests in a browser.
 - **Safety tab:** all self checks show ✓. The two fingerprints shown match `FINGERPRINTS.txt`. "Run check" verifies every lock on 4 servers.
-- **Run `tests.html`:** it should say **49 of 49 tests passed**. The tests cover:
+- **Run `tests.html`:** it should say **53 of 53 tests passed**. The tests cover:
   - Both contracts, early-release attempts and strangers pressing release.
   - Backup dates and USDT-style tokens.
   - 560 random actions checked against a model.
-  - 20 attacks on the guard: fake locks, a lying server, a tampered deployer, the wrong network, a changed account, and Cancel.
+  - 24 attacks on the guard: fake locks, a lying server, a tampered deployer, the wrong network, a changed account, a network or account switch while the confirm screen is open, and Cancel.
 - **Arbiscan:** the "Goal lock file" and "Fixed-date lock file" downloads on the Safety tab are the exact Standard-JSON inputs. Use them to publish the source on Arbiscan.
 - **Rebuild:** run `python3 source/web/build.py`. It must produce `index.html` and `tests.html` identical to the ones here.
 

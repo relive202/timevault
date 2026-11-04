@@ -226,8 +226,8 @@ async function runTimeVaultTests(ethers, Ganache, MOCK_BYTECODE, FAKE_BYTECODE, 
   await test('Guard', 'REFUSES sending to a normal wallet address', async () => noSend(() => guard.deposit({ lock: attacker, amount: U(5) }), 'not a TimeVault lock'));
   await test('Guard', 'REFUSES a lock holding an unsupported coin', async () => { const j = await newGoal(junk, U(100), 30 * DAY); await noSend(() => guard.deposit({ lock: j, amount: U(5) }), 'does not support'); });
   await test('Guard', 'REFUSES depositing into a lock whose date has passed', async () => {
-    const n = await now(); const E = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 2 * 3600, goal: U(10) });
-    await warp(3 * 3600); await noSend(() => guard.deposit({ lock: E.addr, amount: U(5) }), 'date has passed');
+    const n = await now(); const E = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 2 * DAY, goal: U(10) });
+    await warp(3 * DAY); await noSend(() => guard.deposit({ lock: E.addr, amount: U(5) }), 'date has passed');
   });
   await test('Guard', 'REFUSES depositing more than your wallet has', async () => {
     const n = await now(); const M = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: U(10) });
@@ -238,7 +238,8 @@ async function runTimeVaultTests(ethers, Ganache, MOCK_BYTECODE, FAKE_BYTECODE, 
   await test('Guard', 'REFUSES bad settings before asking the wallet (zero goal, past date, 11 years)', async () => {
     const n = await now();
     await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: 0n }), 'more than zero');
-    await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n - 10, goal: U(5) }), 'at least an hour');
+    await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n - 10, goal: U(5) }), 'at least one day');
+    await noSend(() => guard.create({ kind: 'date', sym: 'USDC', releaseTime: n + 2 * 3600 }), 'at least one day');
     await noSend(() => guard.create({ kind: 'date', sym: 'USDC', releaseTime: n + 11 * 365 * DAY }), 'at most 10 years');
     await noSend(() => guard.create({ kind: 'goal', sym: 'JUNK', releaseTime: n + 30 * DAY, goal: U(5) }), 'Unsupported coin');
   });
@@ -270,6 +271,31 @@ async function runTimeVaultTests(ethers, Ganache, MOCK_BYTECODE, FAKE_BYTECODE, 
   await test('Guard', 'REFUSES when the connected account changed', async () => {
     const g5 = TV.makeGuard(ethers, { ...baseCfg, getAccount: () => stranger });
     await noSend(() => g5.deposit({ lock: GL.addr, amount: U(1) }), 'account changed');
+  });
+  await test('Guard', 'REFUSES a first deposit that already reaches the goal', async () => {
+    const n = await now(); await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: U(10), firstDeposit: U(10) }), 'already reaches the goal');
+  });
+  await test('Guard', 'REFUSES if the wallet switches network while the confirm screen is open', async () => {
+    let flipped = false;
+    const sw = { getAddress: () => signer.getAddress(), sendTransaction: (t) => signer.sendTransaction(t),
+      provider: { send: async (m, p) => (m === 'eth_chainId' && flipped ? '0x1' : signer.provider.send(m, p)) } };
+    const g7 = TV.makeGuard(ethers, { ...baseCfg, getSigner: async () => sw, onAsk: async () => { flipped = true; return true; } });
+    await noSend(() => g7.deposit({ lock: GL.addr, amount: U(1) }), 'not on Arbitrum');
+  });
+  await test('Guard', 'REFUSES if the account changes while the confirm screen is open', async () => {
+    let who = me;
+    const g8 = TV.makeGuard(ethers, { ...baseCfg, getAccount: () => who, onAsk: async () => { who = stranger; return true; } });
+    await noSend(() => g8.deposit({ lock: GL.addr, amount: U(1) }), 'account changed');
+  });
+  await test('Guard', 'every transaction names the network, and the confirm screen gets the lock\'s verified settings', async () => {
+    const seen = []; const spy = { getAddress: () => signer.getAddress(), provider: signer.provider, sendTransaction: (t) => { seen.push(t); return signer.sendTransaction(t); } };
+    const hashes = [];
+    const g9 = TV.makeGuard(ethers, { ...baseCfg, getSigner: async () => spy, onSent: (h) => hashes.push(h) });
+    await g9.deposit({ lock: GL.addr, amount: U(1) });
+    must(seen.length === 1 && BigInt(seen[0].chainId) === BigInt(baseCfg.chainId), 'chainId missing from the transaction');
+    must(hashes.length === 1 && /^0x[0-9a-f]{64}$/i.test(hashes[0]), 'onSent did not get the hash');
+    const last = asked[asked.length - 1];
+    must(last.action === 'deposit' && last.lock && last.lock.kind === 'goal' && last.lock.goal === GL.goal && last.lock.releaseTime === GL.releaseTime, 'confirm screen did not get the lock settings');
   });
   await test('Guard', 'nothing is sent if you press Cancel on the confirm screen', async () => {
     const g6 = TV.makeGuard(ethers, { ...baseCfg, onAsk: async () => false });
