@@ -3,7 +3,7 @@
 # 1. Rebuild both locks from source and check they are byte-for-byte the code the app uses.
 # 2. Slither (static analysis) on both lock contracts.
 # 3. Foundry attack tests: fuzzing and random-sequence (invariant) tests that try to get money out early or to someone else.
-# 4. The app's own 49 safety tests, in a headless browser.
+# 4. The app's own 53 safety tests, in a headless browser.
 name: Safety audit
 
 on:
@@ -26,9 +26,9 @@ jobs:
         shell: bash
         working-directory: audit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
@@ -44,7 +44,7 @@ jobs:
         if: always()
         run: scripts/report.sh "Rebuild from source" rebuild.txt
 
-      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1
 
       - name: 3. Foundry attack tests (fuzz + invariants)
         run: |
@@ -55,7 +55,7 @@ jobs:
         if: always()
         run: scripts/report.sh "Foundry attack tests" forge.txt
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         if: always()
         with:
           python-version: '3.12'
@@ -95,13 +95,13 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
-      - name: 4. Run the 49 safety tests in tests.html
+      - name: 4. Run the 53 safety tests in tests.html
         working-directory: audit
         run: |
           npm install --no-audit --no-fund --no-save playwright@1.48.2

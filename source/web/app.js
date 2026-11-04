@@ -15,7 +15,11 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const short = (a) => (a ? a.slice(0, 8) + '…' + a.slice(-7) : ''); // long enough that look-alike scam addresses don't match
-  const fmt = (x) => Number(ethers.formatUnits(x, 6));
+  // Every supported coin uses the same number of decimals, and the screens rely on that. If a coin with other
+  // decimals is ever added, money actions stop here instead of showing or sending wrong amounts.
+  const DEC = TOKENS.USDC.decimals;
+  const SAME_DEC = Object.values(TOKENS).every((t) => t.decimals === DEC);
+  const fmt = (x) => Number(ethers.formatUnits(x, DEC));
   const store = {
     get(k, d = '') { try { const v = localStorage.getItem('tv3.' + k); return v === null ? d : v; } catch { return d; } },
     set(k, v) { try { v === '' || v == null ? localStorage.removeItem('tv3.' + k) : localStorage.setItem('tv3.' + k, v); } catch {} },
@@ -77,6 +81,7 @@
   if (NATIVE) document.body.classList.add('native');
 
   const SELF = TV.selfCheck(ethers);
+  if (!SAME_DEC) { SELF.ok = false; SELF.items.push({ label: 'all coins use the same decimals', ok: false }); }
   if (!SELF.ok) document.body.classList.add('broken');
 
   // ------------------------------------------------------------------ read-only blockchain access: 4 independent servers
@@ -96,7 +101,17 @@
     getAccount: () => account,
     getSigner: async () => { if (!eip) throw new TV.Refused('Connect your wallet first.'); return new ethers.BrowserProvider(eip).getSigner(account); },
     onAsk: confirmScreen,
+    onSent: (hash, s) => { if (s.action === 'deposit') store.setJson(pendKey(s.recipient), { hash, t: Date.now() }); },
   });
+  // A deposit whose receipt has not been seen yet. Until it settles, another deposit to the same lock is refused,
+  // so a slow network can't make you lock the same money twice.
+  const pendKey = (lock) => 'pend.' + String(lock).toLowerCase();
+  async function checkPending(lock) {
+    const p = store.json(pendKey(lock), null); if (!p || !p.hash) return;
+    const rc = await main.getTransactionReceipt(p.hash).catch(() => undefined);
+    if (rc || Date.now() - (p.t || 0) > 3 * 3600 * 1000) { store.set(pendKey(lock), ''); return; } // settled, or old enough to have been dropped
+    throw new TV.Refused('Your last deposit to this lock is still on its way. Wait for it to arrive before adding more, so you don\'t lock the same money twice.');
+  }
 
   function setAccount(a, c) {
     account = a ? ethers.getAddress(a) : ''; chainId = Number(c || 0);
@@ -177,11 +192,18 @@
         release: ['Withdraw to your wallet', 'Your wallet will ask you to approve a contract interaction with your lock:', s.to, s.text],
       }[s.action];
       $('cfTitle').textContent = lines[0]; $('cfLead').textContent = lines[1];
+      if (s.action === 'deposit' && s.lock) lines[3] += ' ' + opensText(s.lock);
       $('cfAddr').textContent = lines[2]; $('cfText').textContent = lines[3];
       $('confirm').hidden = false; $('cfGo').focus();
       const done = (v) => { $('confirm').hidden = true; $('cfGo').onclick = $('cfNo').onclick = null; if (v) { waiting(true); if (isTouch()) setTimeout(openWalletApp, 700); } resolve(v); };
       $('cfGo').onclick = () => done(true); $('cfNo').onclick = () => done(false);
     });
+  }
+  // When a lock opens, from its verified settings: shown before money goes in, so a lock with the wrong date or goal is noticed.
+  function opensText(L) {
+    return L.kind === 'goal'
+      ? T('This lock opens when it holds ' + num(fmt(L.goal), 6) + ' ' + L.sym + ', or on ' + dateStr(L.releaseTime) + ' if that comes first.')
+      : T('This lock opens on ' + dateStr(L.releaseTime) + '.');
   }
   // ---- waiting for the wallet: bring it to the front, offer a way out if the request never shows up
   let waitT = null, stopWait = null;
@@ -470,43 +492,69 @@
   function openDeposit(l, amount) {
     depLock = l; $('depTitle').textContent = 'Add money to ' + (l.name || (l.kind === 'goal' ? 'your ' + num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'your lock'));
     $('depAmount').value = amount || ''; $('depBal').textContent = WALLET[l.sym] !== undefined ? 'You have ' + num(fmt(WALLET[l.sym]), 6) + ' ' + l.sym + ' in your wallet.' : '';
-    $('exCoin').textContent = l.sym; $('exAddr').textContent = l.addr; $('exContract').textContent = '\u2026' + l.token.slice(-4) + ' (full: ' + l.token + ')';
-    $('exQr').hidden = true; $('exQr').innerHTML = ''; exBase = null; exStop();
+    exShow(null); exBase = null; exStop();
     depTab(false); $('depSheet').hidden = false;
   }
   // ---- add money from an exchange: show the lock address and watch for coins arriving
-  let exBase = null, exTimer = null;
+  // Saved lock data is only used to draw the screens. The address shown here is what an exchange sends money to,
+  // with no wallet check in between, so it is shown only after a fresh check on 3 servers that it is a genuine
+  // lock paying the connected wallet, with that lock's own coin, date and goal.
+  let exBase = null, exTimer = null, exLock = null, exSeq = 0;
+  function exShow(L) {
+    exLock = L;
+    $('exCopy').disabled = $('exQrBtn').disabled = !L; $('exQr').hidden = true; $('exQr').innerHTML = '';
+    $('exAddr').textContent = L ? L.addr : T('Checking this lock on the blockchain…');
+    $('exCoin').textContent = L ? L.sym : depLock.sym;
+    $('exContract').textContent = L ? '\u2026' + L.token.slice(-4) + ' (full: ' + L.token + ')' : '';
+    $('exOpens').textContent = L ? opensText(L) : '';
+  }
+  async function exVerify() {
+    const seq = ++exSeq, want = depLock && depLock.addr; exShow(null);
+    try {
+      if (!account) throw new TV.Refused('Connect your wallet first.');
+      const L = await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, want, { beneficiary: account });
+      if (seq !== exSeq || !depLock || depLock.addr !== want) return;
+      exShow(L);
+    } catch (e) {
+      if (seq !== exSeq) return;
+      $('exAddr').textContent = T('Could not double-check this lock, so its address is hidden. Try again in a minute.') + ' ' + nice(e);
+    }
+  }
   function exStop() { clearInterval(exTimer); exTimer = null; $('exWatch').className = 'exwatch'; $('exWatch').textContent = 'Waiting for money to arrive\u2026'; }
   async function exPoll() {
     if (!depLock || $('depSheet').hidden) return exStop();
     try {
-      const b = await new ethers.Contract(depLock.token, ERC20, main).balanceOf(depLock.addr);
+      if (!exLock) return; // nothing to watch until the lock has passed its fresh check
+      const b = await new ethers.Contract(exLock.token, ERC20, main).balanceOf(exLock.addr);
       if (exBase === null) exBase = b;
-      else if (b > exBase) { $('exWatch').className = 'exwatch got'; $('exWatch').textContent = 'Arrived: +' + num(fmt(b - exBase), 6) + ' ' + depLock.sym + '. It is locked now.'; history = null; }
+      else if (b > exBase) { $('exWatch').className = 'exwatch got'; $('exWatch').textContent = 'Arrived: +' + num(fmt(b - exBase), 6) + ' ' + exLock.sym + '. It is locked now.'; history = null; }
     } catch {}
   }
   function depTab(ex) {
     $('depTabWallet').setAttribute('aria-selected', String(!ex)); $('depTabEx').setAttribute('aria-selected', String(ex));
     $('depWallet').hidden = ex; $('depEx').hidden = !ex;
+    if (ex && !exLock) exVerify();
     if (ex && !exTimer) { exPoll(); exTimer = setInterval(exPoll, 8000); } else if (!ex) exStop();
     if (!ex) $('depAmount').focus();
   }
   $('depTabWallet').addEventListener('click', () => depTab(false));
   $('depTabEx').addEventListener('click', () => depTab(true));
-  $('exCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(depLock.addr); toast('Lock address copied. Pick ' + depLock.sym + ' on the Arbitrum One network.', 8000); } catch { toast('Select the address and copy it.'); } });
-  $('exQrBtn').addEventListener('click', () => { try { const q = qrcode(0, 'M'); q.addData(depLock.addr); q.make(); $('exQr').innerHTML = q.createImgTag(4, 8); $('exQr').hidden = false; } catch { toast('QR code not available. Use Copy address.'); } });
+  $('exCopy').addEventListener('click', async () => { if (!exLock) return; try { await navigator.clipboard.writeText(exLock.addr); toast('Lock address copied. Pick ' + depLock.sym + ' on the Arbitrum One network.', 8000); } catch { toast('Select the address and copy it.'); } });
+  $('exQrBtn').addEventListener('click', () => { if (!exLock) return; try { const q = qrcode(0, 'M'); q.addData(exLock.addr); q.make(); $('exQr').innerHTML = q.createImgTag(4, 8); $('exQr').hidden = false; } catch { toast('QR code not available. Use Copy address.'); } });
   const closeDep = () => { $('depSheet').hidden = true; exStop(); if ($('exWatch').classList.contains('got')) refresh(); };
   $('exClose').addEventListener('click', () => { $('depSheet').hidden = true; exStop(); refresh(); });
   $('depClose').addEventListener('click', closeDep);
-  $('depMax').addEventListener('click', () => { if (depLock && WALLET[depLock.sym] !== undefined) $('depAmount').value = ethers.formatUnits(WALLET[depLock.sym], 6); });
+  $('depMax').addEventListener('click', () => { if (depLock && WALLET[depLock.sym] !== undefined) $('depAmount').value = ethers.formatUnits(WALLET[depLock.sym], TOKENS[depLock.sym].decimals); });
   $('depGo').addEventListener('click', () => {
     const l = depLock; const raw = $('depAmount').value.trim();
-    let amt; try { amt = ethers.parseUnits(raw || '0', 6); } catch { return toast('Enter an amount like 25 or 25.50'); }
+    let amt; try { amt = ethers.parseUnits(raw || '0', TOKENS[l.sym].decimals); } catch { return toast('Enter an amount like 25 or 25.50'); }
     if (amt <= 0n) return toast('Enter an amount.');
     $('depSheet').hidden = true; // close this sheet first so the confirm screen is visible on top
     run($('depGo'), async () => {
       await ensureArbitrum();
+      await checkPending(l.addr);
       const after = await guard.deposit({ lock: l.addr, amount: amt });
+      store.set(pendKey(l.addr), '');
       toast(after.kind === 'goal' && after.balance >= after.goal ? 'Goal reached! You can withdraw it now.' : 'Added ' + raw + ' ' + l.sym + '. Nice work!');
       history = null;
     });
@@ -520,7 +568,7 @@
   document.querySelectorAll('[data-goal]').forEach((b) => b.addEventListener('click', () => { $('lkGoal').value = b.dataset.goal; updateSummary(); }));
   ['typeGoal', 'typeDate'].forEach((id) => $(id).addEventListener('change', applyType));
   ['lkName', 'lkToken', 'lkAmount', 'lkDate', 'lkAgree', 'lkGoal'].forEach((id) => $(id).addEventListener('input', updateSummary));
-  $('lkMax').addEventListener('click', () => { const b = WALLET[$('lkToken').value]; if (b !== undefined) { $('lkAmount').value = ethers.formatUnits(b, 6); updateSummary(); } });
+  $('lkMax').addEventListener('click', () => { const b = WALLET[$('lkToken').value]; if (b !== undefined) { $('lkAmount').value = ethers.formatUnits(b, DEC); updateSummary(); } });
   function applyType() {
     const g = lockType() === 'goal';
     $('goalField').hidden = !g; $('amountLabel').textContent = g ? 'Add money now (optional)' : 'How much to lock';
@@ -533,7 +581,7 @@
     const [y, mo, d] = v.split('-').map(Number); const n = new Date();
     return Math.floor(new Date(y, mo - 1, d, n.getHours(), n.getMinutes() + 5, 0).getTime() / 1000);
   }
-  function parse6(v) { try { return v.trim() ? ethers.parseUnits(v.trim(), 6) : 0n; } catch { return null; } }
+  function parse6(v) { try { return v.trim() ? ethers.parseUnits(v.trim(), DEC) : 0n; } catch { return null; } }
   function updateSummary() {
     const g = lockType() === 'goal', sym = $('lkToken').value;
     const amt = parse6($('lkAmount').value), goal = parse6($('lkGoal').value), ts = unlockTs();
@@ -579,10 +627,10 @@
       await ensureArbitrum();
       const startBlock = await main.getBlockNumber().catch(() => 0);
       step(1, 'doing');
-      const L = await guard.create({ kind: g ? 'goal' : 'date', sym, releaseTime: ts, goal, onStep: (s) => { if (s === 'verify') { step(1, 'done'); step(2, 'doing'); waiting(false); } } });
+      const L = await guard.create({ kind: g ? 'goal' : 'date', sym, releaseTime: ts, goal, firstDeposit: g && amt > 0n ? amt : undefined, onStep: (s) => { if (s === 'verify') { step(1, 'done'); step(2, 'doing'); waiting(false); } } });
       addLock(account, { addr: L.addr, created: Math.floor(Date.now() / 1000), block: startBlock, name }); store.set('ms.' + L.addr.toLowerCase(), '0');
       verified.set(L.addr, L); step(2, 'done');
-      if (amt > 0n) { step(3, 'doing'); await guard.deposit({ lock: L.addr, amount: amt }); }
+      if (amt > 0n) { step(3, 'doing'); await guard.deposit({ lock: L.addr, amount: amt }); store.set(pendKey(L.addr), ''); }
       step(3, 'done');
       toast(g ? 'Your savings goal is ready!' : 'Locked until ' + dateStr(ts) + '.', 8000);
       $('lkAmount').value = ''; $('lkAgree').checked = false; $('lkName').value = '';
@@ -623,7 +671,7 @@
       for (const a of cands) {
         if (isHidden(who, a) || getList(who).some((e) => e.addr.toLowerCase() === a.toLowerCase())) continue;
         const code = await main.getCode(a).catch(() => '0x');
-        if (code.length !== 2 + 1737 * 2 && code.length !== 2 + 1639 * 2) continue;
+        if (code.length !== 2 + TV.CONTRACTS.goal.runtimeLength * 2 && code.length !== 2 + TV.CONTRACTS.date.runtimeLength * 2) continue;
         try { await verifyCached(a, who); addLock(who, { addr: a }); found++; } catch {}
       }
       toast(found ? 'Found ' + found + ' lock' + (found > 1 ? 's' : '') + '.' : 'No other locks found. Locks you never added money to can only be added by address in Settings.', 8000);
@@ -639,7 +687,7 @@
   $('unhideBtn').addEventListener('click', () => { const w = viewer(); if (!w) return toast('Connect your wallet first.'); const n = store.json(hiddenKey(w), []).length; store.set(hiddenKey(w), ''); toast(n ? 'Showing ' + n + ' hidden lock' + (n > 1 ? 's' : '') + ' again.' : 'No hidden locks.'); refresh(); });
   $('exportBtn').addEventListener('click', () => {
     const who = viewer(); if (!who) return toast('Connect or track a wallet first.');
-    const data = { app: 'TimeVault', wallet: who, network: 'Arbitrum One', exported: new Date().toISOString(), locks: LOCKS.map((l) => ({ address: l.addr, type: l.kind, coin: l.sym, goal: l.kind === 'goal' ? ethers.formatUnits(l.goal, 6) : null, unlock: new Date(l.releaseTime * 1000).toISOString(), name: l.name })) };
+    const data = { app: 'TimeVault', wallet: who, network: 'Arbitrum One', exported: new Date().toISOString(), locks: LOCKS.map((l) => ({ address: l.addr, type: l.kind, coin: l.sym, goal: l.kind === 'goal' ? ethers.formatUnits(l.goal, TOKENS[l.sym].decimals) : null, unlock: new Date(l.releaseTime * 1000).toISOString(), name: l.name })) };
     download('timevault-backup.json', JSON.stringify(data, null, 2), 'application/json');
   });
 

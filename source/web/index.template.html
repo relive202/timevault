@@ -612,7 +612,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
       <h2>How your money is protected</h2>
       <ul class="protect">
         <li><b>Nobody can take it out early</b><span class="small muted">Not you, not the people who made this app, not a hacker. The lock is a contract on the blockchain with no owner, no admin and no back door. It can only pay out to your wallet.</span></li>
-        <li><b>Proven, tested code</b><span class="small muted">Built on OpenZeppelin's widely used, audited timelock contract and tested 49 ways, including 560 random actions and attacks on the app.</span></li>
+        <li><b>Proven, tested code</b><span class="small muted">Built on OpenZeppelin's widely used, audited timelock contract and tested 53 ways, including 560 random actions and attacks on the app.</span></li>
         <li><b>Fake locks are refused</b><span class="small muted">Before every deposit, the app checks that the lock's code matches the tested code exactly, using 4 separate servers.</span></li>
         <li><b>You approve everything</b><span class="small muted">The app can't move money by itself. Every action needs your approval in your wallet, and the app shows you the address first.</span></li>
       </ul>
@@ -628,7 +628,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
       <ul class="checks" id="selfList"></ul>
       <span class="label">Code fingerprints</span>
       <pre class="wrap" id="appFp"></pre>
-      <p class="small muted">These should match FINGERPRINTS.txt on GitHub. <a id="testsLink" href="tests.html" target="_blank" rel="noopener">Run the 49 safety tests yourself.</a></p>
+      <p class="small muted">These should match FINGERPRINTS.txt on GitHub. <a id="testsLink" href="tests.html" target="_blank" rel="noopener">Run the 53 safety tests yourself.</a></p>
       <span class="label">Publish a lock's code on Arbiscan</span>
       <ol class="small" style="margin:0;padding-inline-start:20px;display:grid;gap:4px">
         <li>Get the file for your lock type below.</li>
@@ -688,11 +688,13 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
     </div>
     <div id="depEx" class="sheet-body" hidden>
       <p class="small muted">Send straight from Binance, Bybit, OKX or any exchange into this lock. Follow every step: a mistake here can't be undone.</p>
+      <p class="small caution"><b>Wrong coins are lost forever.</b> This lock can only ever pay out the one coin it was made for. Many exchanges send <b>USDC.e</b> (bridged USDC) on Arbitrum, and that coin, or any other, sent here can never be taken out, by you or anyone.</p>
       <ol class="exsteps">
         <li>On the exchange, choose <b>Withdraw</b> and pick the coin <b id="exCoin">USDC</b>.</li>
         <li>Pick the network <b>Arbitrum One</b>. Not Ethereum, not Arbitrum Nova, not any other.</li>
         <li>Paste this lock's address:
           <div class="addr" id="exAddr"></div>
+          <p class="small" id="exOpens"></p>
           <div class="row"><button class="btn small" id="exCopy">Copy address</button><button class="btn ghost small" id="exQrBtn">Show QR code</button></div>
           <div id="exQr" hidden></div>
         </li>

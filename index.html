@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mkWAQ8wULcqt9a0YQ0J5/KOJRR2Rd7tp9BnJ92k25Ts=' 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-dOVmc08UqEfBC3OYv6smZoSVSXHjjco/hY2lFtfLYK8=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mkWAQ8wULcqt9a0YQ0J5/KOJRR2Rd7tp9BnJ92k25Ts=' 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-/Y68Pijd+RmujsaYHqVpLqp1Lhh62zQ8F1NA3teeuxI=' 'sha256-zDvABlPjpQ3yH7tyiIy1z1Q4ML+c91560e5qhquLM5I=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0F0F12">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -612,7 +612,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
       <h2>How your money is protected</h2>
       <ul class="protect">
         <li><b>Nobody can take it out early</b><span class="small muted">Not you, not the people who made this app, not a hacker. The lock is a contract on the blockchain with no owner, no admin and no back door. It can only pay out to your wallet.</span></li>
-        <li><b>Proven, tested code</b><span class="small muted">Built on OpenZeppelin's widely used, audited timelock contract and tested 49 ways, including 560 random actions and attacks on the app.</span></li>
+        <li><b>Proven, tested code</b><span class="small muted">Built on OpenZeppelin's widely used, audited timelock contract and tested 53 ways, including 560 random actions and attacks on the app.</span></li>
         <li><b>Fake locks are refused</b><span class="small muted">Before every deposit, the app checks that the lock's code matches the tested code exactly, using 4 separate servers.</span></li>
         <li><b>You approve everything</b><span class="small muted">The app can't move money by itself. Every action needs your approval in your wallet, and the app shows you the address first.</span></li>
       </ul>
@@ -628,7 +628,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
       <ul class="checks" id="selfList"></ul>
       <span class="label">Code fingerprints</span>
       <pre class="wrap" id="appFp"></pre>
-      <p class="small muted">These should match FINGERPRINTS.txt on GitHub. <a id="testsLink" href="tests.html" target="_blank" rel="noopener">Run the 49 safety tests yourself.</a></p>
+      <p class="small muted">These should match FINGERPRINTS.txt on GitHub. <a id="testsLink" href="tests.html" target="_blank" rel="noopener">Run the 53 safety tests yourself.</a></p>
       <span class="label">Publish a lock's code on Arbiscan</span>
       <ol class="small" style="margin:0;padding-inline-start:20px;display:grid;gap:4px">
         <li>Get the file for your lock type below.</li>
@@ -846,11 +846,13 @@ contract TokenTimelock {
     </div>
     <div id="depEx" class="sheet-body" hidden>
       <p class="small muted">Send straight from Binance, Bybit, OKX or any exchange into this lock. Follow every step: a mistake here can't be undone.</p>
+      <p class="small caution"><b>Wrong coins are lost forever.</b> This lock can only ever pay out the one coin it was made for. Many exchanges send <b>USDC.e</b> (bridged USDC) on Arbitrum, and that coin, or any other, sent here can never be taken out, by you or anyone.</p>
       <ol class="exsteps">
         <li>On the exchange, choose <b>Withdraw</b> and pick the coin <b id="exCoin">USDC</b>.</li>
         <li>Pick the network <b>Arbitrum One</b>. Not Ethereum, not Arbitrum Nova, not any other.</li>
         <li>Paste this lock's address:
           <div class="addr" id="exAddr"></div>
+          <p class="small" id="exOpens"></p>
           <div class="row"><button class="btn small" id="exCopy">Copy address</button><button class="btn ghost small" id="exQrBtn">Show QR code</button></div>
           <div id="exQr" hidden></div>
         </li>
@@ -932,6 +934,7 @@ const TV = (() => {
   const ERC20_ABI = ['function balanceOf(address) view returns (uint256)', 'function transfer(address,uint256) returns (bool)'];
   const SEL_TRANSFER = '0xa9059cbb', SEL_RELEASE = '0x86d1a69f';
   const MAX_LOCK_SECONDS = 10 * 365 * 86400;
+  const MIN_LOCK_SECONDS = 21 * 3600; // the screens ask for "at least one day"; this leaves room for a slow wallet
 
   class Refused extends Error { constructor(msg) { super(msg); this.name = 'Refused'; this.refused = true; } }
   const refuse = (msg) => { throw new Refused(msg); };
@@ -1009,7 +1012,8 @@ const TV = (() => {
   // ------------------------------------------------------------------------------------------- the guard
   // cfg: { providers: [read providers, 2+ independent], need: how many must agree, tokens: {SYM:{address,decimals}},
   //        chainId, getSigner: async () => ethers Signer, getAccount: () => address, maxBaseFee (wei),
-  //        onAsk(summary) -> Promise<bool> user confirmation shown BEFORE the wallet is asked }
+  //        onAsk(summary) -> Promise<bool> user confirmation shown BEFORE the wallet is asked,
+  //        onSent(hash, summary) optional, called as soon as the wallet hands back a transaction hash }
   function makeGuard(ethers, cfg) {
     const main = cfg.providers[0];
     const now = async () => Number((await main.getBlock('latest')).timestamp);
@@ -1025,10 +1029,13 @@ const TV = (() => {
     async function walletChecks() {
       const account = cfg.getAccount(); if (!account) refuse('Connect your wallet first.');
       const signer = await cfg.getSigner();
-      if (lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
+      await signerChecks(signer, account);
+      return { account: ethers.getAddress(account), signer };
+    }
+    async function signerChecks(signer, account) {
+      if (lc(cfg.getAccount()) !== lc(account) || lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
       const chain = Number(await signer.provider.send('eth_chainId', []));
       if (chain !== cfg.chainId) refuse('Your wallet is not on Arbitrum One. Switch networks and try again. Nothing was sent.');
-      return { account: ethers.getAddress(account), signer };
     }
 
     // The single place a transaction is handed to the wallet. Final structural check on the exact bytes.
@@ -1043,7 +1050,11 @@ const TV = (() => {
       catch { gasLimit = 3_000_000n; }
       if (gasLimit > 5_000_000n) refuse('Unexpected gas use. Stopped.');
       if (cfg.onAsk && !(await cfg.onAsk(summary))) refuse('Cancelled.');
-      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, ...(await fees()) });
+      // The confirm screen can stay open a long time: check the wallet again right before it is asked.
+      await signerChecks(signer, account);
+      // chainId is part of the request, so the wallet itself refuses if it is on any other network.
+      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, chainId: BigInt(cfg.chainId), ...(await fees()) });
+      if (cfg.onSent) { try { cfg.onSent(sent.hash, summary); } catch {} }
       const rc = await waitReceipt(sent.hash);
       if (!rc || rc.status !== 1) throw new Error('The transaction failed on chain. ' + (summary.failNote || ''));
       return rc;
@@ -1059,15 +1070,18 @@ const TV = (() => {
       throw new Error('Timed out waiting for the transaction. Check your wallet history before trying again.');
     }
 
-    async function create({ kind, sym, releaseTime, goal, onStep }) {
+    async function create({ kind, sym, releaseTime, goal, firstDeposit, onStep }) {
       if (!CONTRACTS[kind]) refuse('Unknown lock type.');
       const t = cfg.tokens[sym]; if (!t) refuse('Unsupported coin.');
       const { account, signer } = await walletChecks();
       const chainNow = await now();
       releaseTime = Number(releaseTime);
-      if (!(releaseTime > chainNow + 3600)) refuse('The date must be at least an hour from now.');
+      if (!(releaseTime > chainNow + MIN_LOCK_SECONDS)) refuse('The date must be at least one day from now.');
       if (releaseTime > chainNow + MAX_LOCK_SECONDS) refuse('The date can be at most 10 years away.');
-      if (kind === 'goal') { goal = BigInt(goal); if (goal <= 0n) refuse('The goal must be more than zero.'); }
+      if (kind === 'goal') {
+        goal = BigInt(goal); if (goal <= 0n) refuse('The goal must be more than zero.');
+        if (firstDeposit !== undefined && BigInt(firstDeposit) >= goal) refuse('That first deposit already reaches the goal, so the lock would open straight away. Pick a bigger goal.');
+      }
       const deployerCode = lc(await quorum(cfg.providers, (p) => p.getCode(DEPLOYER), cfg.need, 'the deployer'));
       if (ethers.keccak256(deployerCode) !== DEPLOYER_CODEHASH) refuse('The standard deployer on this network looks wrong. Nothing was sent.');
       const params = { token: t.address, beneficiary: account, releaseTime, goal: goal ?? 0n };
@@ -1105,6 +1119,7 @@ const TV = (() => {
       await sendTx(signer, account, { to: tok.address, data }, [tok.address], {
         action: 'deposit', to: tok.address, toLabel: L.sym + ' token contract', recipient: L.addr,
         text: 'Send ' + ethers.formatUnits(amount, tok.decimals) + ' ' + L.sym + ' into your lock ' + L.addr + '.',
+        lock: { kind: L.kind, sym: L.sym, goal: L.goal, releaseTime: L.releaseTime }, // freshly verified settings, shown on the confirm screen
         failNote: 'Your coins are still in your wallet.',
       });
       const after = await retry(async () => { const a = await erc.balanceOf(L.addr); if (a < before + amount) throw new Error('not yet'); return a; });
@@ -1134,7 +1149,7 @@ const TV = (() => {
 
   return Object.freeze({
     DEPLOYER, DEPLOYER_CODEHASH, DEPLOYER_RUNTIME, CONTRACTS, LOCK_ABI, ERC20_ABI,
-    selfCheck, expectedRuntime, initcode, verifyLock, makeGuard, Refused,
+    MIN_LOCK_SECONDS, MAX_LOCK_SECONDS, selfCheck, expectedRuntime, initcode, verifyLock, makeGuard, Refused,
   });
 })();
 </script>
@@ -1340,7 +1355,12 @@ const D2 = {
   'Cancelled.': 'أُلغي.',
   'Unknown lock type.': 'نوع قفل غير معروف.',
   'Unsupported coin.': 'عملة غير مدعومة.',
-  'The date must be at least an hour from now.': 'يجب أن يكون التاريخ بعد ساعة على الأقل من الآن.',
+  'The date must be at least one day from now.': 'يجب أن يكون التاريخ بعد يوم واحد على الأقل من الآن.',
+  'That first deposit already reaches the goal, so the lock would open straight away. Pick a bigger goal.': 'هذا الإيداع الأول يصل إلى الهدف بالفعل، فسيُفتح القفل فورًا. اختر هدفًا أكبر.',
+  'Your last deposit to this lock is still on its way. Wait for it to arrive before adding more, so you don\'t lock the same money twice.': 'إيداعك الأخير في هذا القفل ما زال في الطريق. انتظر وصوله قبل إضافة المزيد، حتى لا تقفل المال نفسه مرتين.',
+  'Checking this lock on the blockchain…': 'جارٍ التحقق من هذا القفل على البلوكتشين…',
+  'Could not double-check this lock, so its address is hidden. Try again in a minute.': 'تعذّر التحقق من هذا القفل، لذلك أُخفي عنوانه. حاول مرة أخرى بعد دقيقة.',
+  '<b>Wrong coins are lost forever.</b> This lock can only ever pay out the one coin it was made for. Many exchanges send <b>USDC.e</b> (bridged USDC) on Arbitrum, and that coin, or any other, sent here can never be taken out, by you or anyone.': '<b>العملات الخاطئة تضيع إلى الأبد.</b> هذا القفل لا يدفع إلا العملة الوحيدة التي أُنشئ لها. كثير من المنصات ترسل <b>USDC.e</b> (USDC المجسورة) على Arbitrum، وهذه العملة أو أي عملة أخرى تُرسل إلى هنا لا يمكن إخراجها أبدًا، لا منك ولا من أي أحد.',
   'The date can be at most 10 years away.': 'يمكن أن يكون التاريخ بعد 10 سنوات كحد أقصى.',
   'The goal must be more than zero.': 'يجب أن يكون الهدف أكبر من صفر.',
   'The standard deployer on this network looks wrong. Nothing was sent.': 'المُنشئ القياسي على هذه الشبكة يبدو غير صحيح. لم يُرسل أي شيء.',
@@ -1357,6 +1377,8 @@ const D2 = {
   'Language': 'اللغة',
 };
 const P2 = [
+  [/^This lock opens when it holds ([\d.,]+) (USDC|USDT), or on (.+) if that comes first\.$/, 'يُفتح هذا القفل عندما يصل إلى $1 $2، أو في $3 إذا جاء ذلك أولًا.'],
+  [/^This lock opens on (.+)\.$/, 'يُفتح هذا القفل في $1.'],
   [/^Only ever send (USDC|USDT) on the Arbitrum One network to this address, using Add money\. Any other coin or network sent here is lost forever\.$/, 'أرسل إلى هذا العنوان $1 على شبكة Arbitrum One فقط، باستخدام إيداع. أي عملة أو شبكة أخرى تُرسل إلى هنا تضيع إلى الأبد.'],
   [/^…(\w{4}) \(full: (0x[0-9a-fA-F]+)\)$/, '…$1 (كاملًا: $2)'],
   // amounts and states
@@ -1582,7 +1604,7 @@ const P2 = [
  "Nobody can take it out early": "لا أحد يستطيع إخراجها مبكرًا",
  "Not you, not the people who made this app, not a hacker. The lock is a contract on the blockchain with no owner, no admin and no back door. It can only pay out to your wallet.": "لا أنت، ولا صانعو هذا التطبيق، ولا أي مخترق. القفل عقد على البلوكتشين بلا مالك ولا مشرف ولا باب خلفي. ولا يدفع إلا إلى محفظتك.",
  "Proven, tested code": "شيفرة مجرّبة ومختبرة",
- "Built on OpenZeppelin's widely used, audited timelock contract and tested 49 ways, including 560 random actions and attacks on the app.": "مبني على عقد القفل الزمني المعروف والمدقَّق من OpenZeppelin، ومختبر بـ49 طريقة، منها 560 عملية عشوائية وهجمات على التطبيق.",
+ "Built on OpenZeppelin's widely used, audited timelock contract and tested 53 ways, including 560 random actions and attacks on the app.": "مبني على عقد القفل الزمني المعروف والمدقَّق من OpenZeppelin، ومختبر بـ53 طريقة، منها 560 عملية عشوائية وهجمات على التطبيق.",
  "Fake locks are refused": "الأقفال المزيفة تُرفض",
  "Before every deposit, the app checks that the lock's code matches the tested code exactly, using 4 separate servers.": "قبل كل إيداع، يتحقق التطبيق من أن شيفرة القفل مطابقة تمامًا للشيفرة المختبرة، باستخدام 4 خوادم منفصلة.",
  "You approve everything": "أنت توافق على كل شيء",
@@ -1592,7 +1614,7 @@ const P2 = [
  "Run check": "تشغيل الفحص",
  "Technical details": "تفاصيل تقنية",
  "Code fingerprints": "بصمات الشيفرة",
- "These should match FINGERPRINTS.txt on GitHub. <a id=\"testsLink\" href=\"tests.html\" target=\"_blank\" rel=\"noopener\">Run the 49 safety tests yourself.</a>": "يجب أن تطابق الملف FINGERPRINTS.txt على GitHub. <a id=\"testsLink\" href=\"tests.html\" target=\"_blank\" rel=\"noopener\">شغّل اختبارات الأمان الـ49 بنفسك.</a>",
+ "These should match FINGERPRINTS.txt on GitHub. <a id=\"testsLink\" href=\"tests.html\" target=\"_blank\" rel=\"noopener\">Run the 53 safety tests yourself.</a>": "يجب أن تطابق الملف FINGERPRINTS.txt على GitHub. <a id=\"testsLink\" href=\"tests.html\" target=\"_blank\" rel=\"noopener\">شغّل اختبارات الأمان الـ53 بنفسك.</a>",
  "Publish a lock's code on Arbiscan": "نشر شيفرة القفل على Arbiscan",
  "Get the file for your lock type below.": "نزّل ملف نوع قفلك من الأسفل.",
  "On Arbiscan, open your lock address → Contract → Verify and Publish.": "على Arbiscan، افتح عنوان قفلك ← Contract ← Verify and Publish.",
@@ -1649,7 +1671,11 @@ const P2 = [
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const short = (a) => (a ? a.slice(0, 8) + '…' + a.slice(-7) : ''); // long enough that look-alike scam addresses don't match
-  const fmt = (x) => Number(ethers.formatUnits(x, 6));
+  // Every supported coin uses the same number of decimals, and the screens rely on that. If a coin with other
+  // decimals is ever added, money actions stop here instead of showing or sending wrong amounts.
+  const DEC = TOKENS.USDC.decimals;
+  const SAME_DEC = Object.values(TOKENS).every((t) => t.decimals === DEC);
+  const fmt = (x) => Number(ethers.formatUnits(x, DEC));
   const store = {
     get(k, d = '') { try { const v = localStorage.getItem('tv3.' + k); return v === null ? d : v; } catch { return d; } },
     set(k, v) { try { v === '' || v == null ? localStorage.removeItem('tv3.' + k) : localStorage.setItem('tv3.' + k, v); } catch {} },
@@ -1711,6 +1737,7 @@ const P2 = [
   if (NATIVE) document.body.classList.add('native');
 
   const SELF = TV.selfCheck(ethers);
+  if (!SAME_DEC) { SELF.ok = false; SELF.items.push({ label: 'all coins use the same decimals', ok: false }); }
   if (!SELF.ok) document.body.classList.add('broken');
 
   // ------------------------------------------------------------------ read-only blockchain access: 4 independent servers
@@ -1730,7 +1757,17 @@ const P2 = [
     getAccount: () => account,
     getSigner: async () => { if (!eip) throw new TV.Refused('Connect your wallet first.'); return new ethers.BrowserProvider(eip).getSigner(account); },
     onAsk: confirmScreen,
+    onSent: (hash, s) => { if (s.action === 'deposit') store.setJson(pendKey(s.recipient), { hash, t: Date.now() }); },
   });
+  // A deposit whose receipt has not been seen yet. Until it settles, another deposit to the same lock is refused,
+  // so a slow network can't make you lock the same money twice.
+  const pendKey = (lock) => 'pend.' + String(lock).toLowerCase();
+  async function checkPending(lock) {
+    const p = store.json(pendKey(lock), null); if (!p || !p.hash) return;
+    const rc = await main.getTransactionReceipt(p.hash).catch(() => undefined);
+    if (rc || Date.now() - (p.t || 0) > 3 * 3600 * 1000) { store.set(pendKey(lock), ''); return; } // settled, or old enough to have been dropped
+    throw new TV.Refused('Your last deposit to this lock is still on its way. Wait for it to arrive before adding more, so you don\'t lock the same money twice.');
+  }
 
   function setAccount(a, c) {
     account = a ? ethers.getAddress(a) : ''; chainId = Number(c || 0);
@@ -1811,11 +1848,18 @@ const P2 = [
         release: ['Withdraw to your wallet', 'Your wallet will ask you to approve a contract interaction with your lock:', s.to, s.text],
       }[s.action];
       $('cfTitle').textContent = lines[0]; $('cfLead').textContent = lines[1];
+      if (s.action === 'deposit' && s.lock) lines[3] += ' ' + opensText(s.lock);
       $('cfAddr').textContent = lines[2]; $('cfText').textContent = lines[3];
       $('confirm').hidden = false; $('cfGo').focus();
       const done = (v) => { $('confirm').hidden = true; $('cfGo').onclick = $('cfNo').onclick = null; if (v) { waiting(true); if (isTouch()) setTimeout(openWalletApp, 700); } resolve(v); };
       $('cfGo').onclick = () => done(true); $('cfNo').onclick = () => done(false);
     });
+  }
+  // When a lock opens, from its verified settings: shown before money goes in, so a lock with the wrong date or goal is noticed.
+  function opensText(L) {
+    return L.kind === 'goal'
+      ? T('This lock opens when it holds ' + num(fmt(L.goal), 6) + ' ' + L.sym + ', or on ' + dateStr(L.releaseTime) + ' if that comes first.')
+      : T('This lock opens on ' + dateStr(L.releaseTime) + '.');
   }
   // ---- waiting for the wallet: bring it to the front, offer a way out if the request never shows up
   let waitT = null, stopWait = null;
@@ -2104,43 +2148,69 @@ const P2 = [
   function openDeposit(l, amount) {
     depLock = l; $('depTitle').textContent = 'Add money to ' + (l.name || (l.kind === 'goal' ? 'your ' + num(fmt(l.goal)) + ' ' + l.sym + ' goal' : 'your lock'));
     $('depAmount').value = amount || ''; $('depBal').textContent = WALLET[l.sym] !== undefined ? 'You have ' + num(fmt(WALLET[l.sym]), 6) + ' ' + l.sym + ' in your wallet.' : '';
-    $('exCoin').textContent = l.sym; $('exAddr').textContent = l.addr; $('exContract').textContent = '\u2026' + l.token.slice(-4) + ' (full: ' + l.token + ')';
-    $('exQr').hidden = true; $('exQr').innerHTML = ''; exBase = null; exStop();
+    exShow(null); exBase = null; exStop();
     depTab(false); $('depSheet').hidden = false;
   }
   // ---- add money from an exchange: show the lock address and watch for coins arriving
-  let exBase = null, exTimer = null;
+  // Saved lock data is only used to draw the screens. The address shown here is what an exchange sends money to,
+  // with no wallet check in between, so it is shown only after a fresh check on 3 servers that it is a genuine
+  // lock paying the connected wallet, with that lock's own coin, date and goal.
+  let exBase = null, exTimer = null, exLock = null, exSeq = 0;
+  function exShow(L) {
+    exLock = L;
+    $('exCopy').disabled = $('exQrBtn').disabled = !L; $('exQr').hidden = true; $('exQr').innerHTML = '';
+    $('exAddr').textContent = L ? L.addr : T('Checking this lock on the blockchain…');
+    $('exCoin').textContent = L ? L.sym : depLock.sym;
+    $('exContract').textContent = L ? '\u2026' + L.token.slice(-4) + ' (full: ' + L.token + ')' : '';
+    $('exOpens').textContent = L ? opensText(L) : '';
+  }
+  async function exVerify() {
+    const seq = ++exSeq, want = depLock && depLock.addr; exShow(null);
+    try {
+      if (!account) throw new TV.Refused('Connect your wallet first.');
+      const L = await TV.verifyLock(ethers, { providers, need: 3, tokens: TOKENS }, want, { beneficiary: account });
+      if (seq !== exSeq || !depLock || depLock.addr !== want) return;
+      exShow(L);
+    } catch (e) {
+      if (seq !== exSeq) return;
+      $('exAddr').textContent = T('Could not double-check this lock, so its address is hidden. Try again in a minute.') + ' ' + nice(e);
+    }
+  }
   function exStop() { clearInterval(exTimer); exTimer = null; $('exWatch').className = 'exwatch'; $('exWatch').textContent = 'Waiting for money to arrive\u2026'; }
   async function exPoll() {
     if (!depLock || $('depSheet').hidden) return exStop();
     try {
-      const b = await new ethers.Contract(depLock.token, ERC20, main).balanceOf(depLock.addr);
+      if (!exLock) return; // nothing to watch until the lock has passed its fresh check
+      const b = await new ethers.Contract(exLock.token, ERC20, main).balanceOf(exLock.addr);
       if (exBase === null) exBase = b;
-      else if (b > exBase) { $('exWatch').className = 'exwatch got'; $('exWatch').textContent = 'Arrived: +' + num(fmt(b - exBase), 6) + ' ' + depLock.sym + '. It is locked now.'; history = null; }
+      else if (b > exBase) { $('exWatch').className = 'exwatch got'; $('exWatch').textContent = 'Arrived: +' + num(fmt(b - exBase), 6) + ' ' + exLock.sym + '. It is locked now.'; history = null; }
     } catch {}
   }
   function depTab(ex) {
     $('depTabWallet').setAttribute('aria-selected', String(!ex)); $('depTabEx').setAttribute('aria-selected', String(ex));
     $('depWallet').hidden = ex; $('depEx').hidden = !ex;
+    if (ex && !exLock) exVerify();
     if (ex && !exTimer) { exPoll(); exTimer = setInterval(exPoll, 8000); } else if (!ex) exStop();
     if (!ex) $('depAmount').focus();
   }
   $('depTabWallet').addEventListener('click', () => depTab(false));
   $('depTabEx').addEventListener('click', () => depTab(true));
-  $('exCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(depLock.addr); toast('Lock address copied. Pick ' + depLock.sym + ' on the Arbitrum One network.', 8000); } catch { toast('Select the address and copy it.'); } });
-  $('exQrBtn').addEventListener('click', () => { try { const q = qrcode(0, 'M'); q.addData(depLock.addr); q.make(); $('exQr').innerHTML = q.createImgTag(4, 8); $('exQr').hidden = false; } catch { toast('QR code not available. Use Copy address.'); } });
+  $('exCopy').addEventListener('click', async () => { if (!exLock) return; try { await navigator.clipboard.writeText(exLock.addr); toast('Lock address copied. Pick ' + depLock.sym + ' on the Arbitrum One network.', 8000); } catch { toast('Select the address and copy it.'); } });
+  $('exQrBtn').addEventListener('click', () => { if (!exLock) return; try { const q = qrcode(0, 'M'); q.addData(exLock.addr); q.make(); $('exQr').innerHTML = q.createImgTag(4, 8); $('exQr').hidden = false; } catch { toast('QR code not available. Use Copy address.'); } });
   const closeDep = () => { $('depSheet').hidden = true; exStop(); if ($('exWatch').classList.contains('got')) refresh(); };
   $('exClose').addEventListener('click', () => { $('depSheet').hidden = true; exStop(); refresh(); });
   $('depClose').addEventListener('click', closeDep);
-  $('depMax').addEventListener('click', () => { if (depLock && WALLET[depLock.sym] !== undefined) $('depAmount').value = ethers.formatUnits(WALLET[depLock.sym], 6); });
+  $('depMax').addEventListener('click', () => { if (depLock && WALLET[depLock.sym] !== undefined) $('depAmount').value = ethers.formatUnits(WALLET[depLock.sym], TOKENS[depLock.sym].decimals); });
   $('depGo').addEventListener('click', () => {
     const l = depLock; const raw = $('depAmount').value.trim();
-    let amt; try { amt = ethers.parseUnits(raw || '0', 6); } catch { return toast('Enter an amount like 25 or 25.50'); }
+    let amt; try { amt = ethers.parseUnits(raw || '0', TOKENS[l.sym].decimals); } catch { return toast('Enter an amount like 25 or 25.50'); }
     if (amt <= 0n) return toast('Enter an amount.');
     $('depSheet').hidden = true; // close this sheet first so the confirm screen is visible on top
     run($('depGo'), async () => {
       await ensureArbitrum();
+      await checkPending(l.addr);
       const after = await guard.deposit({ lock: l.addr, amount: amt });
+      store.set(pendKey(l.addr), '');
       toast(after.kind === 'goal' && after.balance >= after.goal ? 'Goal reached! You can withdraw it now.' : 'Added ' + raw + ' ' + l.sym + '. Nice work!');
       history = null;
     });
@@ -2154,7 +2224,7 @@ const P2 = [
   document.querySelectorAll('[data-goal]').forEach((b) => b.addEventListener('click', () => { $('lkGoal').value = b.dataset.goal; updateSummary(); }));
   ['typeGoal', 'typeDate'].forEach((id) => $(id).addEventListener('change', applyType));
   ['lkName', 'lkToken', 'lkAmount', 'lkDate', 'lkAgree', 'lkGoal'].forEach((id) => $(id).addEventListener('input', updateSummary));
-  $('lkMax').addEventListener('click', () => { const b = WALLET[$('lkToken').value]; if (b !== undefined) { $('lkAmount').value = ethers.formatUnits(b, 6); updateSummary(); } });
+  $('lkMax').addEventListener('click', () => { const b = WALLET[$('lkToken').value]; if (b !== undefined) { $('lkAmount').value = ethers.formatUnits(b, DEC); updateSummary(); } });
   function applyType() {
     const g = lockType() === 'goal';
     $('goalField').hidden = !g; $('amountLabel').textContent = g ? 'Add money now (optional)' : 'How much to lock';
@@ -2167,7 +2237,7 @@ const P2 = [
     const [y, mo, d] = v.split('-').map(Number); const n = new Date();
     return Math.floor(new Date(y, mo - 1, d, n.getHours(), n.getMinutes() + 5, 0).getTime() / 1000);
   }
-  function parse6(v) { try { return v.trim() ? ethers.parseUnits(v.trim(), 6) : 0n; } catch { return null; } }
+  function parse6(v) { try { return v.trim() ? ethers.parseUnits(v.trim(), DEC) : 0n; } catch { return null; } }
   function updateSummary() {
     const g = lockType() === 'goal', sym = $('lkToken').value;
     const amt = parse6($('lkAmount').value), goal = parse6($('lkGoal').value), ts = unlockTs();
@@ -2213,10 +2283,10 @@ const P2 = [
       await ensureArbitrum();
       const startBlock = await main.getBlockNumber().catch(() => 0);
       step(1, 'doing');
-      const L = await guard.create({ kind: g ? 'goal' : 'date', sym, releaseTime: ts, goal, onStep: (s) => { if (s === 'verify') { step(1, 'done'); step(2, 'doing'); waiting(false); } } });
+      const L = await guard.create({ kind: g ? 'goal' : 'date', sym, releaseTime: ts, goal, firstDeposit: g && amt > 0n ? amt : undefined, onStep: (s) => { if (s === 'verify') { step(1, 'done'); step(2, 'doing'); waiting(false); } } });
       addLock(account, { addr: L.addr, created: Math.floor(Date.now() / 1000), block: startBlock, name }); store.set('ms.' + L.addr.toLowerCase(), '0');
       verified.set(L.addr, L); step(2, 'done');
-      if (amt > 0n) { step(3, 'doing'); await guard.deposit({ lock: L.addr, amount: amt }); }
+      if (amt > 0n) { step(3, 'doing'); await guard.deposit({ lock: L.addr, amount: amt }); store.set(pendKey(L.addr), ''); }
       step(3, 'done');
       toast(g ? 'Your savings goal is ready!' : 'Locked until ' + dateStr(ts) + '.', 8000);
       $('lkAmount').value = ''; $('lkAgree').checked = false; $('lkName').value = '';
@@ -2257,7 +2327,7 @@ const P2 = [
       for (const a of cands) {
         if (isHidden(who, a) || getList(who).some((e) => e.addr.toLowerCase() === a.toLowerCase())) continue;
         const code = await main.getCode(a).catch(() => '0x');
-        if (code.length !== 2 + 1737 * 2 && code.length !== 2 + 1639 * 2) continue;
+        if (code.length !== 2 + TV.CONTRACTS.goal.runtimeLength * 2 && code.length !== 2 + TV.CONTRACTS.date.runtimeLength * 2) continue;
         try { await verifyCached(a, who); addLock(who, { addr: a }); found++; } catch {}
       }
       toast(found ? 'Found ' + found + ' lock' + (found > 1 ? 's' : '') + '.' : 'No other locks found. Locks you never added money to can only be added by address in Settings.', 8000);
@@ -2273,7 +2343,7 @@ const P2 = [
   $('unhideBtn').addEventListener('click', () => { const w = viewer(); if (!w) return toast('Connect your wallet first.'); const n = store.json(hiddenKey(w), []).length; store.set(hiddenKey(w), ''); toast(n ? 'Showing ' + n + ' hidden lock' + (n > 1 ? 's' : '') + ' again.' : 'No hidden locks.'); refresh(); });
   $('exportBtn').addEventListener('click', () => {
     const who = viewer(); if (!who) return toast('Connect or track a wallet first.');
-    const data = { app: 'TimeVault', wallet: who, network: 'Arbitrum One', exported: new Date().toISOString(), locks: LOCKS.map((l) => ({ address: l.addr, type: l.kind, coin: l.sym, goal: l.kind === 'goal' ? ethers.formatUnits(l.goal, 6) : null, unlock: new Date(l.releaseTime * 1000).toISOString(), name: l.name })) };
+    const data = { app: 'TimeVault', wallet: who, network: 'Arbitrum One', exported: new Date().toISOString(), locks: LOCKS.map((l) => ({ address: l.addr, type: l.kind, coin: l.sym, goal: l.kind === 'goal' ? ethers.formatUnits(l.goal, TOKENS[l.sym].decimals) : null, unlock: new Date(l.releaseTime * 1000).toISOString(), name: l.name })) };
     download('timevault-backup.json', JSON.stringify(data, null, 2), 'application/json');
   });
 

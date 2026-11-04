@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ovCTjV4GppkEZhym04qo0wbMCecqRLHDl/hGqmyAs98=' 'sha256-JrLZiP1aepYXk1fSRa+7AAxSL2F6+HelzcyUg1eBzq8=' 'sha256-2bACf9/+Uf2ysoSKKSE/PFauDg0Nv4/Vu2kgGmouR0w=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/ganache@7.9.2/dist/web/ganache.min.js 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'unsafe-inline'; connect-src 'none'; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-/Y68Pijd+RmujsaYHqVpLqp1Lhh62zQ8F1NA3teeuxI=' 'sha256-W5NDkK5PAM8W+VISXLvy2v5LQhz3yDn/r4EV1FjlOYE=' 'sha256-2bACf9/+Uf2ysoSKKSE/PFauDg0Nv4/Vu2kgGmouR0w=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/ganache@7.9.2/dist/web/ganache.min.js 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'unsafe-inline'; connect-src 'none'; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <title>TimeVault Safety Tests</title>
 <style>
@@ -26,7 +26,7 @@ code { font: 12px ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
 <body>
 <main>
   <h1>TimeVault safety tests</h1>
-  <p>Runs 49 checks on a private simulated blockchain inside this page, using fake coins: the original contract tests, 40 random locks with 14 random actions each checked against the rules, and attacks on the app's transaction guard (fake locks, wrong wallets, lying servers, a tampered deployer, the wrong network). It uses exactly the same safety code as the app. No wallet, no real money. Takes under a minute on most devices.</p>
+  <p>Runs 53 checks on a private simulated blockchain inside this page, using fake coins: the original contract tests, 40 random locks with 14 random actions each checked against the rules, and attacks on the app's transaction guard (fake locks, wrong wallets, lying servers, a tampered deployer, the wrong network). It uses exactly the same safety code as the app. No wallet, no real money. Takes under a minute on most devices.</p>
   <button id="run">Run all tests</button>
   <div id="sum">Not run yet.</div>
   <ul id="log"></ul>
@@ -86,6 +86,7 @@ const TV = (() => {
   const ERC20_ABI = ['function balanceOf(address) view returns (uint256)', 'function transfer(address,uint256) returns (bool)'];
   const SEL_TRANSFER = '0xa9059cbb', SEL_RELEASE = '0x86d1a69f';
   const MAX_LOCK_SECONDS = 10 * 365 * 86400;
+  const MIN_LOCK_SECONDS = 21 * 3600; // the screens ask for "at least one day"; this leaves room for a slow wallet
 
   class Refused extends Error { constructor(msg) { super(msg); this.name = 'Refused'; this.refused = true; } }
   const refuse = (msg) => { throw new Refused(msg); };
@@ -163,7 +164,8 @@ const TV = (() => {
   // ------------------------------------------------------------------------------------------- the guard
   // cfg: { providers: [read providers, 2+ independent], need: how many must agree, tokens: {SYM:{address,decimals}},
   //        chainId, getSigner: async () => ethers Signer, getAccount: () => address, maxBaseFee (wei),
-  //        onAsk(summary) -> Promise<bool> user confirmation shown BEFORE the wallet is asked }
+  //        onAsk(summary) -> Promise<bool> user confirmation shown BEFORE the wallet is asked,
+  //        onSent(hash, summary) optional, called as soon as the wallet hands back a transaction hash }
   function makeGuard(ethers, cfg) {
     const main = cfg.providers[0];
     const now = async () => Number((await main.getBlock('latest')).timestamp);
@@ -179,10 +181,13 @@ const TV = (() => {
     async function walletChecks() {
       const account = cfg.getAccount(); if (!account) refuse('Connect your wallet first.');
       const signer = await cfg.getSigner();
-      if (lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
+      await signerChecks(signer, account);
+      return { account: ethers.getAddress(account), signer };
+    }
+    async function signerChecks(signer, account) {
+      if (lc(cfg.getAccount()) !== lc(account) || lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
       const chain = Number(await signer.provider.send('eth_chainId', []));
       if (chain !== cfg.chainId) refuse('Your wallet is not on Arbitrum One. Switch networks and try again. Nothing was sent.');
-      return { account: ethers.getAddress(account), signer };
     }
 
     // The single place a transaction is handed to the wallet. Final structural check on the exact bytes.
@@ -197,7 +202,11 @@ const TV = (() => {
       catch { gasLimit = 3_000_000n; }
       if (gasLimit > 5_000_000n) refuse('Unexpected gas use. Stopped.');
       if (cfg.onAsk && !(await cfg.onAsk(summary))) refuse('Cancelled.');
-      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, ...(await fees()) });
+      // The confirm screen can stay open a long time: check the wallet again right before it is asked.
+      await signerChecks(signer, account);
+      // chainId is part of the request, so the wallet itself refuses if it is on any other network.
+      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, chainId: BigInt(cfg.chainId), ...(await fees()) });
+      if (cfg.onSent) { try { cfg.onSent(sent.hash, summary); } catch {} }
       const rc = await waitReceipt(sent.hash);
       if (!rc || rc.status !== 1) throw new Error('The transaction failed on chain. ' + (summary.failNote || ''));
       return rc;
@@ -213,15 +222,18 @@ const TV = (() => {
       throw new Error('Timed out waiting for the transaction. Check your wallet history before trying again.');
     }
 
-    async function create({ kind, sym, releaseTime, goal, onStep }) {
+    async function create({ kind, sym, releaseTime, goal, firstDeposit, onStep }) {
       if (!CONTRACTS[kind]) refuse('Unknown lock type.');
       const t = cfg.tokens[sym]; if (!t) refuse('Unsupported coin.');
       const { account, signer } = await walletChecks();
       const chainNow = await now();
       releaseTime = Number(releaseTime);
-      if (!(releaseTime > chainNow + 3600)) refuse('The date must be at least an hour from now.');
+      if (!(releaseTime > chainNow + MIN_LOCK_SECONDS)) refuse('The date must be at least one day from now.');
       if (releaseTime > chainNow + MAX_LOCK_SECONDS) refuse('The date can be at most 10 years away.');
-      if (kind === 'goal') { goal = BigInt(goal); if (goal <= 0n) refuse('The goal must be more than zero.'); }
+      if (kind === 'goal') {
+        goal = BigInt(goal); if (goal <= 0n) refuse('The goal must be more than zero.');
+        if (firstDeposit !== undefined && BigInt(firstDeposit) >= goal) refuse('That first deposit already reaches the goal, so the lock would open straight away. Pick a bigger goal.');
+      }
       const deployerCode = lc(await quorum(cfg.providers, (p) => p.getCode(DEPLOYER), cfg.need, 'the deployer'));
       if (ethers.keccak256(deployerCode) !== DEPLOYER_CODEHASH) refuse('The standard deployer on this network looks wrong. Nothing was sent.');
       const params = { token: t.address, beneficiary: account, releaseTime, goal: goal ?? 0n };
@@ -259,6 +271,7 @@ const TV = (() => {
       await sendTx(signer, account, { to: tok.address, data }, [tok.address], {
         action: 'deposit', to: tok.address, toLabel: L.sym + ' token contract', recipient: L.addr,
         text: 'Send ' + ethers.formatUnits(amount, tok.decimals) + ' ' + L.sym + ' into your lock ' + L.addr + '.',
+        lock: { kind: L.kind, sym: L.sym, goal: L.goal, releaseTime: L.releaseTime }, // freshly verified settings, shown on the confirm screen
         failNote: 'Your coins are still in your wallet.',
       });
       const after = await retry(async () => { const a = await erc.balanceOf(L.addr); if (a < before + amount) throw new Error('not yet'); return a; });
@@ -288,7 +301,7 @@ const TV = (() => {
 
   return Object.freeze({
     DEPLOYER, DEPLOYER_CODEHASH, DEPLOYER_RUNTIME, CONTRACTS, LOCK_ABI, ERC20_ABI,
-    selfCheck, expectedRuntime, initcode, verifyLock, makeGuard, Refused,
+    MIN_LOCK_SECONDS, MAX_LOCK_SECONDS, selfCheck, expectedRuntime, initcode, verifyLock, makeGuard, Refused,
   });
 })();
 </script>
@@ -520,8 +533,8 @@ async function runTimeVaultTests(ethers, Ganache, MOCK_BYTECODE, FAKE_BYTECODE, 
   await test('Guard', 'REFUSES sending to a normal wallet address', async () => noSend(() => guard.deposit({ lock: attacker, amount: U(5) }), 'not a TimeVault lock'));
   await test('Guard', 'REFUSES a lock holding an unsupported coin', async () => { const j = await newGoal(junk, U(100), 30 * DAY); await noSend(() => guard.deposit({ lock: j, amount: U(5) }), 'does not support'); });
   await test('Guard', 'REFUSES depositing into a lock whose date has passed', async () => {
-    const n = await now(); const E = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 2 * 3600, goal: U(10) });
-    await warp(3 * 3600); await noSend(() => guard.deposit({ lock: E.addr, amount: U(5) }), 'date has passed');
+    const n = await now(); const E = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 2 * DAY, goal: U(10) });
+    await warp(3 * DAY); await noSend(() => guard.deposit({ lock: E.addr, amount: U(5) }), 'date has passed');
   });
   await test('Guard', 'REFUSES depositing more than your wallet has', async () => {
     const n = await now(); const M = await guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: U(10) });
@@ -532,7 +545,8 @@ async function runTimeVaultTests(ethers, Ganache, MOCK_BYTECODE, FAKE_BYTECODE, 
   await test('Guard', 'REFUSES bad settings before asking the wallet (zero goal, past date, 11 years)', async () => {
     const n = await now();
     await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: 0n }), 'more than zero');
-    await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n - 10, goal: U(5) }), 'at least an hour');
+    await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n - 10, goal: U(5) }), 'at least one day');
+    await noSend(() => guard.create({ kind: 'date', sym: 'USDC', releaseTime: n + 2 * 3600 }), 'at least one day');
     await noSend(() => guard.create({ kind: 'date', sym: 'USDC', releaseTime: n + 11 * 365 * DAY }), 'at most 10 years');
     await noSend(() => guard.create({ kind: 'goal', sym: 'JUNK', releaseTime: n + 30 * DAY, goal: U(5) }), 'Unsupported coin');
   });
@@ -564,6 +578,31 @@ async function runTimeVaultTests(ethers, Ganache, MOCK_BYTECODE, FAKE_BYTECODE, 
   await test('Guard', 'REFUSES when the connected account changed', async () => {
     const g5 = TV.makeGuard(ethers, { ...baseCfg, getAccount: () => stranger });
     await noSend(() => g5.deposit({ lock: GL.addr, amount: U(1) }), 'account changed');
+  });
+  await test('Guard', 'REFUSES a first deposit that already reaches the goal', async () => {
+    const n = await now(); await noSend(() => guard.create({ kind: 'goal', sym: 'USDC', releaseTime: n + 30 * DAY, goal: U(10), firstDeposit: U(10) }), 'already reaches the goal');
+  });
+  await test('Guard', 'REFUSES if the wallet switches network while the confirm screen is open', async () => {
+    let flipped = false;
+    const sw = { getAddress: () => signer.getAddress(), sendTransaction: (t) => signer.sendTransaction(t),
+      provider: { send: async (m, p) => (m === 'eth_chainId' && flipped ? '0x1' : signer.provider.send(m, p)) } };
+    const g7 = TV.makeGuard(ethers, { ...baseCfg, getSigner: async () => sw, onAsk: async () => { flipped = true; return true; } });
+    await noSend(() => g7.deposit({ lock: GL.addr, amount: U(1) }), 'not on Arbitrum');
+  });
+  await test('Guard', 'REFUSES if the account changes while the confirm screen is open', async () => {
+    let who = me;
+    const g8 = TV.makeGuard(ethers, { ...baseCfg, getAccount: () => who, onAsk: async () => { who = stranger; return true; } });
+    await noSend(() => g8.deposit({ lock: GL.addr, amount: U(1) }), 'account changed');
+  });
+  await test('Guard', 'every transaction names the network, and the confirm screen gets the lock\'s verified settings', async () => {
+    const seen = []; const spy = { getAddress: () => signer.getAddress(), provider: signer.provider, sendTransaction: (t) => { seen.push(t); return signer.sendTransaction(t); } };
+    const hashes = [];
+    const g9 = TV.makeGuard(ethers, { ...baseCfg, getSigner: async () => spy, onSent: (h) => hashes.push(h) });
+    await g9.deposit({ lock: GL.addr, amount: U(1) });
+    must(seen.length === 1 && BigInt(seen[0].chainId) === BigInt(baseCfg.chainId), 'chainId missing from the transaction');
+    must(hashes.length === 1 && /^0x[0-9a-f]{64}$/i.test(hashes[0]), 'onSent did not get the hash');
+    const last = asked[asked.length - 1];
+    must(last.action === 'deposit' && last.lock && last.lock.kind === 'goal' && last.lock.goal === GL.goal && last.lock.releaseTime === GL.releaseTime, 'confirm screen did not get the lock settings');
   });
   await test('Guard', 'nothing is sent if you press Cancel on the confirm screen', async () => {
     const g6 = TV.makeGuard(ethers, { ...baseCfg, onAsk: async () => false });
