@@ -693,7 +693,59 @@
 
   // ------------------------------------------------------------------ coach: payday plan
   const PLAN = () => ({ pay: Number(store.get('plan.pay', '0')), freq: store.get('plan.freq', 'monthly'), next: store.get('plan.next', ''), mode: store.get('plan.mode', 'pct'), pct: Number(store.get('plan.pct', '20')), fixed: Number(store.get('plan.fixed', '0')), target: store.get('plan.target', '') });
-  function saveAmount(p) { return p.mode === 'pct' ? Math.round(p.pay * p.pct) / 100 : p.fixed; }
+  function saveAmount(p) { return p.mode === 'pct' ? Math.round(p.pay * p.pct) / 100 : p.mode === 'split' ? splitOf(p.pay, SPLIT()).save : p.fixed; }
+  // ------------------------------------------------------------------ coach: split a payment into spend / save / invest
+  // Only a calculator: it never moves money. The save part can be locked with the normal (guarded) deposit screen.
+  const pctIn = (id) => { const v = $(id).value.trim(); return v === '' ? NaN : Number(v); }; // an empty box counts as not filled in
+  const SPLIT = () => ({ spend: pctIn('spSpend'), save: pctIn('spSave'), invest: pctIn('spInvest') });
+  const pctOk = (x) => Number.isFinite(x) && x >= 0 && x <= 100;
+  function splitValid(sp) { return pctOk(sp.spend) && pctOk(sp.save) && pctOk(sp.invest) && Math.abs(sp.spend + sp.save + sp.invest - 100) < 0.001; }
+  // Amounts in cents so the three parts always add up to the payment exactly; spend takes any rounding cent.
+  function splitOf(amount, sp) {
+    const c = Math.round((Number(amount) || 0) * 100); if (!(c > 0) || !splitValid(sp)) return { spend: 0, save: 0, invest: 0 };
+    const save = Math.round(c * sp.save / 100), invest = Math.round(c * sp.invest / 100);
+    return { spend: (c - save - invest) / 100, save: save / 100, invest: invest / 100 };
+  }
+  function splitTarget() { const L = LOCKS.find((l) => l.addr === store.get('plan.target', '')); return L && account && L.beneficiary === account && !isFinished(L) && Date.now() / 1000 < L.releaseTime ? L : null; }
+  function renderSplit() {
+    const sp = SPLIT(), amt = Number($('spAmount').value.replace(/,/g, '')), out = $('spOut'), btn = $('spLock');
+    btn.hidden = true;
+    if (!splitValid(sp)) {
+      const t = sp.spend + sp.save + sp.invest;
+      out.innerHTML = '<div class="warn">' + (Number.isFinite(t) && [sp.spend, sp.save, sp.invest].every(pctOk) ? 'Your parts add up to ' + num(t) + '%. Make them add up to 100%.' : 'Use numbers from 0 to 100 for each part.') + '</div>';
+      return;
+    }
+    const bar = '<div class="split-bar" aria-hidden="true"><i style="width:' + sp.spend + '%;background:var(--amber)"></i><i style="width:' + sp.save + '%;background:var(--accent)"></i><i style="width:' + sp.invest + '%;background:var(--mint)"></i></div>';
+    if (!(amt > 0)) { out.innerHTML = bar + '<p class="muted">Enter the payment you received to see how much goes where.</p>'; return; }
+    const x = splitOf(amt, sp);
+    const line = (dot, name, v, pc) => '<div class="split-line" style="--dot:var(' + dot + ')"><b>' + name + '</b> ' + num(pc) + '%<span>' + money(v) + '</span></div>';
+    const rows = [bar, line('--amber', 'To spend', x.spend, sp.spend), line('--accent', 'To save', x.save, sp.save), line('--mint', 'To invest', x.invest, sp.invest)];
+    const L = splitTarget();
+    if (x.save > 0 && L) { btn.hidden = false; btn.textContent = 'Lock ' + money(x.save); }
+    else if (x.save > 0) rows.push('<div class="muted small">' + (account ? 'Choose an open lock under "Save into" below to lock the save part in one tap.' : 'Connect your wallet to lock the save part.') + '</div>');
+    out.innerHTML = rows.join('');
+  }
+  function splitChanged() {
+    store.set('split.spend', $('spSpend').value.trim()); store.set('split.save', $('spSave').value.trim()); store.set('split.invest', $('spInvest').value.trim());
+    renderSplit(); if (PLAN().mode === 'split') { renderCoach(); renderToday(); planChanged(); }
+  }
+  ['spSpend', 'spSave', 'spInvest'].forEach((id) => $(id).addEventListener('input', splitChanged));
+  $('spAmount').addEventListener('input', renderSplit);
+  document.querySelectorAll('[data-split]').forEach((b) => b.addEventListener('click', () => {
+    const [a, c, d] = b.dataset.split.split(','); $('spSpend').value = a; $('spSave').value = c; $('spInvest').value = d; splitChanged();
+  }));
+  $('spLock').addEventListener('click', () => {
+    const L = splitTarget(), x = splitOf(Number($('spAmount').value.replace(/,/g, '')), SPLIT());
+    if (!L || !(x.save > 0)) return renderSplit();
+    openDeposit(L, String(x.save));
+  });
+  $('spCopy').addEventListener('click', async () => {
+    const sp = SPLIT(), amt = Number($('spAmount').value.replace(/,/g, ''));
+    if (!splitValid(sp) || !(amt > 0)) return toast('Enter the payment and make the parts add up to 100% first.');
+    const x = splitOf(amt, sp);
+    const text = T('Payment ' + money(amt) + ': spend ' + money(x.spend) + ' (' + num(sp.spend) + '%), save ' + money(x.save) + ' (' + num(sp.save) + '%), invest ' + money(x.invest) + ' (' + num(sp.invest) + '%)');
+    try { await navigator.clipboard.writeText(text); toast('Copied the split.'); } catch { toast('Could not copy.'); }
+  });
   // Paydays as Date objects (local midnight)
   function payday(p, k) { // k-th payday relative to the anchor (k can be negative)
     const [y, m, d] = p.next.split('-').map(Number); const a = new Date(y, m - 1, d);
@@ -717,11 +769,12 @@
   function planReady(p) { return p.next && saveAmount(p) > 0; }
   function renderCoach() {
     const p = PLAN();
-    $('cPctRow').hidden = p.mode !== 'pct'; $('cFixedRow').hidden = p.mode !== 'fixed';
+    $('cPctRow').hidden = p.mode !== 'pct'; $('cFixedRow').hidden = p.mode !== 'fixed'; renderSplit();
     const out = $('cPlan');
-    if (!planReady(p)) { out.innerHTML = '<p class="muted">Fill in your pay and next payday to get a plan.</p>'; return; }
+    if (!planReady(p)) { out.innerHTML = '<p class="muted">' + (p.mode === 'split' && !splitValid(SPLIT()) ? 'Make the parts in Split a payment add up to 100%.' : 'Fill in your pay and next payday to get a plan.') + '</p>'; return; }
     const S = saveAmount(p); const L = LOCKS.find((l) => l.addr === p.target);
-    const rows = ['<div><b>Each payday:</b> lock ' + money(S) + (p.mode === 'pct' ? ' (' + p.pct + '% of ' + money(p.pay) + ')' : '') + '</div>'];
+    const rows = ['<div><b>Each payday:</b> lock ' + money(S) + (p.mode === 'pct' ? ' (' + p.pct + '% of ' + money(p.pay) + ')' : p.mode === 'split' ? ' (' + num(SPLIT().save) + '% of ' + money(p.pay) + ')' : '') + '</div>'];
+    if (p.mode === 'split') { const x = splitOf(p.pay, SPLIT()); rows.push('<div><b>Spend:</b> ' + money(x.spend) + ' · <b>Invest:</b> ' + money(x.invest) + '</div>'); }
     const perYear = { weekly: 52, biweekly: 26, twice: 24, monthly: 12 }[p.freq];
     rows.push('<div><b>In a year:</b> ' + money(S * perYear) + '</div>');
     if (L) {
@@ -1115,6 +1168,7 @@
   if (NATIVE) $('testsLink').href = TESTS_URL;
   $('wcId').value = store.get('wcid');
   const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
+  $('spSpend').value = store.get('split.spend', '50'); $('spSave').value = store.get('split.save', '30'); $('spInvest').value = store.get('split.invest', '20');
   if (!p0.next) { const d = new Date(); d.setDate(d.getDate() + 1); $('cNext').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); }
   renderLessons(); codeFingerprints(); applyType();
   window.history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
