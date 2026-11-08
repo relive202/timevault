@@ -184,6 +184,13 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
 .seg .check b { font-size: 15px; }
 .summary { font-size: 14px; background: var(--raised); border-radius: var(--r-md); padding: 15px; display: grid; gap: 6px; overflow-wrap: anywhere; }
 .summary b { font-weight: 600; }
+.split-pcts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.split-presets .chip { color: var(--ink); }
+.split-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--line); margin-bottom: 4px; }
+.split-bar i { display: block; height: 100%; }
+.split-line { display: flex; align-items: center; gap: 9px; }
+.split-line::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--dot); flex: none; }
+.split-line span { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
 .steps { display: grid; gap: 9px; font-size: 14px; }
 .steps div { display: flex; gap: 10px; align-items: center; color: var(--muted); }
 .steps div::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--faint); flex: none; }
@@ -504,14 +511,29 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
   <!-- COACH -->
   <section id="tab-coach" hidden>
     <h1 class="page-title">Payday plan</h1>
+    <div class="card" id="splitCard">
+      <div class="section-head"><h2>Split a payment</h2></div>
+      <p class="small muted">Got paid by a client? Enter the amount and the coach splits it into money to spend, to save and to invest.</p>
+      <label for="spAmount">Payment received<input id="spAmount" inputmode="decimal" placeholder="e.g. 1500" autocomplete="off"></label>
+      <div class="split-pcts">
+        <label for="spSpend">Spend %<input id="spSpend" inputmode="decimal" placeholder="50"></label>
+        <label for="spSave">Save %<input id="spSave" inputmode="decimal" placeholder="30"></label>
+        <label for="spInvest">Invest %<input id="spInvest" inputmode="decimal" placeholder="20"></label>
+      </div>
+      <div class="row split-presets"><span class="small muted">Quick picks:</span><button class="chip" data-split="50,30,20">50 / 30 / 20</button><button class="chip" data-split="60,25,15">60 / 25 / 15</button><button class="chip" data-split="70,20,10">70 / 20 / 10</button></div>
+      <div class="summary" id="spOut"></div>
+      <div class="row"><button class="btn brass small" id="spLock" hidden>Lock savings</button><button class="btn ghost small" id="spCopy">Copy the split</button></div>
+      <p class="small muted">The save part goes into the lock chosen under "Save into" below. TimeVault never invests for you: move the invest part yourself, to the account you invest with.</p>
+    </div>
     <div class="card">
+      <div class="section-head"><h2>Your plan</h2></div>
       <p class="small muted">Tell the coach when you get paid. It works out how much to lock each payday and when you'll reach your goal.</p>
       <label for="cPay">How much you get paid each time<input id="cPay" inputmode="decimal" placeholder="e.g. 800" autocomplete="off"></label>
       <div class="row">
         <label for="cFreq" style="flex:1;min-width:150px">How often<select id="cFreq"><option value="weekly">Every week</option><option value="biweekly">Every 2 weeks</option><option value="twice">1st and 15th</option><option value="monthly">Once a month</option></select></label>
         <label for="cNext" style="flex:1;min-width:150px">Next payday<input id="cNext" type="date"></label>
       </div>
-      <label for="cMode">How much to save<select id="cMode"><option value="pct">A percent of my pay</option><option value="fixed">The same amount every time</option></select></label>
+      <label for="cMode">How much to save<select id="cMode"><option value="pct">A percent of my pay</option><option value="fixed">The same amount every time</option><option value="split">My split's save part</option></select></label>
       <label for="cPct" id="cPctRow">Percent<input id="cPct" inputmode="decimal" placeholder="20"></label>
       <label for="cFixed" id="cFixedRow" hidden>Amount each payday<input id="cFixed" inputmode="decimal" placeholder="100"></label>
       <label for="cTarget">Save into<select id="cTarget"></select></label>
@@ -549,7 +571,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
     </div>
     <div class="group">
       <button class="mrow" data-tab="new"><span class="mico" style="--g1:#1FC7B6;--g2:#52E08F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="mmid"><b>New lock</b><span>Start a savings goal or a date lock</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
-      <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Payday plan</b><span>Your plan, streak and money lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Payday plan</b><span>Split a payment, your plan, streak and lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="badges"><span class="mico" style="--g1:#C9971C;--g2:#FFD66B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.5" r="5.5"/><path d="M8.5 9.8L6 3.5h4l2 4 2-4h4l-2.5 6.3"/></svg></span><span class="mmid"><b>Achievements</b><span>Your level and badges</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
