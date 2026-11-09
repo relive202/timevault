@@ -339,7 +339,7 @@
     $('menuWallet').textContent = viewer() ? short(viewer()) + (account ? '' : ' (view only)') : 'Not connected';
     $('gasHint').hidden = !(WALLET.ETH !== undefined && WALLET.ETH < ethers.parseEther('0.0002'));
     for (const o of $('lkToken').options) o.textContent = o.value + (WALLET[o.value] !== undefined ? ' (you have ' + num(fmt(WALLET[o.value])) + ')' : '');
-    renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones(); renderFun();
+    renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones(); renderFun(); renderMine();
     const tgt = $('cTarget'); const cur = store.get('plan.target');
     tgt.innerHTML = '<option value="">Choose one of your goals</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
   }
@@ -719,11 +719,12 @@
     if (!(amt > 0)) { out.innerHTML = bar + '<p class="muted">Enter the payment you received to see how much goes where.</p>'; return; }
     const x = splitOf(amt, sp);
     const line = (dot, name, v, pc) => '<div class="split-line" style="--dot:var(' + dot + ')"><b>' + name + '</b> ' + num(pc) + '%<span>' + money(v) + '</span></div>';
-    const rows = [bar, line('--amber', 'To spend', x.spend, sp.spend), line('--accent', 'To save', x.save, sp.save), line('--mint', 'To invest', x.invest, sp.invest)];
+    const rm = routerMode();
+    const rows = [bar, line('--amber', rm ? 'Binance Funding (spend)' : 'To spend', x.spend, sp.spend), line('--accent', rm ? 'Tangem goal (save)' : 'To save', x.save, sp.save), line('--mint', rm ? 'Binance Spot DCA (invest)' : 'To invest', x.invest, sp.invest)];
     const L = splitTarget();
     if (x.save > 0 && L) { btn.hidden = false; btn.textContent = 'Lock ' + money(x.save); }
     else if (x.save > 0) rows.push('<div class="muted small">' + (account ? 'Choose an open lock under "Save into" below to lock the save part in one tap.' : 'Connect your wallet to lock the save part.') + '</div>');
-    out.innerHTML = rows.join('');
+    out.innerHTML = rows.join('') + routerSteps(amt);
   }
   function splitChanged() {
     store.set('split.spend', $('spSpend').value.trim()); store.set('split.save', $('spSave').value.trim()); store.set('split.invest', $('spInvest').value.trim());
@@ -746,6 +747,181 @@
     const text = T('Payment ' + money(amt) + ': spend ' + money(x.spend) + ' (' + num(sp.spend) + '%), save ' + money(x.save) + ' (' + num(sp.save) + '%), invest ' + money(x.invest) + ' (' + num(sp.invest) + '%)');
     try { await navigator.clipboard.writeText(text); toast('Copied the split.'); } catch { toast('Could not copy.'); }
   });
+  // ------------------------------------------------------------------ my money setup: Tangem goal, paycheck router, BTC/ETH log, spending pot
+  // Only a planner and a notebook: nothing here moves money, talks to an exchange or asks for keys. Everything stays on this phone.
+  const MODES = { max: { save: 50, invest: 100 / 6, spend: 100 / 3, sub: 100, name: 'Claude Max ($100)' }, pro: { save: 60, invest: 20, spend: 20, sub: 20, name: 'Claude Pro ($20)' } };
+  const MY = () => ({
+    on: store.get('my.on', '1') === '1', mode: store.get('my.mode', 'max') === 'pro' ? 'pro' : 'max',
+    income: Number(store.get('my.income', '600')) || 0, goal: Number(store.get('my.goal', '5000')) || 0, backup: store.get('my.backup', ''),
+    btc: ((x) => (Number.isFinite(x) && x >= 0 && x <= 100 ? x : 70))(store.get('my.btcPct', '') === '' ? 70 : Number(store.get('my.btcPct', '70'))), food: Number(store.get('my.food', '50')) || 0, fun: Number(store.get('my.fun', '50')) || 0,
+    start: store.get('my.dcaStart', ''), auto: store.get('my.dcaAuto', '') === '1', sweepAt: Number(store.get('my.sweepAt', '400')) || 400,
+  });
+  const cents = (x) => Math.round(x * 100) / 100;
+  const r4 = (x) => String(Math.round(x * 10000) / 10000);
+  const modeSplit = (m) => [r4(MODES[m].spend), r4(MODES[m].save), r4(MODES[m].invest)];
+  // the split boxes hold exactly one of the two presets: then the three parts are Funding / Tangem / Spot
+  const routerMode = () => { const cur = [$('spSpend').value.trim(), $('spSave').value.trim(), $('spInvest').value.trim()]; return ['max', 'pro'].find((m) => modeSplit(m).every((v, i) => Number(v) === Number(cur[i]))) || ''; };
+  const monthly = (m) => ({ save: cents(m.income * MODES[m.mode].save / 100), invest: cents(m.income * MODES[m.mode].invest / 100), spend: cents(m.income * MODES[m.mode].spend / 100) });
+  // weekly recurring buy that adds up to the monthly DCA amount (a month is 52/12 weeks, not 4)
+  function weekly(m) { const w = monthly(m).invest * 12 / 52, b = cents(w * m.btc / 100); return { btc: b, eth: cents(cents(w) - b), total: cents(w) }; }
+  const monthKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  const ymd = (d) => [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+  const fromYmd = (s) => { const [y, mo, d] = String(s).split('-').map(Number); return y ? new Date(y, mo - 1, d) : null; };
+  const moneyIn = (v) => { const n = Number(String(v).replace(/,/g, '').replace('$', '').trim()); return Number.isFinite(n) && n > 0 && n < 1e7 ? cents(n) : 0; };
+
+  function myGoalLock() {
+    const t = LOCKS.find((l) => l.addr === store.get('plan.target', '') && l.kind === 'goal');
+    return t || LOCKS.find((l) => l.kind === 'goal' && !isFinished(l)) || null;
+  }
+  function renderGoalCard(m) {
+    const box = $('myGoal'), L = myGoalLock();
+    const inLock = L ? fmt(L.balance) : 0, loose = WALLET.USDC !== undefined ? fmt(WALLET.USDC) : 0;
+    const saved = cents(inLock + loose), goal = m.goal, left = cents(Math.max(0, goal - saved)), per = monthly(m).save;
+    const pct = goal > 0 ? Math.min(100, Math.floor(100 * saved / goal)) : 0;
+    const rows = ['<div class="section-head"><h2>' + money(goal).replace('.00', '') + ' savings goal</h2><span class="chip">' + esc(MODES[m.mode].name) + '</span></div>',
+      '<div class="prog-top"><b>' + money(saved) + '</b><span>' + pct + '%</span></div><div class="bar"><i style="width:' + pct + '%"></i></div>',
+      '<div class="small muted">' + money(inLock) + ' locked' + (L ? '' : ' (no goal lock yet)') + ' · ' + money(loose) + ' USDC loose in your wallet' + (store.get('watch') && !account ? ' (view only)' : '') + '</div>'];
+    if (!goal) rows.push('<p class="muted">Set your goal under Payday plan → My money setup.</p>');
+    else if (!left) rows.push('<div class="note">Goal reached. ' + (L && L.balance >= L.goal ? 'Your lock can be opened now.' : '') + '</div>');
+    else if (per > 0) {
+      const n = Math.ceil(left / per - 1e-9), when = new Date(); when.setMonth(when.getMonth() + n);
+      const last = cents(left - per * (n - 1));
+      rows.push('<div><b>' + money(left) + ' to go:</b> ' + plural(n, ...U_MON) + ' at ' + money(per) + '/month, around ' + when.toLocaleDateString(DATELOC, { month: 'long', year: 'numeric' }) + (n > 1 && last < per ? ' (the last month is only ' + money(last) + ')' : '') + '.</div>');
+    }
+    const bk = L ? L.releaseTime : (fromYmd(m.backup) ? fromYmd(m.backup).getTime() / 1000 : 0);
+    if (bk) rows.push('<div><b>Backup unlock date:</b> ' + dateStr(bk) + ' · ' + (bk > Date.now() / 1000 ? 'in ' + untilStr(bk) : 'passed') + '</div>');
+    if (L && Math.abs(fmt(L.goal) - goal) > 0.005) rows.push('<div class="small caution">Your lock itself opens at its own goal of ' + money(fmt(L.goal)) + '. A lock\'s goal can\'t be changed.</div>');
+    if (loose > 0) rows.push('<div class="small muted">Only money inside a lock is locked. Loose USDC in your wallet can be spent.</div>');
+    box.innerHTML = rows.join('');
+  }
+
+  // ---- BTC / ETH bought on Binance: logged by hand or counted from the weekly schedule
+  const dcaLog = () => store.json('my.dca', []).filter((e) => e && moneyIn(e.usd));
+  function dcaOnBinance(m) {
+    const since = Number(store.get('my.sweptT', '0')) || 0;
+    const logged = dcaLog().filter((e) => e.t > since);
+    let usd = logged.reduce((s, e) => s + e.usd, 0), sched = 0;
+    const st = fromYmd(m.start);
+    if (m.auto && st) { // one buy on the start day and every 7 days after it; count the ones since the last move to Tangem
+      const wk = 7 * DAY * 1000, s0 = st.getTime(), now = Date.now();
+      if (now >= s0) { const kmax = Math.floor((now - s0) / wk), kmin = since >= s0 ? Math.floor((since - s0) / wk) + 1 : 0; sched = Math.max(0, kmax - kmin + 1); }
+      usd = sched * weekly(m).total;
+    }
+    const btc = m.auto ? sched * weekly(m).btc : logged.filter((e) => e.a === 'BTC').reduce((s, e) => s + e.usd, 0);
+    const shown = store.json('my.bnShown', null); // what Binance itself showed, if typed in after the last buy or sweep
+    const useShown = shown && shown.t > since && moneyIn(shown.usd) && (!logged.length || shown.t >= logged[logged.length - 1].t);
+    return { cost: cents(usd), btc: cents(btc), eth: cents(usd - btc), value: useShown ? shown.usd : 0, buys: m.auto ? sched : logged.length };
+  }
+  const onBinanceUsd = (m) => { const d = dcaOnBinance(m); return d.value || d.cost; };
+  function renderDca(m) {
+    const d = dcaOnBinance(m), w = weekly(m), tg = store.json('my.tangemDca', { usd: 0, btc: '', eth: '' });
+    const val = d.value || d.cost, pct = Math.min(100, Math.floor(100 * val / m.sweepAt));
+    const log = dcaLog().slice(-5).reverse();
+    $('myDca').innerHTML = '<div class="section-head"><h2>Spot BTC &amp; ETH</h2><span class="chip">Simple Earn OFF</span></div>' +
+      '<div class="small muted">Recurring buy: ' + money(w.btc) + ' BTC + ' + money(w.eth) + ' ETH each week (' + money(monthly(m).invest) + '/month).</div>' +
+      '<div class="irow"><span>On Binance' + (d.value ? ' (what Binance shows)' : m.auto ? ' (from your schedule)' : ' (what you spent)') + '</span><b>' + money(val) + '</b></div>' +
+      (d.value ? '' : '<div class="small muted">BTC ' + money(d.btc) + ' · ETH ' + money(d.eth) + ' · ' + d.buys + ' buy' + (d.buys === 1 ? '' : 's') + ' since your last move to Tangem</div>') +
+      '<div class="prog-top"><span>Move to Tangem at ' + money(m.sweepAt).replace('.00', '') + '</span><span>' + pct + '%</span></div><div class="bar' + (pct >= 100 ? ' red' : pct >= 75 ? ' amber' : '') + '"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="irow"><span>On Tangem</span><b>' + (tg.btc ? esc(tg.btc) + ' BTC' : '') + (tg.btc && tg.eth ? ' · ' : '') + (tg.eth ? esc(tg.eth) + ' ETH' : '') + (tg.btc || tg.eth ? '' : money(tg.usd || 0) + ' moved') + '</b></div>' +
+      '<div class="row">' + (m.auto ? '' : '<button class="btn small" data-my="logWeek">Log this week\'s buy</button>') + '<button class="btn ghost small" data-my="swept">I moved it to Tangem</button></div>' +
+      '<details class="need"><summary>Log a buy, or type what Binance shows</summary><div class="grid8">' +
+      '<div class="inline"><select id="dcaAsset" style="max-width:110px"><option>BTC</option><option>ETH</option></select><input id="dcaUsd" inputmode="decimal" placeholder="$ amount"><button class="btn ghost small" data-my="logOne">Add</button></div>' +
+      '<div class="inline"><input id="bnShown" inputmode="decimal" placeholder="BTC + ETH value on Binance, $"><button class="btn ghost small" data-my="shown">Save</button></div>' +
+      '<div class="inline"><input id="tgBtc" inputmode="decimal" placeholder="BTC on Tangem" value="' + esc(tg.btc || '') + '"><input id="tgEth" inputmode="decimal" placeholder="ETH on Tangem" value="' + esc(tg.eth || '') + '"><button class="btn ghost small" data-my="tangem">Save</button></div>' +
+      (log.length ? '<ol class="mylog">' + log.map((e) => '<li><span>' + new Date(e.t).toLocaleDateString(DATELOC, { month: 'short', day: 'numeric' }) + ' · ' + e.a + '</span><b>' + money(e.usd) + '</b><button class="x" data-my="delDca" data-t="' + e.t + '" aria-label="Remove">×</button></li>').join('') + '</ol>' : '') +
+      '</div></details>';
+  }
+  function renderSweep(m) {
+    const v = onBinanceUsd(m), box = $('sweepAlert');
+    box.hidden = !(v >= m.sweepAt);
+    if (!box.hidden) box.innerHTML = '<b>Move your BTC and ETH to Tangem.</b><span>About ' + money(v) + ' is sitting on Binance. Don\'t keep large amounts on an exchange: withdraw it to your Tangem wallet.</span><button class="btn small" data-my="swept">I moved it to Tangem</button>';
+  }
+
+  // ---- spending pot in the Binance Funding wallet: one record per month, so the 1st of each month starts fresh by itself
+  const spendKey = () => 'my.spend.' + monthKey();
+  const spendNow = () => { const s = store.json(spendKey(), null); return s && Array.isArray(s.e) ? s : { sub: false, e: [] }; };
+  function spendSave(s) {
+    store.setJson(spendKey(), s);
+    const keep = new Set(Array.from({ length: 13 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); return 'my.spend.' + monthKey(d); }));
+    try { Object.keys(localStorage).filter((k) => k.startsWith('tv3.my.spend.') && !keep.has(k.slice(4))).forEach((k) => localStorage.removeItem(k)); } catch {}
+  }
+  function capBar(name, cat, used, cap, warnAt) {
+    const pct = cap > 0 ? Math.min(100, Math.round(100 * used / cap)) : 0, cls = used >= cap ? ' red' : used >= warnAt ? ' amber' : '';
+    const quick = [5, 10, 15].map((v) => '<button class="chip" data-my="add" data-c="' + cat + '" data-v="' + v + '">+$' + v + '</button>').join('');
+    return '<div class="capbox"><div class="prog-top"><b>' + name + '</b><span>' + money(used) + ' of ' + money(cap).replace('.00', '') + '</span></div><div class="bar' + cls + '"><i style="width:' + pct + '%"></i></div>' +
+      (used >= cap ? '<div class="small warn">Cap reached. No more ' + (cat === 'food' ? 'delivery' : 'fun spending') + ' this month.</div>' : used >= warnAt ? '<div class="small caution">' + money(cap - used) + ' left. Slow down.</div>' : '') +
+      '<div class="row">' + quick + '<input class="mini" id="add_' + cat + '" inputmode="decimal" placeholder="$"><button class="chip" data-my="addOwn" data-c="' + cat + '">Add</button></div></div>';
+  }
+  function renderSpend(m) {
+    const s = spendNow(), sub = MODES[m.mode].sub, sum = (c) => cents(s.e.filter((e) => e.c === c).reduce((a, e) => a + e.usd, 0));
+    const food = sum('food'), fun = sum('fun'), cap = sub + m.food + m.fun, used = cents((s.sub ? sub : 0) + food + fun);
+    $('mySpend').innerHTML = '<div class="section-head"><h2>Spending money</h2><span class="small muted">' + new Date().toLocaleDateString(DATELOC, { month: 'long' }) + ' · ' + money(Math.max(0, cap - used)) + ' left of ' + money(cap).replace('.00', '') + '</span></div>' +
+      '<label class="check"><input type="checkbox" data-my="sub"' + (s.sub ? ' checked' : '') + '><span><b>Claude subscription</b> ' + money(sub).replace('.00', '') + (s.sub ? ' · paid' : ' · not paid yet') + '</span></label>' +
+      capBar('Food delivery', 'food', food, m.food, m.food * 0.7) + capBar('Fun and outings', 'fun', fun, m.fun, m.fun * 0.7) +
+      (s.e.length ? '<button class="link-btn small-link" data-my="undo">Undo last (' + money(s.e[s.e.length - 1].usd) + ' ' + (s.e[s.e.length - 1].c === 'food' ? 'delivery' : 'fun') + ')</button>' : '') +
+      '<p class="small muted">From your Binance Funding wallet. Starts fresh on the 1st of each month.</p>';
+  }
+
+  function renderMine() {
+    const m = MY();
+    ['myGoal', 'mySpend', 'myDca'].forEach((id) => { $(id).hidden = !m.on; });
+    if (!m.on) { $('sweepAlert').hidden = true; return; }
+    renderGoalCard(m); renderSpend(m); renderDca(m); renderSweep(m);
+  }
+
+  // ---- the paycheck router: the split card's three parts become Funding / Tangem / Spot when a preset is chosen
+  function routerSteps(amt) {
+    const md = routerMode(), m = MY(); if (!md || !(amt > 0)) return '';
+    const x = splitOf(amt, SPLIT()), w = weekly({ ...m, mode: md });
+    const who = viewer();
+    const step = (n, title, body) => '<label class="check step"><input type="checkbox"><span><b>' + n + '. ' + title + '</b>' + body + '</span></label>';
+    return '<div class="router">' +
+      step(1, 'Send ' + money(x.save) + ' USDC to Tangem', '<span class="small muted">Withdraw from Binance on <b>Arbitrum One</b> toward your ' + money(m.goal).replace('.00', '') + ' goal' + (who ? ' to <span class="mono">' + short(who) + '</span>' : '') + ', or lock it with the button below.</span>') +
+      step(2, 'Keep ' + money(x.invest) + ' in Binance Spot', '<span class="small muted">For your weekly recurring buy: ' + money(w.btc) + ' BTC + ' + money(w.eth) + ' ETH (' + money(w.total) + '/week). This payment: ' + money(cents(x.invest * m.btc / 100)) + ' BTC + ' + money(cents(x.invest - cents(x.invest * m.btc / 100))) + ' ETH.</span><span class="badge">Keep Simple Earn OFF (Spot only, no interest)</span>') +
+      step(3, 'Move ' + money(x.spend) + ' to the Binance Funding wallet', '<span class="small muted">Spending money only: Claude ' + money(MODES[md].sub).replace('.00', '') + ', food delivery ' + money(m.food).replace('.00', '') + ', fun ' + money(m.fun).replace('.00', '') + ' a month.</span>') +
+      '</div>';
+  }
+  document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => {
+    const md = b.dataset.mode, [a, c, d] = modeSplit(md); store.set('my.mode', md); $('myMode').value = md;
+    $('spSpend').value = a; $('spSave').value = c; $('spInvest').value = d; splitChanged(); renderMine();
+  }));
+
+  // ---- one click handler for every button in the cards above
+  document.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-my]'); if (!b || b.tagName === 'INPUT') return;
+    const m = MY(), act = b.dataset.my, now = Date.now();
+    if (act === 'add' || act === 'addOwn') {
+      const v = act === 'add' ? Number(b.dataset.v) : moneyIn($('add_' + b.dataset.c).value); if (!v) return toast('Type an amount first.');
+      const s = spendNow(); s.e.push({ c: b.dataset.c, usd: v, t: now }); spendSave(s);
+      const cap = b.dataset.c === 'food' ? m.food : m.fun, used = s.e.filter((e) => e.c === b.dataset.c).reduce((a, e) => a + e.usd, 0);
+      if (used >= cap) toast(b.dataset.c === 'food' ? 'Delivery cap reached. No more delivery this month.' : 'Fun cap reached for this month.', 7000);
+    } else if (act === 'undo') { const s = spendNow(); s.e.pop(); spendSave(s); }
+    else if (act === 'logWeek') { const w = weekly(m), l = dcaLog(); l.push({ a: 'BTC', usd: w.btc, t: now }, { a: 'ETH', usd: w.eth, t: now + 1 }); store.setJson('my.dca', l.slice(-500)); toast('Logged ' + money(w.total) + ' of BTC and ETH.'); }
+    else if (act === 'logOne') { const v = moneyIn($('dcaUsd').value); if (!v) return toast('Type an amount first.'); const l = dcaLog(); l.push({ a: $('dcaAsset').value === 'ETH' ? 'ETH' : 'BTC', usd: v, t: now }); store.setJson('my.dca', l.slice(-500)); }
+    else if (act === 'delDca') { store.setJson('my.dca', dcaLog().filter((e) => String(e.t) !== b.dataset.t)); }
+    else if (act === 'shown') { const v = moneyIn($('bnShown').value); store.setJson('my.bnShown', v ? { usd: v, t: now } : null); }
+    else if (act === 'tangem') { const q = (id) => { const v = $(id).value.trim(); return v && Number(v) >= 0 ? v : ''; }; const tg = store.json('my.tangemDca', { usd: 0 }); store.setJson('my.tangemDca', { ...tg, btc: q('tgBtc'), eth: q('tgEth') }); toast('Saved.'); }
+    else if (act === 'swept') { const tg = store.json('my.tangemDca', { usd: 0 }); store.setJson('my.tangemDca', { ...tg, usd: cents((tg.usd || 0) + onBinanceUsd(m)) }); store.set('my.sweptT', String(now)); store.setJson('my.bnShown', null); toast('Nice. Your Binance BTC and ETH count starts again from zero.'); }
+    else return;
+    renderMine();
+  });
+  document.addEventListener('change', (ev) => { const b = ev.target; if (b.dataset && b.dataset.my === 'sub') { const s = spendNow(); s.sub = b.checked; spendSave(s); renderMine(); } });
+
+  // ---- settings, on the Payday plan screen
+  const MYFIELDS = { myIncome: 'my.income', myGoalIn: 'my.goal', myBackup: 'my.backup', myFood: 'my.food', myFun: 'my.fun', myStart: 'my.dcaStart', mySweepAt: 'my.sweepAt', myBtcPct: 'my.btcPct' };
+  function mySettingsChanged() {
+    for (const [id, k] of Object.entries(MYFIELDS)) store.set(k, $(id).value.trim());
+    const wasRouter = routerMode(); store.set('my.mode', $('myMode').value); if (wasRouter && wasRouter !== $('myMode').value) { const [a, c, d] = modeSplit($('myMode').value); $('spSpend').value = a; $('spSave').value = c; $('spInvest').value = d; splitChanged(); } store.set('my.on', $('myOn').checked ? '1' : '0'); store.set('my.dcaAuto', $('myAuto').checked ? '1' : '');
+    const bp = Number($('myBtcPct').value); $('myBtcNote').textContent = Number.isFinite(bp) && bp >= 0 && bp <= 100 ? 'ETH gets ' + num(100 - bp) + '%.' : 'Use a number from 0 to 100.';
+    renderMine(); renderSplit();
+  }
+  function myBoot() {
+    const m = MY();
+    for (const [id, k] of Object.entries(MYFIELDS)) $(id).value = store.get(k, { 'my.income': '600', 'my.goal': '5000', 'my.food': '50', 'my.fun': '50', 'my.sweepAt': '400', 'my.btcPct': '70' }[k] || '');
+    $('myMode').value = m.mode; $('myOn').checked = m.on; $('myAuto').checked = m.auto;
+    Object.keys(MYFIELDS).concat(['myMode', 'myOn', 'myAuto']).forEach((id) => $(id).addEventListener(id === 'myMode' || id === 'myOn' || id === 'myAuto' ? 'change' : 'input', mySettingsChanged));
+    $('myBtcNote').textContent = 'ETH gets ' + num(100 - m.btc) + '%.';
+  }
   // Paydays as Date objects (local midnight)
   function payday(p, k) { // k-th payday relative to the anchor (k can be negative)
     const [y, m, d] = p.next.split('-').map(Number); const a = new Date(y, m - 1, d);
@@ -1170,6 +1346,7 @@
   const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
   $('spSpend').value = store.get('split.spend', '50'); $('spSave').value = store.get('split.save', '30'); $('spInvest').value = store.get('split.invest', '20');
   if (!p0.next) { const d = new Date(); d.setDate(d.getDate() + 1); $('cNext').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); }
+  myBoot();
   renderLessons(); codeFingerprints(); applyType();
   window.history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
   setAccount('');

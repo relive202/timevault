@@ -198,6 +198,18 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
 .steps div.done { color: var(--ink); } .steps div.done::before { border-color: var(--mint); background: var(--mint); }
 .notice { background: var(--amber-soft); color: var(--ink); padding: 13px 15px; border-radius: var(--r-sm); font-size: 14px; }
 .notice.bad { background: var(--bad-soft); }
+.bar.amber > i { background: var(--amber); } .bar.red > i { background: var(--bad); }
+.sweep { display: grid; gap: 6px; } .sweep b { font-weight: 650; } .sweep span { font-size: 13.5px; } .sweep .btn { justify-self: start; margin-top: 4px; }
+.router { display: grid; gap: 12px; margin-top: 6px; padding-top: 12px; box-shadow: inset 0 1px 0 var(--line); }
+.router .step > span { display: grid; gap: 4px; } .router .step b { font-weight: 600; }
+.badge { justify-self: start; font: 600 12px var(--body); color: var(--mint); background: var(--mint-soft); padding: 4px 9px; border-radius: 999px; }
+.capbox { display: grid; gap: 8px; }
+input.mini { width: 76px; padding: 6px 10px; font-size: 14px; border-radius: 999px; }
+.grid8 { display: grid; gap: 8px; margin-top: 10px; }
+ol.mylog { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; }
+ol.mylog li { display: flex; align-items: center; gap: 10px; } ol.mylog li span { color: var(--muted); } ol.mylog li b { margin-inline-start: auto; font-weight: 550; font-variant-numeric: tabular-nums; }
+button.x { border: 0; background: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
+.link-btn.small-link { font-size: 13px; padding: 7px 13px; }
 #qr { background: #fff; padding: 12px; border-radius: var(--r-md); width: max-content; max-width: 100%; margin-inline: auto; }
 #qr img { display: block; width: 220px; height: 220px; image-rendering: pixelated; }
 .uri { font: 11.5px var(--mono); overflow-wrap: anywhere; color: var(--faint); }
@@ -452,7 +464,11 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
       </div>
       <div class="group pad chart" id="homeChart" hidden><div class="ch-top"><div><span class="ch-label"></span><b class="ch-val"></b></div><div class="ranges"><button data-range="1M">1M</button><button data-range="3M">3M</button><button data-range="1Y">1Y</button><button data-range="All">All</button></div></div><div class="ch-plot"></div><div class="ch-axis"></div></div>
       <p class="notice" id="gasHint" hidden>Your wallet needs a little ETH on the Arbitrum network (about $1) to pay transaction fees.</p>
+      <div id="sweepAlert" class="notice bad sweep" role="alert" hidden></div>
       <div id="today"></div>
+      <div class="card" id="myGoal" hidden></div>
+      <div class="card" id="mySpend" hidden></div>
+      <div class="card" id="myDca" hidden></div>
       <button class="group mrow level" id="levelRow" hidden></button>
       <div class="ledger" id="locks"></div>
       <button class="link-btn" id="findBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><span class="lbl">Find my locks</span></button>
@@ -521,9 +537,31 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
         <label for="spInvest">Invest %<input id="spInvest" inputmode="decimal" placeholder="20"></label>
       </div>
       <div class="row split-presets"><span class="small muted">Quick picks:</span><button class="chip" data-split="50,30,20">50 / 30 / 20</button><button class="chip" data-split="60,25,15">60 / 25 / 15</button><button class="chip" data-split="70,20,10">70 / 20 / 10</button></div>
+      <div class="row split-presets"><span class="small muted">My setup:</span><button class="chip" data-mode="max">Claude Max $100</button><button class="chip" data-mode="pro">Claude Pro $20</button></div>
       <div class="summary" id="spOut"></div>
       <div class="row"><button class="btn brass small" id="spLock" hidden>Lock savings</button><button class="btn ghost small" id="spCopy">Copy the split</button></div>
       <p class="small muted">The save part goes into the lock chosen under "Save into" below. TimeVault never invests for you: move the invest part yourself, to the account you invest with.</p>
+    </div>
+    <div class="card" id="mySetup">
+      <div class="section-head"><h2>My money setup</h2></div>
+      <p class="small muted">Your Tangem savings goal, Binance BTC and ETH buys and monthly spending money. Nothing here moves money or connects to Binance: you log Binance amounts yourself.</p>
+      <label class="check"><input type="checkbox" id="myOn"><span>Show these cards on the home screen</span></label>
+      <label for="myMode">Claude plan<select id="myMode"><option value="max">Claude Max $100: save 50%, buy 16.67%, spend 33.33%</option><option value="pro">Claude Pro $20: save 60%, buy 20%, spend 20%</option></select></label>
+      <div class="row">
+        <label for="myIncome" style="flex:1;min-width:140px">Income per month<input id="myIncome" inputmode="decimal" placeholder="600"></label>
+        <label for="myGoalIn" style="flex:1;min-width:140px">Savings goal (USDC)<input id="myGoalIn" inputmode="decimal" placeholder="5000"></label>
+      </div>
+      <label for="myBackup">Backup unlock date<input id="myBackup" type="date"><span class="small muted" style="font-weight:400">Only used when you have no goal lock. A lock's own date always wins.</span></label>
+      <div class="row">
+        <label for="myFood" style="flex:1;min-width:140px">Food delivery cap<input id="myFood" inputmode="decimal" placeholder="50"></label>
+        <label for="myFun" style="flex:1;min-width:140px">Fun cap<input id="myFun" inputmode="decimal" placeholder="50"></label>
+      </div>
+      <div class="row">
+        <label for="myBtcPct" style="flex:1;min-width:140px">BTC share of buys, %<input id="myBtcPct" inputmode="decimal" placeholder="70"><span class="small muted" style="font-weight:400" id="myBtcNote"></span></label>
+        <label for="mySweepAt" style="flex:1;min-width:140px">Move to Tangem at<input id="mySweepAt" inputmode="decimal" placeholder="400"></label>
+      </div>
+      <label for="myStart">First recurring buy<input id="myStart" type="date"></label>
+      <label class="check"><input type="checkbox" id="myAuto"><span>Count my buys from this schedule instead of logging each one</span></label>
     </div>
     <div class="card">
       <div class="section-head"><h2>Your plan</h2></div>

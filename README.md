@@ -6,6 +6,8 @@ A phone app that locks your USDC or USDT on Arbitrum One until you reach a savin
 
 It also has a savings coach: a payment splitter (spend, save, invest), a payday plan, a streak counter, calendar reminders and short money lessons.
 
+"My money setup" (on the Payday plan screen) adds home-screen cards for a Tangem savings goal (months left and backup date), a paycheck router with Claude Max / Pro presets (Tangem, Binance Spot, Binance Funding), a BTC/ETH buy log with a reminder to move it to Tangem at $400, and a monthly spending pot with food-delivery and fun caps that resets on the 1st. Binance amounts are typed in by hand: the app never connects to an exchange or asks for keys.
+
 There is no server, no account and no company holding your coins. The app is a single web page that talks directly to the Arbitrum blockchain and to your wallet. It works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet.
 
 ## بالعربية
