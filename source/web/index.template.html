@@ -184,13 +184,15 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
 .seg .check b { font-size: 15px; }
 .summary { font-size: 14px; background: var(--raised); border-radius: var(--r-md); padding: 15px; display: grid; gap: 6px; overflow-wrap: anywhere; }
 .summary b { font-weight: 600; }
-.split-pcts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.split-presets .chip { color: var(--ink); }
 .split-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--line); margin-bottom: 4px; }
 .split-bar i { display: block; height: 100%; }
 .split-line { display: flex; align-items: center; gap: 9px; }
 .split-line::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--dot); flex: none; }
 .split-line span { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.split-sub { font-size: 13px; color: var(--muted); padding-inline-start: 19px; margin-top: -3px; }
+.split-sub .badge { margin-inline-start: 6px; }
+.gp-log { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; color: var(--muted); }
+.gp-log li { display: flex; gap: 8px; } .gp-log b { margin-inline-start: auto; color: var(--ink); font-weight: 600; }
 .steps { display: grid; gap: 9px; font-size: 14px; }
 .steps div { display: flex; gap: 10px; align-items: center; color: var(--muted); }
 .steps div::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--faint); flex: none; }
@@ -200,8 +202,6 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
 .notice.bad { background: var(--bad-soft); }
 .bar.amber > i { background: var(--amber); } .bar.red > i { background: var(--bad); }
 .sweep { display: grid; gap: 6px; } .sweep b { font-weight: 650; } .sweep span { font-size: 13.5px; } .sweep .btn { justify-self: start; margin-top: 4px; }
-.router { display: grid; gap: 12px; margin-top: 6px; padding-top: 12px; box-shadow: inset 0 1px 0 var(--line); }
-.router .step > span { display: grid; gap: 4px; } .router .step b { font-weight: 600; }
 .badge { justify-self: start; font: 600 12px var(--body); color: var(--mint); background: var(--mint-soft); padding: 4px 9px; border-radius: 999px; }
 .capbox { display: grid; gap: 8px; }
 input.mini { width: 76px; padding: 6px 10px; font-size: 14px; border-radius: 999px; }
@@ -459,7 +459,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
         <div class="quick">
           <button id="quickAdd"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>Add money</button>
           <button data-tab="new"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span>New lock</button>
-          <button data-tab="coach"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>Payday plan</button>
+          <button data-tab="coach"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>Got paid</button>
         </div>
       </div>
       <div class="group pad chart" id="homeChart" hidden><div class="ch-top"><div><span class="ch-label"></span><b class="ch-val"></b></div><div class="ranges"><button data-range="1M">1M</button><button data-range="3M">3M</button><button data-range="1Y">1Y</button><button data-range="All">All</button></div></div><div class="ch-plot"></div><div class="ch-axis"></div></div>
@@ -526,31 +526,23 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
 
   <!-- COACH -->
   <section id="tab-coach" hidden>
-    <h1 class="page-title">Payday plan</h1>
-    <div class="card" id="splitCard">
-      <div class="section-head"><h2>Split a payment</h2></div>
-      <p class="small muted">Got paid by a client? Enter the amount and the coach splits it into money to spend, to save and to invest.</p>
-      <label for="spAmount">Payment received<input id="spAmount" inputmode="decimal" placeholder="e.g. 1500" autocomplete="off"></label>
-      <div class="split-pcts">
-        <label for="spSpend">Spend %<input id="spSpend" inputmode="decimal" placeholder="50"></label>
-        <label for="spSave">Save %<input id="spSave" inputmode="decimal" placeholder="30"></label>
-        <label for="spInvest">Invest %<input id="spInvest" inputmode="decimal" placeholder="20"></label>
-      </div>
-      <div class="row split-presets"><span class="small muted">Quick picks:</span><button class="chip" data-split="50,30,20">50 / 30 / 20</button><button class="chip" data-split="60,25,15">60 / 25 / 15</button><button class="chip" data-split="70,20,10">70 / 20 / 10</button></div>
-      <div class="row split-presets"><span class="small muted">My setup:</span><button class="chip" data-mode="max">Claude Max $100</button><button class="chip" data-mode="pro">Claude Pro $20</button></div>
-      <div class="summary" id="spOut"></div>
-      <div class="row"><button class="btn brass small" id="spLock" hidden>Lock savings</button><button class="btn ghost small" id="spCopy">Copy the split</button></div>
-      <p class="small muted">The save part goes into the lock chosen under "Save into" below. TimeVault never invests for you: move the invest part yourself, to the account you invest with.</p>
+    <h1 class="page-title">Got paid</h1>
+    <div class="card" id="gpCard">
+      <p class="small muted" id="gpRule"></p>
+      <label for="gpAmount">How much did you get paid?<input id="gpAmount" inputmode="decimal" placeholder="e.g. 150" autocomplete="off"></label>
+      <div class="summary" id="gpOut"></div>
+      <div class="row"><button class="btn brass" id="gpLock" hidden>Lock</button><button class="btn" id="gpDone" hidden>Done</button></div>
+      <div id="gpLog"></div>
     </div>
-    <div class="card" id="mySetup">
-      <div class="section-head"><h2>My money setup</h2></div>
-      <p class="small muted">Your Tangem savings goal, Binance BTC and ETH buys and monthly spending money. Nothing here moves money or connects to Binance: you log Binance amounts yourself.</p>
-      <label class="check"><input type="checkbox" id="myOn"><span>Show these cards on the home screen</span></label>
-      <label for="myMode">Claude plan<select id="myMode"><option value="max">Claude Max $100: save 50%, buy 16.67%, spend 33.33%</option><option value="pro">Claude Pro $20: save 60%, buy 20%, spend 20%</option></select></label>
+    <details class="card advanced" id="mySetup">
+      <summary><h2>My setup</h2></summary>
+      <p class="small muted">Fill this in once. Nothing here moves money or connects to Binance: you log Binance amounts yourself.</p>
+      <label for="myMode">Claude plan<select id="myMode"><option value="max">Claude Max $100</option><option value="pro">Claude Pro $20</option></select></label>
       <div class="row">
-        <label for="myIncome" style="flex:1;min-width:140px">Income per month<input id="myIncome" inputmode="decimal" placeholder="600"></label>
         <label for="myGoalIn" style="flex:1;min-width:140px">Savings goal (USDC)<input id="myGoalIn" inputmode="decimal" placeholder="5000"></label>
+        <label for="myIncome" style="flex:1;min-width:140px">Usual income per month<input id="myIncome" inputmode="decimal" placeholder="600"></label>
       </div>
+      <label for="cTarget">Save into<select id="cTarget"></select></label>
       <label for="myBackup">Backup unlock date<input id="myBackup" type="date"><span class="small muted" style="font-weight:400">Only used when you have no goal lock. A lock's own date always wins.</span></label>
       <div class="row">
         <label for="myFood" style="flex:1;min-width:140px">Food delivery cap<input id="myFood" inputmode="decimal" placeholder="50"></label>
@@ -560,29 +552,14 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
         <label for="myBtcPct" style="flex:1;min-width:140px">BTC share of buys, %<input id="myBtcPct" inputmode="decimal" placeholder="70"><span class="small muted" style="font-weight:400" id="myBtcNote"></span></label>
         <label for="mySweepAt" style="flex:1;min-width:140px">Move to Tangem at<input id="mySweepAt" inputmode="decimal" placeholder="400"></label>
       </div>
-      <label for="myStart">First recurring buy<input id="myStart" type="date"></label>
-      <label class="check"><input type="checkbox" id="myAuto"><span>Count my buys from this schedule instead of logging each one</span></label>
-    </div>
-    <div class="card">
-      <div class="section-head"><h2>Your plan</h2></div>
-      <p class="small muted">Tell the coach when you get paid. It works out how much to lock each payday and when you'll reach your goal.</p>
-      <label for="cPay">How much you get paid each time<input id="cPay" inputmode="decimal" placeholder="e.g. 800" autocomplete="off"></label>
-      <div class="row">
-        <label for="cFreq" style="flex:1;min-width:150px">How often<select id="cFreq"><option value="weekly">Every week</option><option value="biweekly">Every 2 weeks</option><option value="twice">1st and 15th</option><option value="monthly">Once a month</option></select></label>
-        <label for="cNext" style="flex:1;min-width:150px">Next payday<input id="cNext" type="date"></label>
-      </div>
-      <label for="cMode">How much to save<select id="cMode"><option value="pct">A percent of my pay</option><option value="fixed">The same amount every time</option><option value="split">My split's save part</option></select></label>
-      <label for="cPct" id="cPctRow">Percent<input id="cPct" inputmode="decimal" placeholder="20"></label>
-      <label for="cFixed" id="cFixedRow" hidden>Amount each payday<input id="cFixed" inputmode="decimal" placeholder="100"></label>
-      <label for="cTarget">Save into<select id="cTarget"></select></label>
-      <div class="summary" id="cPlan"></div>
-      <div class="row"><button class="btn small" id="notifyBtn" hidden>Remind me every payday</button><button class="btn ghost small" id="icsBtn">Add reminders to my calendar</button></div>
+      <label class="check"><input type="checkbox" id="myOn"><span>Show my goal, spending and BTC/ETH cards on the home screen</span></label>
+      <div class="row"><button class="btn small" id="notifyBtn" hidden>Remind me before my locks open</button></div>
       <p class="small" id="notifyNote" hidden></p>
-      <p class="small muted">Your plan stays on this phone. It never moves money by itself.</p>
-    </div>
+      <p class="small muted">Your setup stays on this phone.</p>
+    </details>
     <div class="card">
       <div class="section-head"><h2>Your streak</h2></div>
-      <div class="streak"><b id="streakNum">0</b><span class="muted">paydays in a row you saved</span></div>
+      <div class="streak"><b id="streakNum">0</b><span class="muted">months in a row you saved</span></div>
       <div id="history"></div>
     </div>
     <div class="card">
@@ -609,7 +586,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
     </div>
     <div class="group">
       <button class="mrow" data-tab="new"><span class="mico" style="--g1:#1FC7B6;--g2:#52E08F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="mmid"><b>New lock</b><span>Start a savings goal or a date lock</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
-      <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Payday plan</b><span>Split a payment, your plan, streak and lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Got paid</b><span>Split a payment, your setup, streak and lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="badges"><span class="mico" style="--g1:#C9971C;--g2:#FFD66B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.5" r="5.5"/><path d="M8.5 9.8L6 3.5h4l2 4 2-4h4l-2.5 6.3"/></svg></span><span class="mmid"><b>Achievements</b><span>Your level and badges</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>

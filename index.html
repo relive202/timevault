@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mkWAQ8wULcqt9a0YQ0J5/KOJRR2Rd7tp9BnJ92k25Ts=' 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-/Y68Pijd+RmujsaYHqVpLqp1Lhh62zQ8F1NA3teeuxI=' 'sha256-0///oJt/Hv4mGkcP5yEbt3opVdgapiNR7tgdJ57PKoY=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mkWAQ8wULcqt9a0YQ0J5/KOJRR2Rd7tp9BnJ92k25Ts=' 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-/Y68Pijd+RmujsaYHqVpLqp1Lhh62zQ8F1NA3teeuxI=' 'sha256-uU8adZGyEK0Mgy5spcp1eJQev0zOYUqi9iQrIPSAjgU=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0F0F12">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -184,13 +184,15 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
 .seg .check b { font-size: 15px; }
 .summary { font-size: 14px; background: var(--raised); border-radius: var(--r-md); padding: 15px; display: grid; gap: 6px; overflow-wrap: anywhere; }
 .summary b { font-weight: 600; }
-.split-pcts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.split-presets .chip { color: var(--ink); }
 .split-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--line); margin-bottom: 4px; }
 .split-bar i { display: block; height: 100%; }
 .split-line { display: flex; align-items: center; gap: 9px; }
 .split-line::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--dot); flex: none; }
 .split-line span { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.split-sub { font-size: 13px; color: var(--muted); padding-inline-start: 19px; margin-top: -3px; }
+.split-sub .badge { margin-inline-start: 6px; }
+.gp-log { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; color: var(--muted); }
+.gp-log li { display: flex; gap: 8px; } .gp-log b { margin-inline-start: auto; color: var(--ink); font-weight: 600; }
 .steps { display: grid; gap: 9px; font-size: 14px; }
 .steps div { display: flex; gap: 10px; align-items: center; color: var(--muted); }
 .steps div::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--faint); flex: none; }
@@ -200,8 +202,6 @@ button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px soli
 .notice.bad { background: var(--bad-soft); }
 .bar.amber > i { background: var(--amber); } .bar.red > i { background: var(--bad); }
 .sweep { display: grid; gap: 6px; } .sweep b { font-weight: 650; } .sweep span { font-size: 13.5px; } .sweep .btn { justify-self: start; margin-top: 4px; }
-.router { display: grid; gap: 12px; margin-top: 6px; padding-top: 12px; box-shadow: inset 0 1px 0 var(--line); }
-.router .step > span { display: grid; gap: 4px; } .router .step b { font-weight: 600; }
 .badge { justify-self: start; font: 600 12px var(--body); color: var(--mint); background: var(--mint-soft); padding: 4px 9px; border-radius: 999px; }
 .capbox { display: grid; gap: 8px; }
 input.mini { width: 76px; padding: 6px 10px; font-size: 14px; border-radius: 999px; }
@@ -459,7 +459,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
         <div class="quick">
           <button id="quickAdd"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>Add money</button>
           <button data-tab="new"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span>New lock</button>
-          <button data-tab="coach"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>Payday plan</button>
+          <button data-tab="coach"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>Got paid</button>
         </div>
       </div>
       <div class="group pad chart" id="homeChart" hidden><div class="ch-top"><div><span class="ch-label"></span><b class="ch-val"></b></div><div class="ranges"><button data-range="1M">1M</button><button data-range="3M">3M</button><button data-range="1Y">1Y</button><button data-range="All">All</button></div></div><div class="ch-plot"></div><div class="ch-axis"></div></div>
@@ -526,31 +526,23 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
 
   <!-- COACH -->
   <section id="tab-coach" hidden>
-    <h1 class="page-title">Payday plan</h1>
-    <div class="card" id="splitCard">
-      <div class="section-head"><h2>Split a payment</h2></div>
-      <p class="small muted">Got paid by a client? Enter the amount and the coach splits it into money to spend, to save and to invest.</p>
-      <label for="spAmount">Payment received<input id="spAmount" inputmode="decimal" placeholder="e.g. 1500" autocomplete="off"></label>
-      <div class="split-pcts">
-        <label for="spSpend">Spend %<input id="spSpend" inputmode="decimal" placeholder="50"></label>
-        <label for="spSave">Save %<input id="spSave" inputmode="decimal" placeholder="30"></label>
-        <label for="spInvest">Invest %<input id="spInvest" inputmode="decimal" placeholder="20"></label>
-      </div>
-      <div class="row split-presets"><span class="small muted">Quick picks:</span><button class="chip" data-split="50,30,20">50 / 30 / 20</button><button class="chip" data-split="60,25,15">60 / 25 / 15</button><button class="chip" data-split="70,20,10">70 / 20 / 10</button></div>
-      <div class="row split-presets"><span class="small muted">My setup:</span><button class="chip" data-mode="max">Claude Max $100</button><button class="chip" data-mode="pro">Claude Pro $20</button></div>
-      <div class="summary" id="spOut"></div>
-      <div class="row"><button class="btn brass small" id="spLock" hidden>Lock savings</button><button class="btn ghost small" id="spCopy">Copy the split</button></div>
-      <p class="small muted">The save part goes into the lock chosen under "Save into" below. TimeVault never invests for you: move the invest part yourself, to the account you invest with.</p>
+    <h1 class="page-title">Got paid</h1>
+    <div class="card" id="gpCard">
+      <p class="small muted" id="gpRule"></p>
+      <label for="gpAmount">How much did you get paid?<input id="gpAmount" inputmode="decimal" placeholder="e.g. 150" autocomplete="off"></label>
+      <div class="summary" id="gpOut"></div>
+      <div class="row"><button class="btn brass" id="gpLock" hidden>Lock</button><button class="btn" id="gpDone" hidden>Done</button></div>
+      <div id="gpLog"></div>
     </div>
-    <div class="card" id="mySetup">
-      <div class="section-head"><h2>My money setup</h2></div>
-      <p class="small muted">Your Tangem savings goal, Binance BTC and ETH buys and monthly spending money. Nothing here moves money or connects to Binance: you log Binance amounts yourself.</p>
-      <label class="check"><input type="checkbox" id="myOn"><span>Show these cards on the home screen</span></label>
-      <label for="myMode">Claude plan<select id="myMode"><option value="max">Claude Max $100: save 50%, buy 16.67%, spend 33.33%</option><option value="pro">Claude Pro $20: save 60%, buy 20%, spend 20%</option></select></label>
+    <details class="card advanced" id="mySetup">
+      <summary><h2>My setup</h2></summary>
+      <p class="small muted">Fill this in once. Nothing here moves money or connects to Binance: you log Binance amounts yourself.</p>
+      <label for="myMode">Claude plan<select id="myMode"><option value="max">Claude Max $100</option><option value="pro">Claude Pro $20</option></select></label>
       <div class="row">
-        <label for="myIncome" style="flex:1;min-width:140px">Income per month<input id="myIncome" inputmode="decimal" placeholder="600"></label>
         <label for="myGoalIn" style="flex:1;min-width:140px">Savings goal (USDC)<input id="myGoalIn" inputmode="decimal" placeholder="5000"></label>
+        <label for="myIncome" style="flex:1;min-width:140px">Usual income per month<input id="myIncome" inputmode="decimal" placeholder="600"></label>
       </div>
+      <label for="cTarget">Save into<select id="cTarget"></select></label>
       <label for="myBackup">Backup unlock date<input id="myBackup" type="date"><span class="small muted" style="font-weight:400">Only used when you have no goal lock. A lock's own date always wins.</span></label>
       <div class="row">
         <label for="myFood" style="flex:1;min-width:140px">Food delivery cap<input id="myFood" inputmode="decimal" placeholder="50"></label>
@@ -560,29 +552,14 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
         <label for="myBtcPct" style="flex:1;min-width:140px">BTC share of buys, %<input id="myBtcPct" inputmode="decimal" placeholder="70"><span class="small muted" style="font-weight:400" id="myBtcNote"></span></label>
         <label for="mySweepAt" style="flex:1;min-width:140px">Move to Tangem at<input id="mySweepAt" inputmode="decimal" placeholder="400"></label>
       </div>
-      <label for="myStart">First recurring buy<input id="myStart" type="date"></label>
-      <label class="check"><input type="checkbox" id="myAuto"><span>Count my buys from this schedule instead of logging each one</span></label>
-    </div>
-    <div class="card">
-      <div class="section-head"><h2>Your plan</h2></div>
-      <p class="small muted">Tell the coach when you get paid. It works out how much to lock each payday and when you'll reach your goal.</p>
-      <label for="cPay">How much you get paid each time<input id="cPay" inputmode="decimal" placeholder="e.g. 800" autocomplete="off"></label>
-      <div class="row">
-        <label for="cFreq" style="flex:1;min-width:150px">How often<select id="cFreq"><option value="weekly">Every week</option><option value="biweekly">Every 2 weeks</option><option value="twice">1st and 15th</option><option value="monthly">Once a month</option></select></label>
-        <label for="cNext" style="flex:1;min-width:150px">Next payday<input id="cNext" type="date"></label>
-      </div>
-      <label for="cMode">How much to save<select id="cMode"><option value="pct">A percent of my pay</option><option value="fixed">The same amount every time</option><option value="split">My split's save part</option></select></label>
-      <label for="cPct" id="cPctRow">Percent<input id="cPct" inputmode="decimal" placeholder="20"></label>
-      <label for="cFixed" id="cFixedRow" hidden>Amount each payday<input id="cFixed" inputmode="decimal" placeholder="100"></label>
-      <label for="cTarget">Save into<select id="cTarget"></select></label>
-      <div class="summary" id="cPlan"></div>
-      <div class="row"><button class="btn small" id="notifyBtn" hidden>Remind me every payday</button><button class="btn ghost small" id="icsBtn">Add reminders to my calendar</button></div>
+      <label class="check"><input type="checkbox" id="myOn"><span>Show my goal, spending and BTC/ETH cards on the home screen</span></label>
+      <div class="row"><button class="btn small" id="notifyBtn" hidden>Remind me before my locks open</button></div>
       <p class="small" id="notifyNote" hidden></p>
-      <p class="small muted">Your plan stays on this phone. It never moves money by itself.</p>
-    </div>
+      <p class="small muted">Your setup stays on this phone.</p>
+    </details>
     <div class="card">
       <div class="section-head"><h2>Your streak</h2></div>
-      <div class="streak"><b id="streakNum">0</b><span class="muted">paydays in a row you saved</span></div>
+      <div class="streak"><b id="streakNum">0</b><span class="muted">months in a row you saved</span></div>
       <div id="history"></div>
     </div>
     <div class="card">
@@ -609,7 +586,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
     </div>
     <div class="group">
       <button class="mrow" data-tab="new"><span class="mico" style="--g1:#1FC7B6;--g2:#52E08F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="mmid"><b>New lock</b><span>Start a savings goal or a date lock</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
-      <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Payday plan</b><span>Split a payment, your plan, streak and lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Got paid</b><span>Split a payment, your setup, streak and lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="badges"><span class="mico" style="--g1:#C9971C;--g2:#FFD66B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.5" r="5.5"/><path d="M8.5 9.8L6 3.5h4l2 4 2-4h4l-2.5 6.3"/></svg></span><span class="mmid"><b>Achievements</b><span>Your level and badges</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -1808,11 +1785,52 @@ const P2 = [
     [/^Undo last \((\$[\d,.]+) (delivery|fun)\)$/, "تراجع عن الأخير ($1)"],
     [/^Recurring buy: (\$[\d,.]+) BTC \+ (\$[\d,.]+) ETH each week \((\$[\d,.]+)\/month\)\.$/, "الشراء المتكرر: $1 BTC + $2 ETH كل أسبوع ($3 شهريًا)."],
     [/^Move to Tangem at (\$[\d,.]+)$/, "انقل إلى Tangem عند $1"],
-    [/^On Binance \((what you spent|from your schedule|what Binance shows)\)$/, "على Binance"],
+    [/^On Binance \((what you spent|what you put in|from your schedule|what Binance shows)\)$/, "على Binance"],
     [/^Logged (\$[\d,.]+) of BTC and ETH\.$/, "تم تسجيل $1 من BTC وETH."],
     [/^ETH gets ([\d.,]+)%\.$/, "حصة ETH ‏$1%."],
     [/^About (\$[\d,.]+) is sitting on Binance\. Don't keep large amounts on an exchange: withdraw it to your Tangem wallet\.$/, "حوالي $1 موجودة على Binance. لا تترك مبالغ كبيرة على منصة تداول: اسحبها إلى محفظة Tangem."],
     [/^<b>Claude subscription<\/b> (\$[\d,.]+) · (paid|not paid yet)$/, "<b>اشتراك Claude</b> $1"]);
+  const D4 = {
+ "Got paid": "وصلني مال",
+ "Got paid?": "وصلك مال؟",
+ "Split it in one tap": "قسّمه بضغطة واحدة",
+ "How much did you get paid?": "كم وصلك؟",
+ "e.g. 150": "مثلًا 150",
+ "My setup": "إعدادي",
+ "Fill this in once. Nothing here moves money or connects to Binance: you log Binance amounts yourself.": "املأ هذا مرة واحدة. لا شيء هنا يحرّك المال أو يتصل بـ Binance: أنت تسجّل مبالغ Binance بنفسك.",
+ "Claude Max $100: save 50%, invest 16.67%, spend 33.33%": "Claude Max ‏100$: ادخار 50%، استثمار 16.67%، صرف 33.33%",
+ "Claude Pro $20: save 60%, invest 20%, spend 20%": "Claude Pro ‏20$: ادخار 60%، استثمار 20%، صرف 20%",
+ "Usual income per month": "دخلك المعتاد في الشهر",
+ "Pick automatically": "اختر تلقائيًا",
+ "Show my goal, spending and BTC/ETH cards on the home screen": "أظهر بطاقات الهدف والمصروف وBTC/ETH في الشاشة الرئيسية",
+ "Remind me before my locks open": "ذكّرني قبل فتح أقفالي",
+ "Your setup stays on this phone.": "إعدادك يبقى على هذا الهاتف.",
+ "months in a row you saved": "أشهر متتالية ادّخرت فيها",
+ "Split a payment, your setup, streak and lessons": "قسّم دفعة، وإعدادك، وسلسلتك، والدروس",
+ "Type the amount and the app splits it for you.": "اكتب المبلغ وسيقسمه التطبيق لك.",
+ "Send it to your Tangem wallet as USDC on Arbitrum One. Make a goal lock to lock it here.": "أرسله إلى محفظة Tangem بعملة USDC على Arbitrum One. أنشئ قفل هدف لتقفله هنا.",
+ "Send it to your Tangem wallet as USDC on Arbitrum One, or connect your wallet to lock it here.": "أرسله إلى محفظة Tangem بعملة USDC على Arbitrum One، أو اربط محفظتك لتقفله هنا.",
+ "Move it to the Binance Funding wallet for Claude, food delivery and fun.": "انقله إلى محفظة Funding في Binance لـ Claude وتوصيل الطعام والترفيه.",
+ "Nothing logged this month yet.": "لم تسجّل شيئًا هذا الشهر بعد.",
+ "Start your streak this month.": "ابدأ سلسلتك هذا الشهر.",
+ "Save 3 months in a row.": "ادّخر 3 أشهر متتالية.",
+ "Save 6 months in a row.": "ادّخر 6 أشهر متتالية.",
+ "Save 12 months in a row.": "ادّخر 12 شهرًا متتاليًا.",
+ "Reminders on. You will get a reminder before each lock opens.": "التذكيرات مفعّلة. سيصلك تذكير قبل فتح كل قفل.",
+ "Log an extra buy, or type what Binance shows": "سجّل شراءً إضافيًا، أو اكتب ما يعرضه Binance",
+ "Set your goal under Got paid → My setup.": "حدّد هدفك من وصلني مال ← إعدادي."
+  };
+  Object.assign(d, D4);
+  P2.unshift([/^Lock it in your (\$[\d,.]+) goal with the button below\.$/, "اقفله في هدفك $1 بالزر بالأسفل."],
+    [/^Keep it in Binance Spot for (\$[\d,.]+) BTC \+ (\$[\d,.]+) ETH\. Keep Simple Earn OFF\.$/, "أبقِه في Binance Spot لشراء $1 BTC و$2 ETH. أبقِ Simple Earn متوقفًا."],
+    [/^This month: (\$[\d,.]+) paid in, (\$[\d,.]+) to save\.$/, "هذا الشهر: وصلك $1، منها $2 للادخار."],
+    [/^This month: (\d+) payments?, (\$[\d,.]+) in\.$/, "هذا الشهر: $1 دفعات، $2 وصلتك."],
+    [/^Undo last \((\$[\d,.]+)\)$/, "تراجع عن الأخير ($1)"],
+    [/^BTC (\$[\d,.]+) · ETH (\$[\d,.]+) since your last move to Tangem$/, "BTC ‏$1 · ETH ‏$2 منذ آخر نقل إلى Tangem"],
+    [/^Logged (\$[\d,.]+)\. (\$[\d,.]+) added to your BTC and ETH\.$/, "تم تسجيل $1. أُضيف $2 إلى BTC وETH."],
+    [/^Streak: (\d+) months? in a row\.$/, "السلسلة: $1 أشهر متتالية."],
+    [/^(Claude (?:Max|Pro) \(\$\d+\)): save ([\d.]+)%, invest ([\d.]+)%, spend ([\d.]+)%\. Change it in My setup below\.$/, "$1: ادخار $2%، استثمار $3%، صرف $4%. غيّرها من إعدادي بالأسفل."],
+    [/^(Claude (?:Max|Pro) \(\$\d+\)): save ([\d.]+)%, invest ([\d.]+)%, spend ([\d.]+)%\.$/, "$1: ادخار $2%، استثمار $3%، صرف $4%."]);
   return { d, p: P2 };
 })();
 
@@ -2110,7 +2128,7 @@ const P2 = [
     store.setJson(cacheKey(who), { w: Object.fromEntries(Object.entries(WALLET).map(([k, v]) => [k, String(v)])), l: LOCKS.map(serL), t: Date.now() });
     setUpdating(false);
     const sig = LOCKS.map((l) => l.addr + l.balance + l.name).sort().join() + '|' + Object.values(WALLET).join();
-    if (sig !== lastSig) { lastSig = sig; render(); planChanged(); } else renderToday();
+    if (sig !== lastSig) { lastSig = sig; render(); remindersChanged(); } else renderToday();
     loadHistory();
   }
 
@@ -2159,7 +2177,7 @@ const P2 = [
     for (const o of $('lkToken').options) o.textContent = o.value + (WALLET[o.value] !== undefined ? ' (you have ' + num(fmt(WALLET[o.value])) + ')' : '');
     renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones(); renderFun(); renderMine();
     const tgt = $('cTarget'); const cur = store.get('plan.target');
-    tgt.innerHTML = '<option value="">Choose one of your goals</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
+    tgt.innerHTML = '<option value="">Pick automatically</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
   }
 
   // ------------------------------------------------------------------ milestone celebrations (25 / 50 / 75 / 100 % of a goal)
@@ -2509,62 +2527,14 @@ const P2 = [
     download('timevault-backup.json', JSON.stringify(data, null, 2), 'application/json');
   });
 
-  // ------------------------------------------------------------------ coach: payday plan
-  const PLAN = () => ({ pay: Number(store.get('plan.pay', '0')), freq: store.get('plan.freq', 'monthly'), next: store.get('plan.next', ''), mode: store.get('plan.mode', 'pct'), pct: Number(store.get('plan.pct', '20')), fixed: Number(store.get('plan.fixed', '0')), target: store.get('plan.target', '') });
-  function saveAmount(p) { return p.mode === 'pct' ? Math.round(p.pay * p.pct) / 100 : p.mode === 'split' ? splitOf(p.pay, SPLIT()).save : p.fixed; }
-  // ------------------------------------------------------------------ coach: split a payment into spend / save / invest
+  // ------------------------------------------------------------------ got paid: split each client payment into save / invest / spend
   // Only a calculator: it never moves money. The save part can be locked with the normal (guarded) deposit screen.
-  const pctIn = (id) => { const v = $(id).value.trim(); return v === '' ? NaN : Number(v); }; // an empty box counts as not filled in
-  const SPLIT = () => ({ spend: pctIn('spSpend'), save: pctIn('spSave'), invest: pctIn('spInvest') });
-  const pctOk = (x) => Number.isFinite(x) && x >= 0 && x <= 100;
-  function splitValid(sp) { return pctOk(sp.spend) && pctOk(sp.save) && pctOk(sp.invest) && Math.abs(sp.spend + sp.save + sp.invest - 100) < 0.001; }
   // Amounts in cents so the three parts always add up to the payment exactly; spend takes any rounding cent.
   function splitOf(amount, sp) {
-    const c = Math.round((Number(amount) || 0) * 100); if (!(c > 0) || !splitValid(sp)) return { spend: 0, save: 0, invest: 0 };
+    const c = Math.round((Number(amount) || 0) * 100); if (!(c > 0)) return { spend: 0, save: 0, invest: 0 };
     const save = Math.round(c * sp.save / 100), invest = Math.round(c * sp.invest / 100);
     return { spend: (c - save - invest) / 100, save: save / 100, invest: invest / 100 };
   }
-  function splitTarget() { const L = LOCKS.find((l) => l.addr === store.get('plan.target', '')); return L && account && L.beneficiary === account && !isFinished(L) && Date.now() / 1000 < L.releaseTime ? L : null; }
-  function renderSplit() {
-    const sp = SPLIT(), amt = Number($('spAmount').value.replace(/,/g, '')), out = $('spOut'), btn = $('spLock');
-    btn.hidden = true;
-    if (!splitValid(sp)) {
-      const t = sp.spend + sp.save + sp.invest;
-      out.innerHTML = '<div class="warn">' + (Number.isFinite(t) && [sp.spend, sp.save, sp.invest].every(pctOk) ? 'Your parts add up to ' + num(t) + '%. Make them add up to 100%.' : 'Use numbers from 0 to 100 for each part.') + '</div>';
-      return;
-    }
-    const bar = '<div class="split-bar" aria-hidden="true"><i style="width:' + sp.spend + '%;background:var(--amber)"></i><i style="width:' + sp.save + '%;background:var(--accent)"></i><i style="width:' + sp.invest + '%;background:var(--mint)"></i></div>';
-    if (!(amt > 0)) { out.innerHTML = bar + '<p class="muted">Enter the payment you received to see how much goes where.</p>'; return; }
-    const x = splitOf(amt, sp);
-    const line = (dot, name, v, pc) => '<div class="split-line" style="--dot:var(' + dot + ')"><b>' + name + '</b> ' + num(pc) + '%<span>' + money(v) + '</span></div>';
-    const rm = routerMode();
-    const rows = [bar, line('--amber', rm ? 'Binance Funding (spend)' : 'To spend', x.spend, sp.spend), line('--accent', rm ? 'Tangem goal (save)' : 'To save', x.save, sp.save), line('--mint', rm ? 'Binance Spot DCA (invest)' : 'To invest', x.invest, sp.invest)];
-    const L = splitTarget();
-    if (x.save > 0 && L) { btn.hidden = false; btn.textContent = 'Lock ' + money(x.save); }
-    else if (x.save > 0) rows.push('<div class="muted small">' + (account ? 'Choose an open lock under "Save into" below to lock the save part in one tap.' : 'Connect your wallet to lock the save part.') + '</div>');
-    out.innerHTML = rows.join('') + routerSteps(amt);
-  }
-  function splitChanged() {
-    store.set('split.spend', $('spSpend').value.trim()); store.set('split.save', $('spSave').value.trim()); store.set('split.invest', $('spInvest').value.trim());
-    renderSplit(); if (PLAN().mode === 'split') { renderCoach(); renderToday(); planChanged(); }
-  }
-  ['spSpend', 'spSave', 'spInvest'].forEach((id) => $(id).addEventListener('input', splitChanged));
-  $('spAmount').addEventListener('input', renderSplit);
-  document.querySelectorAll('[data-split]').forEach((b) => b.addEventListener('click', () => {
-    const [a, c, d] = b.dataset.split.split(','); $('spSpend').value = a; $('spSave').value = c; $('spInvest').value = d; splitChanged();
-  }));
-  $('spLock').addEventListener('click', () => {
-    const L = splitTarget(), x = splitOf(Number($('spAmount').value.replace(/,/g, '')), SPLIT());
-    if (!L || !(x.save > 0)) return renderSplit();
-    openDeposit(L, String(x.save));
-  });
-  $('spCopy').addEventListener('click', async () => {
-    const sp = SPLIT(), amt = Number($('spAmount').value.replace(/,/g, ''));
-    if (!splitValid(sp) || !(amt > 0)) return toast('Enter the payment and make the parts add up to 100% first.');
-    const x = splitOf(amt, sp);
-    const text = T('Payment ' + money(amt) + ': spend ' + money(x.spend) + ' (' + num(sp.spend) + '%), save ' + money(x.save) + ' (' + num(sp.save) + '%), invest ' + money(x.invest) + ' (' + num(sp.invest) + '%)');
-    try { await navigator.clipboard.writeText(text); toast('Copied the split.'); } catch { toast('Could not copy.'); }
-  });
   // ------------------------------------------------------------------ my money setup: Tangem goal, paycheck router, BTC/ETH log, spending pot
   // Only a planner and a notebook: nothing here moves money, talks to an exchange or asks for keys. Everything stays on this phone.
   const MODES = { max: { save: 50, invest: 100 / 6, spend: 100 / 3, sub: 100, name: 'Claude Max ($100)' }, pro: { save: 60, invest: 20, spend: 20, sub: 20, name: 'Claude Pro ($20)' } };
@@ -2572,13 +2542,9 @@ const P2 = [
     on: store.get('my.on', '1') === '1', mode: store.get('my.mode', 'max') === 'pro' ? 'pro' : 'max',
     income: Number(store.get('my.income', '600')) || 0, goal: Number(store.get('my.goal', '5000')) || 0, backup: store.get('my.backup', ''),
     btc: ((x) => (Number.isFinite(x) && x >= 0 && x <= 100 ? x : 70))(store.get('my.btcPct', '') === '' ? 70 : Number(store.get('my.btcPct', '70'))), food: Number(store.get('my.food', '50')) || 0, fun: Number(store.get('my.fun', '50')) || 0,
-    start: store.get('my.dcaStart', ''), auto: store.get('my.dcaAuto', '') === '1', sweepAt: Number(store.get('my.sweepAt', '400')) || 400,
+    sweepAt: Number(store.get('my.sweepAt', '400')) || 400,
   });
   const cents = (x) => Math.round(x * 100) / 100;
-  const r4 = (x) => String(Math.round(x * 10000) / 10000);
-  const modeSplit = (m) => [r4(MODES[m].spend), r4(MODES[m].save), r4(MODES[m].invest)];
-  // the split boxes hold exactly one of the two presets: then the three parts are Funding / Tangem / Spot
-  const routerMode = () => { const cur = [$('spSpend').value.trim(), $('spSave').value.trim(), $('spInvest').value.trim()]; return ['max', 'pro'].find((m) => modeSplit(m).every((v, i) => Number(v) === Number(cur[i]))) || ''; };
   const monthly = (m) => ({ save: cents(m.income * MODES[m.mode].save / 100), invest: cents(m.income * MODES[m.mode].invest / 100), spend: cents(m.income * MODES[m.mode].spend / 100) });
   // weekly recurring buy that adds up to the monthly DCA amount (a month is 52/12 weeks, not 4)
   function weekly(m) { const w = monthly(m).invest * 12 / 52, b = cents(w * m.btc / 100); return { btc: b, eth: cents(cents(w) - b), total: cents(w) }; }
@@ -2599,7 +2565,7 @@ const P2 = [
     const rows = ['<div class="section-head"><h2>' + money(goal).replace('.00', '') + ' savings goal</h2><span class="chip">' + esc(MODES[m.mode].name) + '</span></div>',
       '<div class="prog-top"><b>' + money(saved) + '</b><span>' + pct + '%</span></div><div class="bar"><i style="width:' + pct + '%"></i></div>',
       '<div class="small muted">' + money(inLock) + ' locked' + (L ? '' : ' (no goal lock yet)') + ' · ' + money(loose) + ' USDC loose in your wallet' + (store.get('watch') && !account ? ' (view only)' : '') + '</div>'];
-    if (!goal) rows.push('<p class="muted">Set your goal under Payday plan → My money setup.</p>');
+    if (!goal) rows.push('<p class="muted">Set your goal under Got paid → My setup.</p>');
     else if (!left) rows.push('<div class="note">Goal reached. ' + (L && L.balance >= L.goal ? 'Your lock can be opened now.' : '') + '</div>');
     else if (per > 0) {
       const n = Math.ceil(left / per - 1e-9), when = new Date(); when.setMonth(when.getMonth() + n);
@@ -2613,36 +2579,29 @@ const P2 = [
     box.innerHTML = rows.join('');
   }
 
-  // ---- BTC / ETH bought on Binance: logged by hand or counted from the weekly schedule
+  // ---- BTC / ETH on Binance: the invest part of each "Done" on Got paid, plus any buys logged by hand
   const dcaLog = () => store.json('my.dca', []).filter((e) => e && moneyIn(e.usd));
-  function dcaOnBinance(m) {
+  function dcaOnBinance() {
     const since = Number(store.get('my.sweptT', '0')) || 0;
     const logged = dcaLog().filter((e) => e.t > since);
-    let usd = logged.reduce((s, e) => s + e.usd, 0), sched = 0;
-    const st = fromYmd(m.start);
-    if (m.auto && st) { // one buy on the start day and every 7 days after it; count the ones since the last move to Tangem
-      const wk = 7 * DAY * 1000, s0 = st.getTime(), now = Date.now();
-      if (now >= s0) { const kmax = Math.floor((now - s0) / wk), kmin = since >= s0 ? Math.floor((since - s0) / wk) + 1 : 0; sched = Math.max(0, kmax - kmin + 1); }
-      usd = sched * weekly(m).total;
-    }
-    const btc = m.auto ? sched * weekly(m).btc : logged.filter((e) => e.a === 'BTC').reduce((s, e) => s + e.usd, 0);
+    const usd = logged.reduce((s, e) => s + e.usd, 0), btc = logged.filter((e) => e.a === 'BTC').reduce((s, e) => s + e.usd, 0);
     const shown = store.json('my.bnShown', null); // what Binance itself showed, if typed in after the last buy or sweep
     const useShown = shown && shown.t > since && moneyIn(shown.usd) && (!logged.length || shown.t >= logged[logged.length - 1].t);
-    return { cost: cents(usd), btc: cents(btc), eth: cents(usd - btc), value: useShown ? shown.usd : 0, buys: m.auto ? sched : logged.length };
+    return { cost: cents(usd), btc: cents(btc), eth: cents(usd - btc), value: useShown ? shown.usd : 0 };
   }
-  const onBinanceUsd = (m) => { const d = dcaOnBinance(m); return d.value || d.cost; };
+  const onBinanceUsd = () => { const d = dcaOnBinance(); return d.value || d.cost; };
   function renderDca(m) {
-    const d = dcaOnBinance(m), w = weekly(m), tg = store.json('my.tangemDca', { usd: 0, btc: '', eth: '' });
+    const d = dcaOnBinance(), w = weekly(m), tg = store.json('my.tangemDca', { usd: 0, btc: '', eth: '' });
     const val = d.value || d.cost, pct = Math.min(100, Math.floor(100 * val / m.sweepAt));
     const log = dcaLog().slice(-5).reverse();
     $('myDca').innerHTML = '<div class="section-head"><h2>Spot BTC &amp; ETH</h2><span class="chip">Simple Earn OFF</span></div>' +
       '<div class="small muted">Recurring buy: ' + money(w.btc) + ' BTC + ' + money(w.eth) + ' ETH each week (' + money(monthly(m).invest) + '/month).</div>' +
-      '<div class="irow"><span>On Binance' + (d.value ? ' (what Binance shows)' : m.auto ? ' (from your schedule)' : ' (what you spent)') + '</span><b>' + money(val) + '</b></div>' +
-      (d.value ? '' : '<div class="small muted">BTC ' + money(d.btc) + ' · ETH ' + money(d.eth) + ' · ' + d.buys + ' buy' + (d.buys === 1 ? '' : 's') + ' since your last move to Tangem</div>') +
+      '<div class="irow"><span>On Binance' + (d.value ? ' (what Binance shows)' : ' (what you put in)') + '</span><b>' + money(val) + '</b></div>' +
+      (d.value ? '' : '<div class="small muted">BTC ' + money(d.btc) + ' · ETH ' + money(d.eth) + ' since your last move to Tangem</div>') +
       '<div class="prog-top"><span>Move to Tangem at ' + money(m.sweepAt).replace('.00', '') + '</span><span>' + pct + '%</span></div><div class="bar' + (pct >= 100 ? ' red' : pct >= 75 ? ' amber' : '') + '"><i style="width:' + pct + '%"></i></div>' +
       '<div class="irow"><span>On Tangem</span><b>' + (tg.btc ? esc(tg.btc) + ' BTC' : '') + (tg.btc && tg.eth ? ' · ' : '') + (tg.eth ? esc(tg.eth) + ' ETH' : '') + (tg.btc || tg.eth ? '' : money(tg.usd || 0) + ' moved') + '</b></div>' +
-      '<div class="row">' + (m.auto ? '' : '<button class="btn small" data-my="logWeek">Log this week\'s buy</button>') + '<button class="btn ghost small" data-my="swept">I moved it to Tangem</button></div>' +
-      '<details class="need"><summary>Log a buy, or type what Binance shows</summary><div class="grid8">' +
+      '<div class="row"><button class="btn ghost small" data-my="swept">I moved it to Tangem</button></div>' +
+      '<details class="need"><summary>Log an extra buy, or type what Binance shows</summary><div class="grid8">' +
       '<div class="inline"><select id="dcaAsset" style="max-width:110px"><option>BTC</option><option>ETH</option></select><input id="dcaUsd" inputmode="decimal" placeholder="$ amount"><button class="btn ghost small" data-my="logOne">Add</button></div>' +
       '<div class="inline"><input id="bnShown" inputmode="decimal" placeholder="BTC + ETH value on Binance, $"><button class="btn ghost small" data-my="shown">Save</button></div>' +
       '<div class="inline"><input id="tgBtc" inputmode="decimal" placeholder="BTC on Tangem" value="' + esc(tg.btc || '') + '"><input id="tgEth" inputmode="decimal" placeholder="ETH on Tangem" value="' + esc(tg.eth || '') + '"><button class="btn ghost small" data-my="tangem">Save</button></div>' +
@@ -2650,7 +2609,7 @@ const P2 = [
       '</div></details>';
   }
   function renderSweep(m) {
-    const v = onBinanceUsd(m), box = $('sweepAlert');
+    const v = onBinanceUsd(), box = $('sweepAlert');
     box.hidden = !(v >= m.sweepAt);
     if (!box.hidden) box.innerHTML = '<b>Move your BTC and ETH to Tangem.</b><span>About ' + money(v) + ' is sitting on Binance. Don\'t keep large amounts on an exchange: withdraw it to your Tangem wallet.</span><button class="btn small" data-my="swept">I moved it to Tangem</button>';
   }
@@ -2687,22 +2646,55 @@ const P2 = [
     renderGoalCard(m); renderSpend(m); renderDca(m); renderSweep(m);
   }
 
-  // ---- the paycheck router: the split card's three parts become Funding / Tangem / Spot when a preset is chosen
-  function routerSteps(amt) {
-    const md = routerMode(), m = MY(); if (!md || !(amt > 0)) return '';
-    const x = splitOf(amt, SPLIT()), w = weekly({ ...m, mode: md });
-    const who = viewer();
-    const step = (n, title, body) => '<label class="check step"><input type="checkbox"><span><b>' + n + '. ' + title + '</b>' + body + '</span></label>';
-    return '<div class="router">' +
-      step(1, 'Send ' + money(x.save) + ' USDC to Tangem', '<span class="small muted">Withdraw from Binance on <b>Arbitrum One</b> toward your ' + money(m.goal).replace('.00', '') + ' goal' + (who ? ' to <span class="mono">' + short(who) + '</span>' : '') + ', or lock it with the button below.</span>') +
-      step(2, 'Keep ' + money(x.invest) + ' in Binance Spot', '<span class="small muted">For your weekly recurring buy: ' + money(w.btc) + ' BTC + ' + money(w.eth) + ' ETH (' + money(w.total) + '/week). This payment: ' + money(cents(x.invest * m.btc / 100)) + ' BTC + ' + money(cents(x.invest - cents(x.invest * m.btc / 100))) + ' ETH.</span><span class="badge">Keep Simple Earn OFF (Spot only, no interest)</span>') +
-      step(3, 'Move ' + money(x.spend) + ' to the Binance Funding wallet', '<span class="small muted">Spending money only: Claude ' + money(MODES[md].sub).replace('.00', '') + ', food delivery ' + money(m.food).replace('.00', '') + ', fun ' + money(m.fun).replace('.00', '') + ' a month.</span>') +
-      '</div>';
+  // ---- Got paid: type the amount once; save / invest / spend come from the Claude plan in My setup
+  const paidLog = () => store.json('my.paid', []).filter((e) => e && moneyIn(e.usd));
+  const gpAmount = () => moneyIn($('gpAmount').value);
+  const thisMonth = () => paidLog().filter((e) => monthKey(new Date(e.t)) === monthKey());
+  const ruleText = (md) => 'save ' + num(md.save) + '%, invest ' + num(md.invest) + '%, spend ' + num(md.spend) + '%';
+  function gpTarget() { const L = myGoalLock(); return L && account && L.beneficiary === account && !isFinished(L) && Date.now() / 1000 < L.releaseTime ? L : null; }
+  function renderCoach() {
+    const m = MY(), md = MODES[m.mode], amt = gpAmount(), out = $('gpOut'), lock = $('gpLock');
+    $('gpRule').textContent = T(md.name + ': ' + ruleText(md) + '. Change it in My setup below.');
+    const bar = '<div class="split-bar" aria-hidden="true"><i style="width:' + md.save + '%;background:var(--accent)"></i><i style="width:' + md.invest + '%;background:var(--mint)"></i><i style="width:' + md.spend + '%;background:var(--amber)"></i></div>';
+    lock.hidden = true; $('gpDone').hidden = !(amt > 0);
+    renderPaidLog();
+    if (!(amt > 0)) { out.innerHTML = bar + '<p class="muted">Type the amount and the app splits it for you.</p>'; return; }
+    const x = splitOf(amt, md), btc = cents(x.invest * m.btc / 100), L = gpTarget();
+    const line = (dot, name, v) => '<div class="split-line" style="--dot:var(' + dot + ')"><b>' + name + '</b><span>' + money(v) + '</span></div>';
+    const sub = (t) => '<div class="split-sub">' + t + '</div>';
+    out.innerHTML = bar +
+      line('--accent', 'To save', x.save) + sub(L ? 'Lock it in your ' + money(fmt(L.goal)).replace('.00', '') + ' goal with the button below.' : account ? 'Send it to your Tangem wallet as USDC on Arbitrum One. Make a goal lock to lock it here.' : 'Send it to your Tangem wallet as USDC on Arbitrum One, or connect your wallet to lock it here.') +
+      line('--mint', 'To invest', x.invest) + sub('Keep it in Binance Spot for ' + money(btc) + ' BTC + ' + money(cents(x.invest - btc)) + ' ETH. Keep Simple Earn OFF.') +
+      line('--amber', 'To spend', x.spend) + sub('Move it to the Binance Funding wallet for Claude, food delivery and fun.');
+    if (L && x.save > 0) { lock.hidden = false; lock.textContent = T('Lock ' + money(x.save)); }
   }
-  document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => {
-    const md = b.dataset.mode, [a, c, d] = modeSplit(md); store.set('my.mode', md); $('myMode').value = md;
-    $('spSpend').value = a; $('spSave').value = c; $('spInvest').value = d; splitChanged(); renderMine();
-  }));
+  function renderPaidLog() {
+    const pl = paidLog(), mon = thisMonth(), box = $('gpLog');
+    if (!pl.length) { box.innerHTML = ''; return; }
+    const sum = (k) => cents(mon.reduce((s, e) => s + (e[k] || 0), 0));
+    box.innerHTML = '<div class="small muted">' + (mon.length ? 'This month: ' + money(sum('usd')) + ' paid in, ' + money(sum('save')) + ' to save.' : 'Nothing logged this month yet.') + '</div>' +
+      '<ol class="gp-log">' + pl.slice(-3).reverse().map((e) => '<li><span>' + new Date(e.t).toLocaleDateString(DATELOC, { month: 'short', day: 'numeric' }) + '</span><b>' + money(e.usd) + '</b></li>').join('') + '</ol>' +
+      '<button class="link-btn small-link" id="gpUndo">Undo last (' + money(pl[pl.length - 1].usd) + ')</button>';
+    $('gpUndo').onclick = () => {
+      const l = paidLog(), e = l.pop(); if (!e) return;
+      store.setJson('my.paid', l); store.setJson('my.dca', dcaLog().filter((d) => d.t !== e.t && d.t !== e.t + 1));
+      renderCoach(); renderMine(); renderToday();
+    };
+  }
+  $('gpAmount').addEventListener('input', renderCoach);
+  $('gpLock').addEventListener('click', () => {
+    const L = gpTarget(), x = splitOf(gpAmount(), MODES[MY().mode]);
+    if (!L || !(x.save > 0)) return renderCoach();
+    openDeposit(L, String(x.save));
+  });
+  $('gpDone').addEventListener('click', () => { // logs the payment and adds the invest part to the BTC/ETH count, so nothing else needs typing
+    const m = MY(), amt = gpAmount(); if (!amt) return toast('Type an amount first.');
+    const x = splitOf(amt, MODES[m.mode]), t = Date.now(), btc = cents(x.invest * m.btc / 100), eth = cents(x.invest - btc);
+    const pl = paidLog(); pl.push({ t, usd: amt, ...x }); store.setJson('my.paid', pl.slice(-200));
+    const l = dcaLog(); if (btc > 0) l.push({ a: 'BTC', usd: btc, t }); if (eth > 0) l.push({ a: 'ETH', usd: eth, t: t + 1 }); store.setJson('my.dca', l.slice(-500));
+    $('gpAmount').value = ''; renderCoach(); renderMine(); renderToday();
+    toast('Logged ' + money(amt) + '. ' + money(x.invest) + ' added to your BTC and ETH.');
+  });
 
   // ---- one click handler for every button in the cards above
   document.addEventListener('click', (ev) => {
@@ -2714,89 +2706,37 @@ const P2 = [
       const cap = b.dataset.c === 'food' ? m.food : m.fun, used = s.e.filter((e) => e.c === b.dataset.c).reduce((a, e) => a + e.usd, 0);
       if (used >= cap) toast(b.dataset.c === 'food' ? 'Delivery cap reached. No more delivery this month.' : 'Fun cap reached for this month.', 7000);
     } else if (act === 'undo') { const s = spendNow(); s.e.pop(); spendSave(s); }
-    else if (act === 'logWeek') { const w = weekly(m), l = dcaLog(); l.push({ a: 'BTC', usd: w.btc, t: now }, { a: 'ETH', usd: w.eth, t: now + 1 }); store.setJson('my.dca', l.slice(-500)); toast('Logged ' + money(w.total) + ' of BTC and ETH.'); }
     else if (act === 'logOne') { const v = moneyIn($('dcaUsd').value); if (!v) return toast('Type an amount first.'); const l = dcaLog(); l.push({ a: $('dcaAsset').value === 'ETH' ? 'ETH' : 'BTC', usd: v, t: now }); store.setJson('my.dca', l.slice(-500)); }
     else if (act === 'delDca') { store.setJson('my.dca', dcaLog().filter((e) => String(e.t) !== b.dataset.t)); }
     else if (act === 'shown') { const v = moneyIn($('bnShown').value); store.setJson('my.bnShown', v ? { usd: v, t: now } : null); }
     else if (act === 'tangem') { const q = (id) => { const v = $(id).value.trim(); return v && Number(v) >= 0 ? v : ''; }; const tg = store.json('my.tangemDca', { usd: 0 }); store.setJson('my.tangemDca', { ...tg, btc: q('tgBtc'), eth: q('tgEth') }); toast('Saved.'); }
-    else if (act === 'swept') { const tg = store.json('my.tangemDca', { usd: 0 }); store.setJson('my.tangemDca', { ...tg, usd: cents((tg.usd || 0) + onBinanceUsd(m)) }); store.set('my.sweptT', String(now)); store.setJson('my.bnShown', null); toast('Nice. Your Binance BTC and ETH count starts again from zero.'); }
+    else if (act === 'swept') { const tg = store.json('my.tangemDca', { usd: 0 }); store.setJson('my.tangemDca', { ...tg, usd: cents((tg.usd || 0) + onBinanceUsd()) }); store.set('my.sweptT', String(now)); store.setJson('my.bnShown', null); toast('Nice. Your Binance BTC and ETH count starts again from zero.'); }
     else return;
     renderMine();
   });
   document.addEventListener('change', (ev) => { const b = ev.target; if (b.dataset && b.dataset.my === 'sub') { const s = spendNow(); s.sub = b.checked; spendSave(s); renderMine(); } });
 
-  // ---- settings, on the Payday plan screen
-  const MYFIELDS = { myIncome: 'my.income', myGoalIn: 'my.goal', myBackup: 'my.backup', myFood: 'my.food', myFun: 'my.fun', myStart: 'my.dcaStart', mySweepAt: 'my.sweepAt', myBtcPct: 'my.btcPct' };
+  // ---- My setup, on the Got paid screen
+  const MYFIELDS = { myIncome: 'my.income', myGoalIn: 'my.goal', myBackup: 'my.backup', myFood: 'my.food', myFun: 'my.fun', mySweepAt: 'my.sweepAt', myBtcPct: 'my.btcPct' };
   function mySettingsChanged() {
     for (const [id, k] of Object.entries(MYFIELDS)) store.set(k, $(id).value.trim());
-    const wasRouter = routerMode(); store.set('my.mode', $('myMode').value); if (wasRouter && wasRouter !== $('myMode').value) { const [a, c, d] = modeSplit($('myMode').value); $('spSpend').value = a; $('spSave').value = c; $('spInvest').value = d; splitChanged(); } store.set('my.on', $('myOn').checked ? '1' : '0'); store.set('my.dcaAuto', $('myAuto').checked ? '1' : '');
+    store.set('my.mode', $('myMode').value); store.set('my.on', $('myOn').checked ? '1' : '0');
     const bp = Number($('myBtcPct').value); $('myBtcNote').textContent = Number.isFinite(bp) && bp >= 0 && bp <= 100 ? 'ETH gets ' + num(100 - bp) + '%.' : 'Use a number from 0 to 100.';
-    renderMine(); renderSplit();
+    renderMine(); renderCoach(); renderToday();
   }
   function myBoot() {
     const m = MY();
     for (const [id, k] of Object.entries(MYFIELDS)) $(id).value = store.get(k, { 'my.income': '600', 'my.goal': '5000', 'my.food': '50', 'my.fun': '50', 'my.sweepAt': '400', 'my.btcPct': '70' }[k] || '');
-    $('myMode').value = m.mode; $('myOn').checked = m.on; $('myAuto').checked = m.auto;
-    Object.keys(MYFIELDS).concat(['myMode', 'myOn', 'myAuto']).forEach((id) => $(id).addEventListener(id === 'myMode' || id === 'myOn' || id === 'myAuto' ? 'change' : 'input', mySettingsChanged));
+    $('myMode').value = m.mode; $('myOn').checked = m.on;
+    Object.keys(MYFIELDS).concat(['myMode', 'myOn']).forEach((id) => $(id).addEventListener(id === 'myMode' || id === 'myOn' ? 'change' : 'input', mySettingsChanged));
     $('myBtcNote').textContent = 'ETH gets ' + num(100 - m.btc) + '%.';
   }
-  // Paydays as Date objects (local midnight)
-  function payday(p, k) { // k-th payday relative to the anchor (k can be negative)
-    const [y, m, d] = p.next.split('-').map(Number); const a = new Date(y, m - 1, d);
-    if (p.freq === 'weekly' || p.freq === 'biweekly') { const step = p.freq === 'weekly' ? 7 : 14; const r = new Date(a); r.setDate(a.getDate() + k * step); return r; }
-    if (p.freq === 'monthly') { const r = new Date(a.getFullYear(), a.getMonth() + k, 1); r.setDate(Math.min(d, new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate())); return r; }
-    // twice a month: 1st and 15th, k counts half-months from the anchor's half
-    const half = a.getDate() >= 15 ? 1 : 0; const idx = a.getMonth() * 2 + half + k + a.getFullYear() * 24;
-    const yy = Math.floor(idx / 24), mm = Math.floor((idx % 24) / 2), hh = idx % 2;
-    return new Date(yy, mm, hh ? 15 : 1);
-  }
-  function lastAndNext(p) {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    let k = 0; while (payday(p, k) > today) k--; while (payday(p, k + 1) <= today) k++;
-    return { last: payday(p, k), next: payday(p, k + 1), k };
-  }
-  ['cPay', 'cFreq', 'cNext', 'cMode', 'cPct', 'cFixed', 'cTarget'].forEach((id) => $(id).addEventListener('input', () => {
-    store.set('plan.pay', $('cPay').value); store.set('plan.freq', $('cFreq').value); store.set('plan.next', $('cNext').value);
-    store.set('plan.mode', $('cMode').value); store.set('plan.pct', $('cPct').value); store.set('plan.fixed', $('cFixed').value); store.set('plan.target', $('cTarget').value);
-    renderCoach(); renderToday(); planChanged();
-  }));
-  function planReady(p) { return p.next && saveAmount(p) > 0; }
-  function renderCoach() {
-    const p = PLAN();
-    $('cPctRow').hidden = p.mode !== 'pct'; $('cFixedRow').hidden = p.mode !== 'fixed'; renderSplit();
-    const out = $('cPlan');
-    if (!planReady(p)) { out.innerHTML = '<p class="muted">' + (p.mode === 'split' && !splitValid(SPLIT()) ? 'Make the parts in Split a payment add up to 100%.' : 'Fill in your pay and next payday to get a plan.') + '</p>'; return; }
-    const S = saveAmount(p); const L = LOCKS.find((l) => l.addr === p.target);
-    const rows = ['<div><b>Each payday:</b> lock ' + money(S) + (p.mode === 'pct' ? ' (' + p.pct + '% of ' + money(p.pay) + ')' : p.mode === 'split' ? ' (' + num(SPLIT().save) + '% of ' + money(p.pay) + ')' : '') + '</div>'];
-    if (p.mode === 'split') { const x = splitOf(p.pay, SPLIT()); rows.push('<div><b>Spend:</b> ' + money(x.spend) + ' · <b>Invest:</b> ' + money(x.invest) + '</div>'); }
-    const perYear = { weekly: 52, biweekly: 26, twice: 24, monthly: 12 }[p.freq];
-    rows.push('<div><b>In a year:</b> ' + money(S * perYear) + '</div>');
-    if (L) {
-      const left = Math.max(0, fmt(L.goal) - fmt(L.balance));
-      if (left === 0) rows.push('<div class="ok-text"><b>Goal reached!</b> Withdraw it on the Savings screen, then set your next goal.</div>');
-      else {
-        const n = Math.ceil(left / S); const { k } = lastAndNext(p); const when = payday(p, k + n);
-        rows.push('<div><b>' + money(left) + ' to go:</b> about ' + n + ' more payday' + (n > 1 ? 's' : '') + ', around ' + dayStr(when) + '</div>');
-        const backup = new Date(L.releaseTime * 1000); let m = 0; while (payday(p, k + m + 1) < backup && m < 2000) m++;
-        if (m > 0 && when > backup) rows.push('<div class="warn">⚠ At this pace you will not reach it before the backup date (' + dateStr(L.releaseTime) + '). To make it, lock about ' + money(Math.ceil(left / m * 100) / 100) + ' each payday.</div>');
-      }
-    } else rows.push('<div class="muted">Choose a goal above to see when you will reach it. No goal yet? Make one in New lock.</div>');
-    out.innerHTML = rows.join('');
-  }
-  function renderToday() {
-    const p = PLAN(); const box = $('today');
-    if (!viewer() || !planReady(p)) { box.innerHTML = '<div class="today-empty"><b>Make a payday plan</b><span>Tell the coach when you get paid. It tells you how much to lock each payday and reminds you.</span><button class="btn ghost small" data-go="coach">Make my plan</button></div>'; bindGo(box); return; }
-    const { last, next } = lastAndNext(p); const S = saveAmount(p);
-    const L = LOCKS.find((l) => l.addr === p.target);
-    const since = history ? history.filter((h) => h.time * 1000 >= last.getTime() && (!p.target || h.to === p.target)) : null;
-    const done = since && since.length > 0;
-    const isToday = last.toDateString() === new Date().toDateString();
-    let html;
-    if (done) html = '<div class="today-ok"><span class="big-check">✓</span><div><b>Saved this pay period.</b><span>Next payday: ' + dayStr(next) + '. ' + streakText() + '</span></div></div>';
-    else html = '<div class="today-due"><div><span class="label">' + (isToday ? 'Payday today' : 'Since payday ' + dayStr(last)) + '</span><b>Lock ' + money(S) + (L ? ' into your ' + num(fmt(L.goal)) + ' ' + L.sym + ' goal' : '') + '</b><span>' + streakText() + '</span></div>' +
-      (L && account ? '<button class="btn brass" id="todayGo">Lock ' + money(S) + '</button>' : '') + '</div>';
-    box.innerHTML = html;
-    const go = $('todayGo'); if (go) go.onclick = () => openDeposit(L, String(S));
+  $('cTarget').addEventListener('change', () => { store.set('plan.target', $('cTarget').value); renderCoach(); renderMine(); });
+  function renderToday() { // home: one button to the Got paid screen
+    const md = MODES[MY().mode], mon = thisMonth();
+    const line = mon.length ? 'This month: ' + mon.length + ' payment' + (mon.length > 1 ? 's' : '') + ', ' + money(cents(mon.reduce((s, e) => s + e.usd, 0))) + ' in.' : MODES[MY().mode].name + ': ' + ruleText(md) + '.';
+    $('today').innerHTML = '<div class="today-due"><div><span class="label">Got paid?</span><b>Split it in one tap</b><span>' + line + '</span><span>' + streakText() + '</span></div><button class="btn brass" id="todayGo">Got paid</button></div>';
+    $('todayGo').onclick = () => { go('coach'); setTimeout(() => $('gpAmount').focus(), 250); };
   }
   $('quickAdd').addEventListener('click', () => { // add money: straight to the lock if there is only one you can add to
     if (!account) return toast('Connect your wallet first.');
@@ -2806,18 +2746,6 @@ const P2 = [
     $('locks').scrollIntoView({ behavior: 'smooth', block: 'start' }); toast('Pick which savings to add money to.');
   });
   function bindGo(root) { root.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => go(b.dataset.go))); }
-  $('icsBtn').addEventListener('click', () => {
-    const p = PLAN(); if (!planReady(p)) return toast('Fill in your payday plan first.');
-    const [y, m, d] = p.next.split('-');
-    const rule = { weekly: 'FREQ=WEEKLY', biweekly: 'FREQ=WEEKLY;INTERVAL=2', twice: 'FREQ=MONTHLY;BYMONTHDAY=1,15', monthly: 'FREQ=MONTHLY;BYMONTHDAY=' + Number(d) }[p.freq];
-    const start = p.freq === 'twice' ? (Number(d) >= 15 ? y + m + '15' : y + m + '01') : y + m + d;
-    const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TimeVault//Coach//EN', 'BEGIN:VEVENT', 'UID:timevault-payday-' + Date.now() + '@timevault',
-      'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', 'DTSTART:' + start + 'T090000', 'RRULE:' + rule,
-      'SUMMARY:' + (AR ? 'يوم الراتب: اقفل ' + money(saveAmount(p)) + ' في TimeVault' : 'Payday: lock ' + money(saveAmount(p)) + ' in TimeVault'), 'DESCRIPTION:' + (AR ? 'افتح TimeVault واضغط قفل في الشاشة الرئيسية.' : 'Open TimeVault and tap Lock on the home screen.'),
-      'BEGIN:VALARM', 'TRIGGER:PT0M', 'ACTION:DISPLAY', 'DESCRIPTION:' + (AR ? 'يوم الراتب: اقفل مدخراتك' : 'Payday: lock your savings'), 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
-    download('timevault-payday.ics', ics, 'text/calendar');
-    toast('Open the downloaded file to add the reminders to your calendar.');
-  });
   async function download(name, text, type) {
     if (NATIVE) { // the Android app cannot save files from a web page, so copy instead
       try { await navigator.clipboard.writeText(text); toast('Copied to your clipboard. Paste it into a note or email to keep it.', 8000); }
@@ -2873,17 +2801,14 @@ const P2 = [
     history = buildHistory(who);
     renderHistory(); renderToday(); if (history.length !== before) renderLocks(); renderFun();
   }
-  function streak() {
-    const p = PLAN(); if (!history || !planReady(p)) return 0;
-    const { k } = lastAndNext(p); let s = 0;
-    for (let i = 0; i < 200; i++) {
-      const a = payday(p, k - i), b = payday(p, k - i + 1);
-      const hit = history.some((h) => h.time * 1000 >= a.getTime() && h.time * 1000 < b.getTime());
-      if (hit) s++; else if (i === 0) continue; else break;
-    }
+  function streak() { // months in a row with at least one deposit; the current month only counts once you save in it
+    if (!history) return 0;
+    const months = new Set(history.filter((h) => h.time).map((h) => monthKey(new Date(h.time * 1000))));
+    const d = new Date(); d.setDate(1); let s = 0;
+    for (let i = 0; i < 240; i++) { if (months.has(monthKey(d))) s++; else if (i > 0) break; d.setMonth(d.getMonth() - 1); }
     return s;
   }
-  function streakText() { const s = streak(); return s ? 'Streak: ' + s + ' payday' + (s > 1 ? 's' : '') + ' in a row.' : 'Start your streak this payday.'; }
+  function streakText() { const s = streak(); return s ? 'Streak: ' + s + ' month' + (s > 1 ? 's' : '') + ' in a row.' : 'Start your streak this month.'; }
   function renderHistory() {
     const box = $('history');
     if (!history || (!history.length && !historyLoaded)) { box.innerHTML = '<p class="muted">' + (historyFailed ? 'Could not load your deposits right now. It will try again in a minute.' : 'Loading your deposits from the blockchain…') + '</p>'; return; }
@@ -2990,9 +2915,9 @@ const P2 = [
     ['first-dep', 'First deposit', 'Put money into a lock.', 'plus', '#1FC7B6', '#52E08F', (c) => c.deps >= 1],
     ['big-dep', 'Big move', 'Lock $100 or more in one go.', 'star', '#FFB547', '#FF7A59', (c) => c.biggest >= 100],
     ['three-locks', 'Three goals', 'Have 3 locks saving at once.', 'layers', '#4F8BFF', '#22C7E8', (c) => c.active >= 3],
-    ['streak-3', 'On a roll', 'Save 3 paydays in a row.', 'flame', '#FF7A59', '#FFB547', (c) => c.streak >= 3],
-    ['streak-6', 'Habit', 'Save 6 paydays in a row.', 'flame', '#FF6FA8', '#FF7A59', (c) => c.streak >= 6],
-    ['streak-12', 'Unstoppable', 'Save 12 paydays in a row.', 'flame', '#B467FF', '#FF6FCF', (c) => c.streak >= 12],
+    ['streak-3', 'On a roll', 'Save 3 months in a row.', 'flame', '#FF7A59', '#FFB547', (c) => c.streak >= 3],
+    ['streak-6', 'Habit', 'Save 6 months in a row.', 'flame', '#FF6FA8', '#FF7A59', (c) => c.streak >= 6],
+    ['streak-12', 'Unstoppable', 'Save 12 months in a row.', 'flame', '#B467FF', '#FF6FCF', (c) => c.streak >= 12],
     ['months-3', 'Steady', 'Lock money in 3 different months.', 'cal', '#1FC7B6', '#4F8BFF', (c) => c.months >= 3],
     ['patient-90', 'Patient', 'Keep money locked for 90 days.', 'clock', '#5FB3C4', '#4F8BFF', (c) => c.oldestDays >= 90],
     ['patient-365', 'One year strong', 'Keep money locked for a full year.', 'clock', '#B467FF', '#4F8BFF', (c) => c.oldestDays >= 365],
@@ -3104,8 +3029,8 @@ const P2 = [
     download((kind === 'goal' ? 'GoalTimelock' : 'TokenTimelock') + '-verify.json', json, 'application/json');
   }
 
-  // ------------------------------------------------------------------ payday notifications (Android app only)
-  // Schedules the next 26 paydays at 9:00 as one-time phone notifications. Rescheduled whenever the plan changes or the app opens.
+  // ------------------------------------------------------------------ lock reminders (Android app only)
+  // A reminder the day before and the moment each lock opens. Rescheduled whenever the app opens.
   function notifyNote(t) { $('notifyNote').textContent = t; $('notifyNote').hidden = !t; }
   async function scheduleNotifications(ask) {
     if (!LN) return;
@@ -3120,14 +3045,7 @@ const P2 = [
       store.set('notify', '1'); $('notifyBtn').hidden = true;
       const pending = await LN.getPending();
       if (pending.notifications.length) await LN.cancel({ notifications: pending.notifications.map((n) => ({ id: Number(n.id) })) });
-      const p = PLAN(); const list = []; const now = Date.now();
-      if (planReady(p)) {
-        const { k } = lastAndNext(p); const S = money(saveAmount(p));
-        for (let i = 0; list.length < 26 && i < 80; i++) {
-          const d = payday(p, k + i); d.setHours(9, 0, 0, 0);
-          if (d.getTime() > now + 60000) list.push({ id: 1000 + list.length, title: T('Payday: lock ' + S), body: T('Open TimeVault and tap Lock to keep your streak going.'), schedule: { at: d, allowWhileIdle: true } });
-        }
-      }
+      const list = []; const now = Date.now();
       // reminders the day before and the moment a lock opens (date locks, and goal locks' backup dates)
       let n = 0;
       for (const l of LOCKS) {
@@ -3139,16 +3057,13 @@ const P2 = [
         if (open.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T(name.charAt(0).toUpperCase() + name.slice(1) + ' is open'), body: T('You can withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' in TimeVault, or leave it and keep saving.'), schedule: { at: open, allowWhileIdle: true } });
       }
       if (list.length) await LN.schedule({ notifications: list });
-      const nextPay = list.find((x) => x.id < 2000);
-      notifyNote(nextPay ? 'Reminders on. Next payday reminder: ' + dayStr(nextPay.schedule.at) + ' at 9:00. You will also get a reminder before each lock opens.'
-        : list.length ? 'Reminders on for when your locks open. Fill in your plan above to also get payday reminders.'
-        : 'Reminders are on. Fill in your plan above to get payday reminders.');
+      notifyNote('Reminders on. You will get a reminder before each lock opens.');
     } catch (e) { notifyNote('Could not set notifications: ' + nice(e)); }
   }
-  let planT;
-  function planChanged() { if (LN && store.get('notify') === '1') { clearTimeout(planT); planT = setTimeout(() => scheduleNotifications(false), 1500); } }
+  let remT;
+  function remindersChanged() { if (LN && store.get('notify') === '1') { clearTimeout(remT); remT = setTimeout(() => scheduleNotifications(false), 1500); } }
   $('notifyBtn').addEventListener('click', () => scheduleNotifications(true));
-  if (LN) { $('icsBtn').hidden = true; $('notifyBtn').hidden = store.get('notify') === '1'; }
+  if (LN) $('notifyBtn').hidden = store.get('notify') === '1';
 
   // ------------------------------------------------------------------ language switch
   document.querySelectorAll('[data-lang]').forEach((b) => {
@@ -3161,9 +3076,6 @@ const P2 = [
   $('dialTicks').innerHTML = Array.from({ length: 60 }, (_, i) => { const a = i / 60 * 2 * Math.PI, r1 = i % 5 ? 50 : 48, r2 = 54; return '<line' + (i % 5 ? '' : ' class="major"') + ' x1="' + (60 + r1 * Math.sin(a)).toFixed(2) + '" y1="' + (60 - r1 * Math.cos(a)).toFixed(2) + '" x2="' + (60 + r2 * Math.sin(a)).toFixed(2) + '" y2="' + (60 - r2 * Math.cos(a)).toFixed(2) + '"/>'; }).join('');
   if (NATIVE) $('testsLink').href = TESTS_URL;
   $('wcId').value = store.get('wcid');
-  const p0 = PLAN(); $('cPay').value = p0.pay || ''; $('cFreq').value = p0.freq; $('cNext').value = p0.next; $('cMode').value = p0.mode; $('cPct').value = p0.pct; $('cFixed').value = p0.fixed || '';
-  $('spSpend').value = store.get('split.spend', '50'); $('spSave').value = store.get('split.save', '30'); $('spInvest').value = store.get('split.invest', '20');
-  if (!p0.next) { const d = new Date(); d.setDate(d.getDate() + 1); $('cNext').value = [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-'); }
   myBoot();
   renderLessons(); codeFingerprints(); applyType();
   window.history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
