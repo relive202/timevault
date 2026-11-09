@@ -4,7 +4,9 @@
 
 A phone app that locks your USDC or USDT on Arbitrum One until you reach a savings goal, or until a backup date, whichever comes first. Nobody can take the money out early, including you. When it unlocks, it can only pay your own wallet.
 
-It also has a savings coach: a payment splitter (spend, save, invest), a payday plan, a streak counter, calendar reminders and short money lessons.
+It also has a "Got paid" screen: type what a client paid you once and it splits it into save, invest and spend using your Claude Max or Pro percentages (Max: 50 / 16.67 / 33.33, Pro: 60 / 20 / 20). The save part locks with one tap through the normal deposit screen, and Done logs the payment and adds the invest part to your BTC/ETH count. It also has a streak counter (months in a row you saved) and short money lessons.
+
+"My setup" (on the Got paid screen) holds the one-time settings, and the home screen shows a Tangem savings goal card (months left and backup date), a BTC/ETH card with a reminder to move it to Tangem at $400, and a monthly spending pot with food-delivery and fun caps that resets on the 1st. Binance amounts are typed in by hand: the app never connects to an exchange or asks for keys.
 
 There is no server, no account and no company holding your coins. The app is a single web page that talks directly to the Arbitrum blockchain and to your wallet. It works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet.
 
