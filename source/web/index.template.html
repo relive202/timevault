@@ -127,6 +127,8 @@ section { display: grid; gap: 16px; }
 .lv-head .pot-ico { width: 60px; height: 60px; margin-bottom: 8px; } .lv-head .pot-ico svg { width: 30px; height: 30px; }
 .lv-head h1 { font-size: 17px; font-weight: 600; color: var(--muted); letter-spacing: -.01em; }
 .lockview .quick { margin-top: 10px; max-width: 400px; }
+#ivCoins .irow { padding: 10px 0; }
+#tab-home .quick { grid-template-columns: repeat(4, 1fr); max-width: 380px; }
 .prog-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--muted); }
 .prog-top b { font-weight: 600; color: var(--ink); } .prog-top b.open { color: var(--mint); }
 .irow { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; font-size: 14.5px; }
@@ -460,6 +462,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
           <button id="quickAdd"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>Add money</button>
           <button data-tab="new"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span>New lock</button>
           <button data-tab="coach"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>Got paid</button>
+          <button data-tab="invest"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M5 15l4.5-4.5 3.5 3 6-6.5"/><path d="M15 7h4v4"/></svg></span>Invest</button>
         </div>
       </div>
       <div class="group pad chart" id="homeChart" hidden><div class="ch-top"><div><span class="ch-label"></span><b class="ch-val"></b></div><div class="ranges"><button data-range="1M">1M</button><button data-range="3M">3M</button><button data-range="1Y">1Y</button><button data-range="All">All</button></div></div><div class="ch-plot"></div><div class="ch-axis"></div></div>
@@ -568,6 +571,42 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
     </div>
   </section>
 
+  <!-- INVEST -->
+  <section id="tab-invest" hidden>
+    <h1 class="page-title">Invest</h1>
+    <div class="card" id="ivWeek"></div>
+    <div class="card" id="ivCoins"></div>
+    <details class="card advanced" id="ivSetup">
+      <summary><h2>My weekly plan</h2></summary>
+      <label for="ivWeekly">Weekly amount, $<input id="ivWeekly" inputmode="decimal" placeholder="Same as Got paid"><span class="small muted" style="font-weight:400" id="ivWeeklyNote"></span></label>
+      <div class="row">
+        <label for="ivBtc" style="flex:1;min-width:90px">BTC %<input id="ivBtc" inputmode="decimal" placeholder="70"></label>
+        <label for="ivEth" style="flex:1;min-width:90px">ETH %<input id="ivEth" inputmode="decimal" placeholder="30"></label>
+        <label for="ivSol" style="flex:1;min-width:90px">SOL %<input id="ivSol" inputmode="decimal" placeholder="0"></label>
+      </div>
+      <span id="ivMixNote" class="small muted"></span>
+      <div class="row">
+        <label for="ivPay" style="flex:1;min-width:140px">Pay with<select id="ivPay"><option value="USDC">USDC</option><option value="USDT">USDT</option></select></label>
+        <label for="ivDay" style="flex:1;min-width:140px">Buy day<select id="ivDay"></select></label>
+      </div>
+      <label class="check"><input type="checkbox" id="ivOn"><span>I invest here now, not on Binance. Got paid stops counting Binance buys, and the Android app reminds me on my buy day.</span></label>
+      <p class="small muted">Your plan stays on this phone.</p>
+    </details>
+    <div class="card" id="ivLog" hidden></div>
+    <details class="card advanced">
+      <summary><h2>How it works</h2></summary>
+      <ul class="protect">
+        <li><b>No new contract, no exchange account</b><span class="small muted">BTC and ETH are swapped on Uniswap, the biggest exchange on Arbitrum. The coins go straight to your own wallet. Nothing is held by TimeVault or by a contract.</span></li>
+        <li><b>You approve each buy</b><span class="small muted">Each week you tap Buy and approve in your wallet. First it asks to let Uniswap use exactly that week's amount (never unlimited), then the swap itself.</span></li>
+        <li><b>Price protection</b><span class="small muted">Before asking your wallet, the app compares Uniswap's price with Chainlink's market price and stops if it is more than 2% worse. Each coin also has a minimum it must receive, or the swap cancels itself.</span></li>
+        <li><b>BTC is WBTC here</b><span class="small muted">On Arbitrum, Bitcoin comes as WBTC: a token backed 1 to 1 by real BTC held by a custodian (BitGo). It tracks the BTC price, but you rely on that custodian.</span></li>
+        <li><b>SOL is bought on Solana</b><span class="small muted">Real SOL lives on the Solana network, not Arbitrum. Set up a weekly order once on Jupiter Recurring, paid with USDC on Solana, into your Tangem Solana address. Then log each buy here.</span></li>
+        <li><b>Spot only</b><span class="small muted">Plain buys of the coins. No lending, no interest, no leverage.</span></li>
+        <li><b>Prices go down too</b><span class="small muted">Unlike your locked savings, these coins can lose value. Only invest money you won't need soon.</span></li>
+      </ul>
+    </details>
+  </section>
+
   <!-- ACHIEVEMENTS -->
   <section id="tab-badges" hidden>
     <h1 class="page-title">Achievements</h1>
@@ -587,6 +626,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
     <div class="group">
       <button class="mrow" data-tab="new"><span class="mico" style="--g1:#1FC7B6;--g2:#52E08F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="mmid"><b>New lock</b><span>Start a savings goal or a date lock</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Got paid</b><span>Split a payment, your setup, streak and lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="invest"><span class="mico" style="--g1:#3DD68C;--g2:#1FC7B6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M5 15l4.5-4.5 3.5 3 6-6.5"/><path d="M15 7h4v4"/></svg></span><span class="mmid"><b>Invest</b><span>Weekly BTC, ETH and SOL buys, no exchange</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="badges"><span class="mico" style="--g1:#C9971C;--g2:#FFD66B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.5" r="5.5"/><path d="M8.5 9.8L6 3.5h4l2 4 2-4h4l-2.5 6.3"/></svg></span><span class="mmid"><b>Achievements</b><span>Your level and badges</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -652,6 +692,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
         <li><b>Proven, tested code</b><span class="small muted">Built on OpenZeppelin's widely used, audited timelock contract and tested 53 ways, including 560 random actions and attacks on the app.</span></li>
         <li><b>Fake locks are refused</b><span class="small muted">Before every deposit, the app checks that the lock's code matches the tested code exactly, using 4 separate servers.</span></li>
         <li><b>You approve everything</b><span class="small muted">The app can't move money by itself. Every action needs your approval in your wallet, and the app shows you the address first.</span></li>
+        <li><b>Invest is kept apart</b><span class="small muted">The weekly BTC and ETH buys use their own checks and only ever talk to Uniswap's swap router. They never touch your locks.</span></li>
       </ul>
     </div>
     <div class="card">

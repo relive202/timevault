@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mkWAQ8wULcqt9a0YQ0J5/KOJRR2Rd7tp9BnJ92k25Ts=' 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-/Y68Pijd+RmujsaYHqVpLqp1Lhh62zQ8F1NA3teeuxI=' 'sha256-uU8adZGyEK0Mgy5spcp1eJQev0zOYUqi9iQrIPSAjgU=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-mkWAQ8wULcqt9a0YQ0J5/KOJRR2Rd7tp9BnJ92k25Ts=' 'sha256-AwX2U1vBOSc5yMtZwvJxPazfvNRZDa0f4bBdssNbe5Y=' 'sha256-7copl3kJJrvECPep5GgVPmHKWyUZJIWyK6u+sP/GekM=' 'sha256-/Y68Pijd+RmujsaYHqVpLqp1Lhh62zQ8F1NA3teeuxI=' 'sha256-idHgttu38lmpHsBAJoDpc/TLalgvYCwMvrVrMby7z4c=' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.17.0/dist/index.umd.js https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js; style-src 'unsafe-inline'; font-src https://cdn.jsdelivr.net/npm/@fontsource-variable/onest@5.3.1/files/onest-latin-wght-normal.woff2; img-src 'self' data: blob:; connect-src https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://arbitrum.meowrpc.com wss://relay.walletconnect.org wss://relay.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.reown.com https://*.web3modal.org https://*.web3modal.com; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0F0F12">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -127,6 +127,8 @@ section { display: grid; gap: 16px; }
 .lv-head .pot-ico { width: 60px; height: 60px; margin-bottom: 8px; } .lv-head .pot-ico svg { width: 30px; height: 30px; }
 .lv-head h1 { font-size: 17px; font-weight: 600; color: var(--muted); letter-spacing: -.01em; }
 .lockview .quick { margin-top: 10px; max-width: 400px; }
+#ivCoins .irow { padding: 10px 0; }
+#tab-home .quick { grid-template-columns: repeat(4, 1fr); max-width: 380px; }
 .prog-top { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--muted); }
 .prog-top b { font-weight: 600; color: var(--ink); } .prog-top b.open { color: var(--mint); }
 .irow { display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; font-size: 14.5px; }
@@ -460,6 +462,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
           <button id="quickAdd"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>Add money</button>
           <button data-tab="new"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span>New lock</button>
           <button data-tab="coach"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span>Got paid</button>
+          <button data-tab="invest"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M5 15l4.5-4.5 3.5 3 6-6.5"/><path d="M15 7h4v4"/></svg></span>Invest</button>
         </div>
       </div>
       <div class="group pad chart" id="homeChart" hidden><div class="ch-top"><div><span class="ch-label"></span><b class="ch-val"></b></div><div class="ranges"><button data-range="1M">1M</button><button data-range="3M">3M</button><button data-range="1Y">1Y</button><button data-range="All">All</button></div></div><div class="ch-plot"></div><div class="ch-axis"></div></div>
@@ -568,6 +571,42 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
     </div>
   </section>
 
+  <!-- INVEST -->
+  <section id="tab-invest" hidden>
+    <h1 class="page-title">Invest</h1>
+    <div class="card" id="ivWeek"></div>
+    <div class="card" id="ivCoins"></div>
+    <details class="card advanced" id="ivSetup">
+      <summary><h2>My weekly plan</h2></summary>
+      <label for="ivWeekly">Weekly amount, $<input id="ivWeekly" inputmode="decimal" placeholder="Same as Got paid"><span class="small muted" style="font-weight:400" id="ivWeeklyNote"></span></label>
+      <div class="row">
+        <label for="ivBtc" style="flex:1;min-width:90px">BTC %<input id="ivBtc" inputmode="decimal" placeholder="70"></label>
+        <label for="ivEth" style="flex:1;min-width:90px">ETH %<input id="ivEth" inputmode="decimal" placeholder="30"></label>
+        <label for="ivSol" style="flex:1;min-width:90px">SOL %<input id="ivSol" inputmode="decimal" placeholder="0"></label>
+      </div>
+      <span id="ivMixNote" class="small muted"></span>
+      <div class="row">
+        <label for="ivPay" style="flex:1;min-width:140px">Pay with<select id="ivPay"><option value="USDC">USDC</option><option value="USDT">USDT</option></select></label>
+        <label for="ivDay" style="flex:1;min-width:140px">Buy day<select id="ivDay"></select></label>
+      </div>
+      <label class="check"><input type="checkbox" id="ivOn"><span>I invest here now, not on Binance. Got paid stops counting Binance buys, and the Android app reminds me on my buy day.</span></label>
+      <p class="small muted">Your plan stays on this phone.</p>
+    </details>
+    <div class="card" id="ivLog" hidden></div>
+    <details class="card advanced">
+      <summary><h2>How it works</h2></summary>
+      <ul class="protect">
+        <li><b>No new contract, no exchange account</b><span class="small muted">BTC and ETH are swapped on Uniswap, the biggest exchange on Arbitrum. The coins go straight to your own wallet. Nothing is held by TimeVault or by a contract.</span></li>
+        <li><b>You approve each buy</b><span class="small muted">Each week you tap Buy and approve in your wallet. First it asks to let Uniswap use exactly that week's amount (never unlimited), then the swap itself.</span></li>
+        <li><b>Price protection</b><span class="small muted">Before asking your wallet, the app compares Uniswap's price with Chainlink's market price and stops if it is more than 2% worse. Each coin also has a minimum it must receive, or the swap cancels itself.</span></li>
+        <li><b>BTC is WBTC here</b><span class="small muted">On Arbitrum, Bitcoin comes as WBTC: a token backed 1 to 1 by real BTC held by a custodian (BitGo). It tracks the BTC price, but you rely on that custodian.</span></li>
+        <li><b>SOL is bought on Solana</b><span class="small muted">Real SOL lives on the Solana network, not Arbitrum. Set up a weekly order once on Jupiter Recurring, paid with USDC on Solana, into your Tangem Solana address. Then log each buy here.</span></li>
+        <li><b>Spot only</b><span class="small muted">Plain buys of the coins. No lending, no interest, no leverage.</span></li>
+        <li><b>Prices go down too</b><span class="small muted">Unlike your locked savings, these coins can lose value. Only invest money you won't need soon.</span></li>
+      </ul>
+    </details>
+  </section>
+
   <!-- ACHIEVEMENTS -->
   <section id="tab-badges" hidden>
     <h1 class="page-title">Achievements</h1>
@@ -587,6 +626,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
     <div class="group">
       <button class="mrow" data-tab="new"><span class="mico" style="--g1:#1FC7B6;--g2:#52E08F"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="3"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span class="mmid"><b>New lock</b><span>Start a savings goal or a date lock</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="coach"><span class="mico" style="--g1:#FFB547;--g2:#FF7A59"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></span><span class="mmid"><b>Got paid</b><span>Split a payment, your setup, streak and lessons</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="mrow" data-tab="invest"><span class="mico" style="--g1:#3DD68C;--g2:#1FC7B6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M5 15l4.5-4.5 3.5 3 6-6.5"/><path d="M15 7h4v4"/></svg></span><span class="mmid"><b>Invest</b><span>Weekly BTC, ETH and SOL buys, no exchange</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="badges"><span class="mico" style="--g1:#C9971C;--g2:#FFD66B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14.5" r="5.5"/><path d="M8.5 9.8L6 3.5h4l2 4 2-4h4l-2.5 6.3"/></svg></span><span class="mmid"><b>Achievements</b><span>Your level and badges</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="safety"><span class="mico" style="--g1:#22B573;--g2:#45E0A6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 2.6v5.6c0 4.2-3 7.5-7 8.8-4-1.3-7-4.6-7-8.8V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span class="mmid"><b>Safety</b><span>How your money is protected</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       <button class="mrow" data-tab="setup"><span class="mico" style="--g1:#5C6070;--g2:#8A8F9E"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span><span class="mmid"><b>Settings</b><span>Wallet help, backups, hidden locks</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -652,6 +692,7 @@ html[dir="rtl"] select { background-position: 20px 50%, 15px 50%; padding-right:
         <li><b>Proven, tested code</b><span class="small muted">Built on OpenZeppelin's widely used, audited timelock contract and tested 53 ways, including 560 random actions and attacks on the app.</span></li>
         <li><b>Fake locks are refused</b><span class="small muted">Before every deposit, the app checks that the lock's code matches the tested code exactly, using 4 separate servers.</span></li>
         <li><b>You approve everything</b><span class="small muted">The app can't move money by itself. Every action needs your approval in your wallet, and the app shows you the address first.</span></li>
+        <li><b>Invest is kept apart</b><span class="small muted">The weekly BTC and ETH buys use their own checks and only ever talk to Uniswap's swap router. They never touch your locks.</span></li>
       </ul>
     </div>
     <div class="card">
@@ -1821,6 +1862,45 @@ const P2 = [
  "Set your goal under Got paid → My setup.": "حدّد هدفك من وصلني مال ← إعدادي."
   };
   Object.assign(d, D4);
+  // invest tab
+  Object.assign(d, {
+  "Invest": "استثمار",
+  "Weekly BTC, ETH and SOL buys, no exchange": "شراء أسبوعي لـ BTC وETH وSOL، بلا منصة تداول",
+  "This week's buy": "شراء هذا الأسبوع",
+  "Done this week": "تم هذا الأسبوع",
+  "Due": "مستحق",
+  "Not set": "غير محدد",
+  "Your coins": "عملاتك",
+  "Your buys will show up here.": "ستظهر مشترياتك هنا.",
+  "Buys": "المشتريات",
+  "receipt": "الإيصال",
+  "My weekly plan": "خطتي الأسبوعية",
+  "Weekly amount, $": "المبلغ الأسبوعي، $",
+  "Same as Got paid": "مثل شاشة وصلني مال",
+  "Pay with": "الدفع بـ",
+  "Buy day": "يوم الشراء",
+  "How it works": "كيف يعمل",
+  "Open Jupiter": "افتح Jupiter",
+  "Adds up to 100%.": "المجموع 100%.",
+  "Bought as WBTC on Arbitrum, into your wallet.": "يُشترى كـ WBTC على Arbitrum، إلى محفظتك.",
+  "Real ETH on Arbitrum, into your wallet.": "ETH حقيقي على Arbitrum، إلى محفظتك.",
+  "Bought on Solana with Jupiter Recurring. Log it here when it buys.": "يُشترى على Solana عبر Jupiter Recurring. سجّله هنا عند الشراء.",
+  "Logged this week.": "سُجّل هذا الأسبوع.",
+  "Logged your SOL buy.": "سُجّل شراء SOL.",
+  "Your shares must add up to 100%.": "يجب أن يكون مجموع النسب 100%.",
+  "Allow this week's swap": "اسمح بمبادلة هذا الأسبوع",
+  "Buy BTC and ETH": "اشترِ BTC وETH",
+  "Your wallet will ask you to approve a contract interaction with Uniswap's swap router:": "ستطلب محفظتك الموافقة على تعامل مع موجّه المبادلة في Uniswap:",
+  "Invest is kept apart": "الاستثمار منفصل",
+  "The weekly BTC and ETH buys use their own checks and only ever talk to Uniswap's swap router. They never touch your locks.": "مشتريات BTC وETH الأسبوعية لها فحوصها الخاصة ولا تتعامل إلا مع موجّه المبادلة في Uniswap. لا تلمس أقفالك أبدًا.",
+  "Sunday": "الأحد",
+  "Monday": "الاثنين",
+  "Tuesday": "الثلاثاء",
+  "Wednesday": "الأربعاء",
+  "Thursday": "الخميس",
+  "Friday": "الجمعة",
+  "Saturday": "السبت",
+  });
   P2.unshift([/^Lock it in your (\$[\d,.]+) goal with the button below\.$/, "اقفله في هدفك $1 بالزر بالأسفل."],
     [/^Keep it in Binance Spot for (\$[\d,.]+) BTC \+ (\$[\d,.]+) ETH\. Keep Simple Earn OFF\.$/, "أبقِه في Binance Spot لشراء $1 BTC و$2 ETH. أبقِ Simple Earn متوقفًا."],
     [/^This month: (\$[\d,.]+) paid in, (\$[\d,.]+) to save\.$/, "هذا الشهر: وصلك $1، منها $2 للادخار."],
@@ -1832,6 +1912,300 @@ const P2 = [
     [/^(Claude (?:Max|Pro) \(\$\d+\)): save ([\d.]+)%, invest ([\d.]+)%, spend ([\d.]+)%\. Change it in My setup below\.$/, "$1: ادخار $2%، استثمار $3%، صرف $4%. غيّرها من إعدادي بالأسفل."],
     [/^(Claude (?:Max|Pro) \(\$\d+\)): save ([\d.]+)%, invest ([\d.]+)%, spend ([\d.]+)%\.$/, "$1: ادخار $2%، استثمار $3%، صرف $4%."]);
   return { d, p: P2 };
+})();
+
+// =====================================================================================================
+// TimeVault invest guard: the weekly buy of BTC and ETH on Arbitrum One.
+// Kept apart from core.js on purpose. core.js (the lock guard) is unchanged and still never approves anything.
+// No new contract: the swap goes through Uniswap's own SwapRouter02 and the coins go straight to YOUR wallet.
+//
+// This guard can send only two kinds of transaction, and it builds the bytes itself:
+//   approve : USDC or USDT approve(Uniswap SwapRouter02, exactly this buy's amount). Never an unlimited approval.
+//   buy     : SwapRouter02.multicall(deadline, calls) where calls are only
+//               exactInput(USDC/USDT -> ... -> WBTC, recipient = YOUR wallet)
+//               exactInput(USDC/USDT -> ... -> WETH, recipient = the router itself), then unwrapWETH9(min, YOUR wallet)
+// Before asking the wallet it checks: the router, quoter, coins and price feeds are the real ones (on 2+ servers),
+// the Uniswap price is within 2% of Chainlink's price, and every part has a minimum it must receive or it reverts.
+// =====================================================================================================
+const TVI = (() => {
+  'use strict';
+
+  const A = {
+    ROUTER: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',  // Uniswap SwapRouter02
+    QUOTER: '0x61fFE014bA17989E743c5F6cB21bF9697530B21e',  // Uniswap QuoterV2
+    FACTORY: '0x1F98431c8aD98523631AE4a59f267346ea31F984', // Uniswap V3 factory
+    WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+    WBTC: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
+    FEED_ETH: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612', // Chainlink ETH / USD
+    FEED_BTC: '0x6ce185860a4963106506C203335A2910413708e9', // Chainlink BTC / USD
+  };
+  const ADDRESS_THIS = '0x0000000000000000000000000000000000000002'; // SwapRouter02: "keep it in the router" (for unwrapping)
+  const COINS = {
+    BTC: { token: A.WBTC, decimals: 8, symbol: 'WBTC', feed: A.FEED_BTC, feedName: 'BTC / USD' },
+    ETH: { token: A.WETH, decimals: 18, symbol: 'WETH', feed: A.FEED_ETH, feedName: 'ETH / USD' },
+  };
+  const MAX_BELOW_ORACLE = 200n;  // basis points: refuse if Uniswap pays more than 2% less than Chainlink's price
+  const SLIPPAGE = 50n;           // basis points: each part must get at least 99.5% of the quote, or the whole buy reverts
+  const MAX_BUY = 10000;          // dollars per buy, a typo guard
+  const MIN_PART = 1;             // dollars per coin
+  const FEED_MAX_AGE = 26 * 3600; // Chainlink updates these at least every 24h on Arbitrum
+
+  const ROUTER_ABI = [
+    'function multicall(uint256 deadline, bytes[] data) payable returns (bytes[])',
+    'function exactInput((bytes path, address recipient, uint256 amountIn, uint256 amountOutMinimum) params) payable returns (uint256)',
+    'function unwrapWETH9(uint256 amountMinimum, address recipient) payable',
+    'function WETH9() view returns (address)', 'function factory() view returns (address)',
+  ];
+  const QUOTER_ABI = [
+    'function quoteExactInput(bytes path, uint256 amountIn) returns (uint256 amountOut, uint160[] sqrtPriceX96AfterList, uint32[] initializedTicksCrossedList, uint256 gasEstimate)',
+    'function WETH9() view returns (address)', 'function factory() view returns (address)',
+  ];
+  const ERC20_ABI = ['function balanceOf(address) view returns (uint256)', 'function allowance(address,address) view returns (uint256)',
+    'function approve(address,uint256) returns (bool)', 'function decimals() view returns (uint8)', 'function symbol() view returns (string)',
+    'event Transfer(address indexed from, address indexed to, uint256 value)'];
+  const WETH_EVENTS = ['event Withdrawal(address indexed src, uint256 wad)'];
+  const FEED_ABI = ['function latestRoundData() view returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)',
+    'function decimals() view returns (uint8)', 'function description() view returns (string)'];
+
+  class Refused extends Error { constructor(msg) { super(msg); this.name = 'Refused'; this.refused = true; } }
+  const refuse = (m) => { throw new Refused(m); };
+  const lc = (s) => String(s).toLowerCase();
+
+  // Uniswap V3 path: token (20 bytes), fee (3 bytes), token, fee, token ...
+  function encodePath(ethers, hops) {
+    let out = '0x';
+    for (let i = 0; i < hops.length; i++) out += (i % 2 ? ethers.toBeHex(hops[i], 3) : ethers.getAddress(hops[i])).slice(2).toLowerCase();
+    return out;
+  }
+  function decodePath(ethers, path) {
+    const h = path.slice(2), out = []; let i = 0;
+    while (true) {
+      out.push(ethers.getAddress('0x' + h.slice(i, i + 40))); i += 40;
+      if (i >= h.length) break;
+      out.push(parseInt(h.slice(i, i + 6), 16)); i += 6;
+    }
+    if (i !== h.length) refuse('Internal check failed: bad swap route. Stopped.');
+    return out;
+  }
+  // Routes worth trying for one coin. The best quote wins.
+  function candidates(input, target, usdc) {
+    const r = [[input, 500, target], [input, 3000, target], [input, 100, target]];
+    if (lc(target) !== lc(A.WETH)) r.push([input, 500, A.WETH, 500, target], [input, 500, A.WETH, 3000, target]);
+    if (lc(input) !== lc(usdc)) r.push([input, 100, usdc, 500, target]);
+    return r;
+  }
+
+  async function quorum(providers, fn, need, label) {
+    const res = await Promise.allSettled(providers.map((p) => fn(p)));
+    const ok = res.filter((r) => r.status === 'fulfilled').map((r) => r.value);
+    if (ok.length < need) refuse('Could not reach enough Arbitrum servers to double-check ' + label + '. Nothing was sent. Try again in a minute.');
+    const s = (v) => JSON.stringify(v, (k, x) => (typeof x === 'bigint' ? x.toString() : x));
+    for (const v of ok) if (s(v) !== s(ok[0])) refuse('Arbitrum servers disagree about ' + label + '. Stopping to be safe. Nothing was sent.');
+    return ok[0];
+  }
+
+  // cfg: { providers, need, tokens: {USDC:{address,decimals}, USDT:{...}}, chainId, maxBaseFee, getAccount, getSigner,
+  //        onAsk(summary) -> Promise<bool>, onSent(hash, summary), now?: () => seconds }
+  function makeInvestor(ethers, cfg) {
+    const main = cfg.providers[0];
+    const allowedIn = Object.fromEntries(Object.entries(cfg.tokens).map(([k, v]) => [lc(v.address), k]));
+    const known = new Set([A.WETH, A.WBTC, ...Object.values(cfg.tokens).map((t) => t.address)].map(lc));
+    const R = new ethers.Interface(ROUTER_ABI), E = new ethers.Interface(ERC20_ABI), W = new ethers.Interface(WETH_EVENTS);
+
+    // The router, quoter, coins and price feeds must be what we expect, according to every server that answers.
+    async function checkSetup() {
+      await quorum(cfg.providers, async (p) => {
+        const r = new ethers.Contract(A.ROUTER, ROUTER_ABI, p), q = new ethers.Contract(A.QUOTER, QUOTER_ABI, p);
+        const out = { rw: await r.WETH9(), rf: await r.factory(), qw: await q.WETH9(), qf: await q.factory() };
+        for (const [k, c] of Object.entries(COINS)) {
+          const t = new ethers.Contract(c.token, ERC20_ABI, p), f = new ethers.Contract(c.feed, FEED_ABI, p);
+          out[k] = [await t.symbol(), Number(await t.decimals()), Number(await f.decimals()), await f.description()];
+        }
+        return out;
+      }, cfg.need, 'the exchange').then((o) => {
+        if (lc(o.rw) !== lc(A.WETH) || lc(o.rf) !== lc(A.FACTORY) || lc(o.qw) !== lc(A.WETH) || lc(o.qf) !== lc(A.FACTORY)) refuse('The Uniswap contracts on this network look wrong. Nothing was sent.');
+        for (const [k, c] of Object.entries(COINS)) {
+          const [sym, dec, fdec, desc] = o[k];
+          if (sym !== c.symbol || dec !== c.decimals) refuse('The ' + k + ' coin contract looks wrong. Nothing was sent.');
+          if (fdec !== 8 || desc !== c.feedName) refuse('The ' + k + ' price feed looks wrong. Nothing was sent.');
+        }
+      });
+    }
+
+    // Chainlink price in dollars with 8 decimals, agreed by 2+ servers and fresh.
+    async function oracle(coin, nowTs) {
+      const c = COINS[coin];
+      const [answer, updatedAt] = await quorum(cfg.providers, async (p) => { const r = await new ethers.Contract(c.feed, FEED_ABI, p).latestRoundData(); return [r[1], r[3]]; }, cfg.need, 'the ' + coin + ' price');
+      if (answer <= 0n) refuse('The ' + coin + ' price feed returned no price. Nothing was sent.');
+      if (nowTs - Number(updatedAt) > FEED_MAX_AGE) refuse('The ' + coin + ' price feed is out of date. Nothing was sent. Try again later.');
+      return answer;
+    }
+    async function bestQuote(input, coin, amountIn) {
+      const q = new ethers.Contract(A.QUOTER, QUOTER_ABI, main);
+      let best = null;
+      for (const hops of candidates(input, COINS[coin].token, cfg.tokens.USDC.address)) {
+        const path = encodePath(ethers, hops);
+        try { const r = await q.quoteExactInput.staticCall(path, amountIn); if (!best || r[0] > best.out) best = { path, hops, out: r[0] }; } catch { /* no such pool */ }
+      }
+      if (!best) refuse('Uniswap has no route for ' + coin + ' right now. Nothing was sent.');
+      return best;
+    }
+
+    // Works out the buy without sending anything: amounts, routes, price checks, minimums.
+    // plan: { pay: 'USDC'|'USDT', parts: { BTC: dollars, ETH: dollars } }
+    async function prepare(plan) {
+      const t = cfg.tokens[plan.pay]; if (!t) refuse('Pay with USDC or USDT.');
+      const parts = Object.entries(plan.parts || {}).filter(([, v]) => Number(v) > 0);
+      if (!parts.length) refuse('Nothing to buy. Set your weekly amount and mix first.');
+      for (const [k, v] of parts) {
+        if (!COINS[k]) refuse('Only BTC and ETH can be bought on Arbitrum here.');
+        if (!(Number(v) >= MIN_PART)) refuse('Each coin needs at least $' + MIN_PART + '.');
+      }
+      const total = parts.reduce((s, [, v]) => s + Number(v), 0);
+      if (total > MAX_BUY) refuse('That is more than $' + MAX_BUY + ' in one buy. Check the amount.');
+      await checkSetup();
+      const nowTs = cfg.now ? await cfg.now() : Number((await main.getBlock('latest')).timestamp);
+      const legs = [];
+      for (const [coin, usd] of parts) {
+        const amountIn = ethers.parseUnits(Number(usd).toFixed(2), t.decimals);
+        const [price, q] = await Promise.all([oracle(coin, nowTs), bestQuote(t.address, coin, amountIn)]);
+        const c = COINS[coin];
+        // what Chainlink says the dollars should buy (stablecoin counted as $1)
+        const fair = amountIn * 10n ** BigInt(c.decimals) * 10n ** 8n / (price * 10n ** BigInt(t.decimals));
+        if (q.out * 10000n < fair * (10000n - MAX_BELOW_ORACLE)) refuse('Uniswap\'s ' + coin + ' price is more than 2% worse than the market price right now. Nothing was sent. Try again later.');
+        legs.push({ coin, usd: Number(usd), amountIn, path: q.path, hops: q.hops, quote: q.out, min: q.out * (10000n - SLIPPAGE) / 10000n, price });
+      }
+      return { pay: plan.pay, token: t, legs, total: legs.reduce((s, l) => s + l.amountIn, 0n), nowTs };
+    }
+
+    function buildBuy(p, account, deadline) {
+      const calls = [];
+      for (const l of p.legs) {
+        const toRouter = l.coin === 'ETH';
+        calls.push(R.encodeFunctionData('exactInput', [{ path: l.path, recipient: toRouter ? ADDRESS_THIS : account, amountIn: l.amountIn, amountOutMinimum: l.min }]));
+        if (toRouter) calls.push(R.encodeFunctionData('unwrapWETH9', [l.min, account]));
+      }
+      return R.encodeFunctionData('multicall', [deadline, calls]);
+    }
+
+    // Reads the bytes back and checks every rule in the header comment. The last word before the wallet.
+    function checkBuy(data, p, account) {
+      const top = R.parseTransaction({ data });
+      if (!top || top.name !== 'multicall' || top.signature !== 'multicall(uint256,bytes[])') refuse('Internal check failed: unexpected call. Stopped.');
+      let spent = 0n, wethOwed = 0n, unwrapped = false;
+      for (const raw of top.args[1]) {
+        const c = R.parseTransaction({ data: raw });
+        if (c && c.name === 'exactInput') {
+          if (unwrapped) refuse('Internal check failed: swap after unwrap. Stopped.');
+          const [path, recipient, amountIn, minOut] = c.args[0];
+          const hops = decodePath(ethers, path);
+          if (lc(hops[0]) !== lc(p.token.address)) refuse('Internal check failed: wrong coin paid in. Stopped.');
+          for (let i = 0; i < hops.length; i += 2) if (!known.has(lc(hops[i]))) refuse('Internal check failed: unknown coin in route. Stopped.');
+          const end = lc(hops[hops.length - 1]);
+          if (end === lc(A.WBTC)) { if (lc(recipient) !== lc(account)) refuse('Internal check failed: BTC not paid to your wallet. Stopped.'); }
+          else if (end === lc(A.WETH)) { if (lc(recipient) !== lc(ADDRESS_THIS)) refuse('Internal check failed: ETH route. Stopped.'); wethOwed += minOut; }
+          else refuse('Internal check failed: unknown coin bought. Stopped.');
+          if (minOut <= 0n) refuse('Internal check failed: no minimum. Stopped.');
+          spent += amountIn;
+        } else if (c && c.signature === 'unwrapWETH9(uint256,address)') {
+          if (lc(c.args[1]) !== lc(account) || c.args[0] !== wethOwed || unwrapped) refuse('Internal check failed: ETH not paid to your wallet. Stopped.');
+          unwrapped = true;
+        } else refuse('Internal check failed: unexpected call inside the buy. Stopped.');
+      }
+      if (wethOwed > 0n && !unwrapped) refuse('Internal check failed: ETH left in the router. Stopped.');
+      if (spent !== p.total) refuse('Internal check failed: amount mismatch. Stopped.');
+    }
+
+    async function signerChecks(signer, account) {
+      if (lc(cfg.getAccount()) !== lc(account) || lc(await signer.getAddress()) !== lc(account)) refuse('Wallet account changed. Reconnect and try again.');
+      if (Number(await signer.provider.send('eth_chainId', [])) !== cfg.chainId) refuse('Your wallet is not on Arbitrum One. Switch networks and try again. Nothing was sent.');
+    }
+    async function fees() {
+      const base = (await main.getBlock('latest')).baseFeePerGas ?? 0n;
+      if (cfg.maxBaseFee && base > cfg.maxBaseFee) refuse('Network fees look abnormally high right now. Nothing was sent. Try again later.');
+      let cap = base * 3n; const floor = ethers.parseUnits('0.1', 'gwei'); if (cap < floor) cap = floor;
+      return { maxFeePerGas: cap, maxPriorityFeePerGas: 0n };
+    }
+    async function waitReceipt(hash) {
+      for (let i = 0; i < 300; i++) { const rc = await main.getTransactionReceipt(hash).catch(() => null); if (rc) return rc; await new Promise((r) => setTimeout(r, 1000)); }
+      throw new Error('Timed out waiting for the transaction. Check your wallet history before trying again.');
+    }
+    async function sendTx(signer, account, tx, summary) {
+      if (!(lc(tx.to) === lc(A.ROUTER) || allowedIn[lc(tx.to)])) refuse('Internal check failed: unexpected destination. Stopped.');
+      if (allowedIn[lc(tx.to)]) { const c = E.parseTransaction({ data: tx.data }); if (!c || c.name !== 'approve' || lc(c.args[0]) !== lc(A.ROUTER) || c.args[1] > ethers.parseUnits(String(MAX_BUY), 6)) refuse('Internal check failed: unexpected approval. Stopped.'); }
+      // dry run with the exact bytes, from your address, against the live chain
+      try { await main.call({ from: account, to: tx.to, data: tx.data, value: 0n }); }
+      catch (e) { refuse('Dry run failed, so nothing was sent: ' + (e.reason || e.shortMessage || e.message || e).toString().slice(0, 160)); }
+      let gasLimit;
+      try { gasLimit = (await main.estimateGas({ from: account, to: tx.to, data: tx.data, value: 0n })) * 13n / 10n; } catch { gasLimit = 2_000_000n; }
+      if (gasLimit > 5_000_000n) refuse('Unexpected gas use. Stopped.');
+      if (cfg.onAsk && !(await cfg.onAsk(summary))) refuse('Cancelled.');
+      await signerChecks(signer, account);
+      const sent = await signer.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gasLimit, chainId: BigInt(cfg.chainId), ...(await fees()) });
+      if (cfg.onSent) { try { cfg.onSent(sent.hash, summary); } catch {} }
+      const rc = await waitReceipt(sent.hash);
+      if (!rc || rc.status !== 1) throw new Error('The transaction failed on chain. ' + (summary.failNote || ''));
+      return rc;
+    }
+
+    // The weekly buy. Up to two wallet requests: approve this exact amount (skipped if already approved), then the buy.
+    async function buy(plan, onStep) {
+      const account = cfg.getAccount(); if (!account) refuse('Connect your wallet first.');
+      const signer = await cfg.getSigner(); await signerChecks(signer, account);
+      onStep && onStep('check');
+      const p = await prepare(plan);
+      const erc = new ethers.Contract(p.token.address, ERC20_ABI, main);
+      if ((await erc.balanceOf(account)) < p.total) refuse('Your wallet has less than ' + ethers.formatUnits(p.total, p.token.decimals) + ' ' + p.pay + '.');
+      const amt = ethers.formatUnits(p.total, p.token.decimals) + ' ' + p.pay;
+      if ((await erc.allowance(account, A.ROUTER)) < p.total) {
+        onStep && onStep('approve');
+        await sendTx(signer, account, { to: p.token.address, data: E.encodeFunctionData('approve', [A.ROUTER, p.total]) }, {
+          action: 'approve', to: p.token.address, spender: A.ROUTER,
+          text: 'Let Uniswap\'s swap router use exactly ' + amt + ' for this week\'s buy. Nothing else, and no coins move in this step.',
+          failNote: 'Your coins are still in your wallet.',
+        });
+      }
+      // fresh prices right before the buy, since the approval may have taken a while
+      const fresh = await prepare(plan);
+      if (fresh.total !== p.total) refuse('Internal check failed: amount changed. Stopped.');
+      const deadline = BigInt(fresh.nowTs + 20 * 60);
+      const data = buildBuy(fresh, account, deadline);
+      checkBuy(data, fresh, account);
+      onStep && onStep('buy');
+      const rc = await sendTx(signer, account, { to: A.ROUTER, data }, {
+        action: 'buy', to: A.ROUTER, legs: fresh.legs.map((l) => ({ coin: l.coin, usd: l.usd, min: ethers.formatUnits(l.min, COINS[l.coin].decimals) })),
+        text: 'Swap ' + amt + ' on Uniswap. ' + fresh.legs.map((l) => (l.coin === 'BTC' ? 'At least ' + ethers.formatUnits(l.min, 8) + ' WBTC' : 'At least ' + Number(ethers.formatEther(l.min)).toFixed(6) + ' ETH')).join(' and ') + ' to your wallet ' + account + ', or the swap cancels itself.',
+        failNote: 'Your ' + p.pay + ' is still in your wallet.',
+      });
+      // what actually arrived, read from the receipt
+      const got = { BTC: 0n, ETH: 0n };
+      for (const log of rc.logs || []) {
+        if (lc(log.address) === lc(A.WBTC)) { try { const ev = E.parseLog(log); if (ev && ev.name === 'Transfer' && lc(ev.args.to) === lc(account)) got.BTC += ev.args.value; } catch {} }
+        if (lc(log.address) === lc(A.WETH)) { try { const ev = W.parseLog(log); if (ev && ev.name === 'Withdrawal' && lc(ev.args.src) === lc(A.ROUTER)) got.ETH += ev.args.wad; } catch {} }
+      }
+      return { hash: rc.hash, pay: p.pay, legs: fresh.legs.map((l) => ({ coin: l.coin, usd: l.usd, amount: ethers.formatUnits(got[l.coin], COINS[l.coin].decimals) })) };
+    }
+
+    // Prices for the screens only (never used to send anything): Chainlink, from the first server that answers.
+    async function prices() {
+      const out = {};
+      for (const [k, c] of Object.entries(COINS)) {
+        for (const p of cfg.providers) { try { out[k] = Number((await new ethers.Contract(c.feed, FEED_ABI, p).latestRoundData())[1]) / 1e8; break; } catch {} }
+      }
+      return out;
+    }
+    async function holdings(who) {
+      const out = {};
+      for (const p of cfg.providers) {
+        try { out.BTC = Number(ethers.formatUnits(await new ethers.Contract(A.WBTC, ERC20_ABI, p).balanceOf(who), 8)); out.ETH = Number(ethers.formatEther(await p.getBalance(who))); return out; } catch {}
+      }
+      return out;
+    }
+
+    return Object.freeze({ prepare, buildBuy, checkBuy, buy, prices, holdings });
+  }
+
+  return Object.freeze({ A, ADDRESS_THIS, COINS, encodePath, decodePath, candidates, makeInvestor, Refused });
 })();
 
 // TimeVault app. All transactions go through TV.makeGuard (core.js). This file only builds the screens.
@@ -2026,6 +2400,8 @@ const P2 = [
         create: ['Create your lock', 'Your wallet will ask you to approve a contract interaction with:', s.to, 'This sets up your empty lock using Arbitrum\'s standard contract creator. No money moves yet. The network fee is a few cents of ETH.'],
         deposit: ['Add money to your lock', 'Your wallet will show a transfer to your lock:', s.recipient, s.text],
         release: ['Withdraw to your wallet', 'Your wallet will ask you to approve a contract interaction with your lock:', s.to, s.text],
+        approve: ['Allow this week\'s swap', 'Your wallet will ask you to let this address use your ' + (s.to === TOKENS.USDT.address ? 'USDT' : 'USDC') + '. It is Uniswap\'s swap router:', s.spender, s.text],
+        buy: ['Buy BTC and ETH', 'Your wallet will ask you to approve a contract interaction with Uniswap\'s swap router:', s.to, s.text],
       }[s.action];
       $('cfTitle').textContent = lines[0]; $('cfLead').textContent = lines[1];
       if (s.action === 'deposit' && s.lock) lines[3] += ' ' + opensText(s.lock);
@@ -2133,13 +2509,14 @@ const P2 = [
   }
 
   // ------------------------------------------------------------------ screens
-  const TABS = ['home', 'new', 'coach', 'setup', 'safety', 'menu', 'lock', 'badges'];
+  const TABS = ['home', 'new', 'coach', 'invest', 'setup', 'safety', 'menu', 'lock', 'badges'];
   document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => go(b.dataset.tab)));
   let page = 'home', depth = 0;
   function show(t) {
     TABS.forEach((x) => { $('tab-' + x).hidden = x !== t; });
     page = t; document.body.dataset.page = t; window.scrollTo(0, 0); onScroll();
     if (t === 'badges') renderBadges();
+    if (t === 'invest') renderInvest();
   }
   // every screen is a history step, so the phone's back gesture and the back arrow both go back one screen
   function go(t) {
@@ -2175,7 +2552,7 @@ const P2 = [
     $('menuWallet').textContent = viewer() ? short(viewer()) + (account ? '' : ' (view only)') : 'Not connected';
     $('gasHint').hidden = !(WALLET.ETH !== undefined && WALLET.ETH < ethers.parseEther('0.0002'));
     for (const o of $('lkToken').options) o.textContent = o.value + (WALLET[o.value] !== undefined ? ' (you have ' + num(fmt(WALLET[o.value])) + ')' : '');
-    renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones(); renderFun(); renderMine();
+    renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones(); renderFun(); renderMine(); if (page === 'invest') renderInvest();
     const tgt = $('cTarget'); const cur = store.get('plan.target');
     tgt.innerHTML = '<option value="">Pick automatically</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
   }
@@ -2644,6 +3021,7 @@ const P2 = [
     ['myGoal', 'mySpend', 'myDca'].forEach((id) => { $(id).hidden = !m.on; });
     if (!m.on) { $('sweepAlert').hidden = true; return; }
     renderGoalCard(m); renderSpend(m); renderDca(m); renderSweep(m);
+    if (IV().on && !(onBinanceUsd() > 0)) $('myDca').hidden = true; // all on-chain now: the Binance card has nothing to show
   }
 
   // ---- Got paid: type the amount once; save / invest / spend come from the Claude plan in My setup
@@ -2664,7 +3042,7 @@ const P2 = [
     const sub = (t) => '<div class="split-sub">' + t + '</div>';
     out.innerHTML = bar +
       line('--accent', 'To save', x.save) + sub(L ? 'Lock it in your ' + money(fmt(L.goal)).replace('.00', '') + ' goal with the button below.' : account ? 'Send it to your Tangem wallet as USDC on Arbitrum One. Make a goal lock to lock it here.' : 'Send it to your Tangem wallet as USDC on Arbitrum One, or connect your wallet to lock it here.') +
-      line('--mint', 'To invest', x.invest) + sub('Keep it in Binance Spot for ' + money(btc) + ' BTC + ' + money(cents(x.invest - btc)) + ' ETH. Keep Simple Earn OFF.') +
+      line('--mint', 'To invest', x.invest) + sub(IV().on ? 'Keep it as ' + IV().pay + ' in your wallet for your weekly buys in Invest (' + money(IV().weekly) + ' a week).' : 'Keep it in Binance Spot for ' + money(btc) + ' BTC + ' + money(cents(x.invest - btc)) + ' ETH. Keep Simple Earn OFF.') +
       line('--amber', 'To spend', x.spend) + sub('Move it to the Binance Funding wallet for Claude, food delivery and fun.');
     if (L && x.save > 0) { lock.hidden = false; lock.textContent = T('Lock ' + money(x.save)); }
   }
@@ -2691,9 +3069,9 @@ const P2 = [
     const m = MY(), amt = gpAmount(); if (!amt) return toast('Type an amount first.');
     const x = splitOf(amt, MODES[m.mode]), t = Date.now(), btc = cents(x.invest * m.btc / 100), eth = cents(x.invest - btc);
     const pl = paidLog(); pl.push({ t, usd: amt, ...x }); store.setJson('my.paid', pl.slice(-200));
-    const l = dcaLog(); if (btc > 0) l.push({ a: 'BTC', usd: btc, t }); if (eth > 0) l.push({ a: 'ETH', usd: eth, t: t + 1 }); store.setJson('my.dca', l.slice(-500));
+    if (!IV().on) { const l = dcaLog(); if (btc > 0) l.push({ a: 'BTC', usd: btc, t }); if (eth > 0) l.push({ a: 'ETH', usd: eth, t: t + 1 }); store.setJson('my.dca', l.slice(-500)); }
     $('gpAmount').value = ''; renderCoach(); renderMine(); renderToday();
-    toast('Logged ' + money(amt) + '. ' + money(x.invest) + ' added to your BTC and ETH.');
+    toast(IV().on ? 'Logged ' + money(amt) + '. Keep ' + money(x.invest) + ' for your weekly buys.' : 'Logged ' + money(amt) + '. ' + money(x.invest) + ' added to your BTC and ETH.');
   });
 
   // ---- one click handler for every button in the cards above
@@ -2971,6 +3349,115 @@ const P2 = [
   $('levelRow').addEventListener('click', () => go('badges'));
   function renderFun() { renderCharts(); monthLine(); renderFx(); renderLevel(); if (page === 'badges') renderBadges(); checkBadges(); }
 
+  // ------------------------------------------------------------------ invest: a weekly buy of BTC, ETH and SOL, without Binance
+  // BTC and ETH are bought on Arbitrum through Uniswap by the invest guard (invest.js), straight into your wallet.
+  // SOL lives on Solana, so it is bought there with Jupiter Recurring and only logged here.
+  const investor = TVI.makeInvestor(ethers, {
+    providers, need: 2, tokens: TOKENS, chainId: CHAIN_ID, maxBaseFee: ethers.parseUnits('2', 'gwei'),
+    getAccount: () => account,
+    getSigner: async () => { if (!eip) throw new TV.Refused('Connect your wallet first.'); return new ethers.BrowserProvider(eip).getSigner(account); },
+    onAsk: confirmScreen,
+  });
+  const JUP_URL = 'https://jup.ag/recurring';
+  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const pct = (k, d) => { const v = store.get(k, ''); const n = v === '' ? d : Number(v); return Number.isFinite(n) && n >= 0 && n <= 100 ? n : d; };
+  const IV = () => {
+    const m = MY(), btc = pct('inv.btc', m.btc), eth = pct('inv.eth', 100 - m.btc), sol = pct('inv.sol', 0);
+    const own = moneyIn(store.get('inv.weekly', ''));
+    return { on: store.get('inv.on', '0') === '1', pay: store.get('inv.pay', 'USDC') === 'USDT' ? 'USDT' : 'USDC', day: Number(store.get('inv.day', '1')) % 7,
+      weekly: own || weekly(m).total, own: !!own, btc, eth, sol, mixOk: Math.abs(btc + eth + sol - 100) < 0.01 };
+  };
+  // the week's dollars per coin; cents always add up to the weekly amount (SOL takes any rounding cent)
+  function ivParts(v) {
+    const c = Math.round(v.weekly * 100), b = Math.round(c * v.btc / 100), e = Math.round(c * v.eth / 100);
+    return { BTC: b / 100, ETH: e / 100, SOL: v.sol > 0 ? (c - b - e) / 100 : 0 };
+  }
+  const ivLog = () => store.json('inv.log', []).filter((e) => e && e.coin && moneyIn(e.usd));
+  // the most recent buy day at midnight, local time
+  function ivWeekStart(v, now = new Date()) { const d = new Date(now); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() - v.day + 7) % 7)); return d; }
+  const ivDone = (v, coin) => ivLog().some((e) => e.t >= ivWeekStart(v).getTime() && (coin ? e.coin === coin : e.coin !== 'SOL'));
+  let ivPrices = {}, ivHeld = {}, ivPriceT = 0;
+  async function ivLoadPrices() {
+    if (Date.now() - ivPriceT < 120000) return; ivPriceT = Date.now();
+    try { ivPrices = await investor.prices(); if (viewer()) ivHeld = await investor.holdings(viewer()); } catch {}
+    if (page === 'invest') renderInvest();
+  }
+  function renderInvest() {
+    const v = IV(), x = ivParts(v), chain = cents(x.BTC + x.ETH), done = ivDone(v), solDone = ivDone(v, 'SOL');
+    const next = ivWeekStart(v); next.setDate(next.getDate() + 7);
+    const due = !done && chain > 0;
+    const bal = WALLET[v.pay] !== undefined ? fmt(WALLET[v.pay]) : null;
+    const row = (name, usd, how) => '<div class="split-line" style="--dot:var(--mint)"><b>' + name + '</b><span>' + money(usd) + '</span></div><div class="split-sub">' + how + '</div>';
+    $('ivWeek').innerHTML = '<div class="section-head"><h2>This week\'s buy</h2><span class="chip">' + (done ? 'Done this week' : chain > 0 ? 'Due' : 'Not set') + '</span></div>' +
+      '<p class="small muted">' + money(v.weekly) + ' every ' + DAYS[v.day] + (v.own ? '' : ' (the invest part of Got paid)') + '. Next week starts ' + dayStr(next) + '.</p>' +
+      (v.mixOk ? '' : '<div class="small warn">Your BTC, ETH and SOL shares add up to ' + num(v.btc + v.eth + v.sol) + '%, not 100%. Fix them in My weekly plan.</div>') +
+      (x.BTC > 0 ? row('BTC', x.BTC, 'Bought as WBTC on Arbitrum, into your wallet.') : '') +
+      (x.ETH > 0 ? row('ETH', x.ETH, 'Real ETH on Arbitrum, into your wallet.') : '') +
+      (x.SOL > 0 ? row('SOL', x.SOL, solDone ? 'Logged this week.' : 'Bought on Solana with Jupiter Recurring. Log it here when it buys.') : '') +
+      (chain > 0 ? '<div class="row"><button class="btn brass" id="ivBuy"' + (v.mixOk ? '' : ' disabled') + '>' + (done ? 'Buy again' : 'Buy BTC + ETH') + ' for ' + money(chain) + '</button></div>' +
+        '<p class="small muted">Paid with ' + v.pay + (bal !== null ? ' (you have ' + num(bal) + ')' : '') + '. Up to two taps in your wallet: allow this exact amount, then the swap. ' + (account ? '' : 'Connect your wallet first.') + '</p>' : '') +
+      (x.SOL > 0 ? '<div class="row"><a class="btn ghost small" href="' + JUP_URL + '" target="_blank" rel="noopener">Open Jupiter</a><button class="btn ghost small" id="ivSolLog">I bought ' + money(x.SOL) + ' SOL</button></div>' : '');
+    if ($('ivBuy')) $('ivBuy').onclick = (ev) => ivBuy(ev.currentTarget);
+    if ($('ivSolLog')) $('ivSolLog').onclick = () => { const l = ivLog(); l.push({ t: Date.now(), coin: 'SOL', usd: ivParts(IV()).SOL }); store.setJson('inv.log', l.slice(-500)); toast('Logged your SOL buy.'); renderInvest(); remindersChanged(); };
+
+    // what you hold
+    const log = ivLog(), coins = ['BTC', 'ETH', 'SOL'].filter((c) => log.some((e) => e.coin === c) || x[c] > 0);
+    const lines = coins.map((c) => {
+      const es = log.filter((e) => e.coin === c), usd = cents(es.reduce((s, e) => s + e.usd, 0)), amt = es.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+      const avg = amt > 0 ? usd / amt : 0, now = ivPrices[c], val = now && amt ? cents(amt * now) : 0;
+      return '<div class="irow"><span>' + c + (amt ? ' · ' + num(amt, c === 'BTC' ? 8 : 6) : '') + '</span><b>' + money(usd) + ' put in' +
+        (val ? ' · worth ' + money(val) + ' <span class="' + (val >= usd ? 'ok-text' : 'warn') + '">(' + (val >= usd ? '+' : '') + num(100 * (val - usd) / usd, 1) + '%)</span>' : '') + '</b></div>' +
+        (avg ? '<div class="small muted" style="padding-bottom:8px">Average buy price ' + money(avg) + (now ? ' · now ' + money(now) : '') + '</div>' : '');
+    }).join('');
+    const held = ivHeld.BTC !== undefined ? '<p class="small muted">In your wallet now: ' + num(ivHeld.BTC, 8) + ' WBTC · ' + num(ivHeld.ETH, 6) + ' ETH (some ETH is for fees).</p>' : '';
+    $('ivCoins').innerHTML = '<div class="section-head"><h2>Your coins</h2></div>' + (log.length ? lines : '<p class="muted">Your buys will show up here.</p>') + held;
+
+    const rec = log.slice(-10).reverse();
+    $('ivLog').hidden = !rec.length;
+    $('ivLog').innerHTML = '<div class="section-head"><h2>Buys</h2></div><ol class="mylog">' + rec.map((e) => '<li><span>' + new Date(e.t).toLocaleDateString(DATELOC, { month: 'short', day: 'numeric' }) + ' · ' + e.coin +
+      (e.hash ? ' · <a href="https://arbiscan.io/tx/' + esc(e.hash) + '" target="_blank" rel="noopener">receipt</a>' : '') + '</span><b>' + money(e.usd) + '</b>' +
+      (e.hash ? '' : '<button class="x" data-iv-del="' + e.t + '" aria-label="Remove">×</button>') + '</li>').join('') + '</ol>';
+    $('ivLog').querySelectorAll('[data-iv-del]').forEach((b) => (b.onclick = () => { store.setJson('inv.log', ivLog().filter((e) => String(e.t) !== b.dataset.ivDel || e.hash)); renderInvest(); }));
+    ivLoadPrices();
+  }
+  async function ivBuy(btn) {
+    if (!SELF.ok) return toast('Safety check failed. Do not use this copy of the app.');
+    const v = IV(), x = ivParts(v);
+    if (!v.mixOk) return toast('Your shares must add up to 100%.');
+    await run(btn, async () => {
+      await ensureArbitrum();
+      const r = await investor.buy({ pay: v.pay, parts: { BTC: x.BTC, ETH: x.ETH } });
+      const l = ivLog(), t = Date.now();
+      r.legs.forEach((g, i) => l.push({ t: t + i, coin: g.coin, usd: g.usd, amount: g.amount, hash: r.hash }));
+      store.setJson('inv.log', l.slice(-500)); ivPriceT = 0;
+      toast('Bought! ' + r.legs.map((g) => num(Number(g.amount), g.coin === 'BTC' ? 8 : 6) + ' ' + (g.coin === 'BTC' ? 'WBTC' : 'ETH')).join(' and ') + ' are in your wallet.', 9000);
+      remindersChanged();
+    });
+    renderInvest();
+  }
+  // ---- My weekly plan
+  const IVFIELDS = { ivWeekly: 'inv.weekly', ivBtc: 'inv.btc', ivEth: 'inv.eth', ivSol: 'inv.sol' };
+  function ivSettingsChanged() {
+    for (const [id, k] of Object.entries(IVFIELDS)) store.set(k, $(id).value.trim());
+    store.set('inv.pay', $('ivPay').value); store.set('inv.day', $('ivDay').value); store.set('inv.on', $('ivOn').checked ? '1' : '0');
+    ivNotes(); renderInvest(); renderCoach(); renderMine(); remindersChanged();
+  }
+  function ivNotes() {
+    const v = IV();
+    $('ivWeeklyNote').textContent = v.own ? '' : 'Empty = the invest part of Got paid, ' + money(weekly(MY()).total) + ' a week.';
+    $('ivMixNote').textContent = v.mixOk ? 'Adds up to 100%.' : 'These add up to ' + num(v.btc + v.eth + v.sol) + '%. Make them add up to 100%.';
+    $('ivMixNote').className = 'small ' + (v.mixOk ? 'muted' : 'warn');
+  }
+  function ivBoot() {
+    const v = IV();
+    $('ivDay').innerHTML = DAYS.map((d, i) => '<option value="' + i + '">' + d + '</option>').join('');
+    $('ivWeekly').value = store.get('inv.weekly', ''); $('ivBtc').value = String(v.btc); $('ivEth').value = String(v.eth); $('ivSol').value = String(v.sol);
+    $('ivPay').value = v.pay; $('ivDay').value = String(v.day); $('ivOn').checked = v.on;
+    Object.keys(IVFIELDS).forEach((id) => $(id).addEventListener('input', ivSettingsChanged));
+    ['ivPay', 'ivDay', 'ivOn'].forEach((id) => $(id).addEventListener('change', ivSettingsChanged));
+    ivNotes();
+  }
+
   // ------------------------------------------------------------------ coach: lessons
   const LESSONS = [
     ['Pay yourself first', 'Lock your savings the day you get paid, before you spend anything. Saving what is left at the end of the month usually means saving nothing.'],
@@ -3056,8 +3543,16 @@ const P2 = [
         if (before.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T('Tomorrow: ' + name + ' ' + what), body: T('It holds ' + num(fmt(l.balance)) + ' ' + l.sym + '.'), schedule: { at: before, allowWhileIdle: true } });
         if (open.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T(name.charAt(0).toUpperCase() + name.slice(1) + ' is open'), body: T('You can withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' in TimeVault, or leave it and keep saving.'), schedule: { at: open, allowWhileIdle: true } });
       }
+      const v = IV(), x = ivParts(v), chain = cents(x.BTC + x.ETH);
+      if (v.on && v.weekly > 0) { // weekly buy reminders for the next 8 weeks, at 10:00 on the buy day
+        for (let i = 0; i < 9; i++) {
+          const at = ivWeekStart(v); at.setDate(at.getDate() + 7 * i); at.setHours(10, 0, 0, 0);
+          if (at.getTime() <= now + 60000 || (i === 0 && ivDone(v))) continue;
+          list.push({ id: 3000 + i, title: T('Weekly buy: ' + money(v.weekly)), body: T((chain > 0 ? 'Open Invest and tap Buy BTC + ETH for ' + money(chain) + '.' : '') + (x.SOL > 0 ? ' Log your ' + money(x.SOL) + ' SOL from Jupiter.' : '')), schedule: { at, allowWhileIdle: true } });
+        }
+      }
       if (list.length) await LN.schedule({ notifications: list });
-      notifyNote('Reminders on. You will get a reminder before each lock opens.');
+      notifyNote('Reminders on. You will get a reminder before each lock opens' + (v.on ? ' and on your weekly buy day.' : '.'));
     } catch (e) { notifyNote('Could not set notifications: ' + nice(e)); }
   }
   let remT;
@@ -3076,7 +3571,7 @@ const P2 = [
   $('dialTicks').innerHTML = Array.from({ length: 60 }, (_, i) => { const a = i / 60 * 2 * Math.PI, r1 = i % 5 ? 50 : 48, r2 = 54; return '<line' + (i % 5 ? '' : ' class="major"') + ' x1="' + (60 + r1 * Math.sin(a)).toFixed(2) + '" y1="' + (60 - r1 * Math.cos(a)).toFixed(2) + '" x2="' + (60 + r2 * Math.sin(a)).toFixed(2) + '" y2="' + (60 - r2 * Math.cos(a)).toFixed(2) + '"/>'; }).join('');
   if (NATIVE) $('testsLink').href = TESTS_URL;
   $('wcId').value = store.get('wcid');
-  myBoot();
+  myBoot(); ivBoot();
   renderLessons(); codeFingerprints(); applyType();
   window.history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
   setAccount('');

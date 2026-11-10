@@ -8,6 +8,8 @@ It also has a "Got paid" screen: type what a client paid you once and it splits 
 
 "My setup" (on the Got paid screen) holds the one-time settings, and the home screen shows a Tangem savings goal card (months left and backup date), a BTC/ETH card with a reminder to move it to Tangem at $400, and a monthly spending pot with food-delivery and fun caps that resets on the 1st. Binance amounts are typed in by hand: the app never connects to an exchange or asks for keys.
 
+The Invest tab replaces the Binance recurring buy with a weekly buy you do from your own wallet. Pick a weekly amount and a BTC / ETH / SOL mix. Each week you tap Buy and approve in your wallet: BTC (as WBTC) and ETH are swapped on Uniswap on Arbitrum straight into your wallet, with no new contract. The app approves only that week's exact amount, checks the price against Chainlink and stops if it is more than 2% off, and sets a minimum each coin must receive. SOL lives on Solana, so it is bought with Jupiter Recurring and logged here. This code (source/web/invest.js) is separate from the lock guard and never touches the locks; its tests are in audit/scripts/invest_tests.js.
+
 There is no server, no account and no company holding your coins. The app is a single web page that talks directly to the Arbitrum blockchain and to your wallet. It works with any wallet app that supports WalletConnect, such as MetaMask, Trust Wallet, Tangem, Rainbow or Coinbase Wallet.
 
 ## بالعربية

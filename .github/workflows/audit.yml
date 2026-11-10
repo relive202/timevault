@@ -4,6 +4,7 @@
 # 2. Slither (static analysis) on both lock contracts.
 # 3. Foundry attack tests: fuzzing and random-sequence (invariant) tests that try to get money out early or to someone else.
 # 4. The app's own 53 safety tests, in a headless browser.
+# Also: the invest guard tests (weekly BTC/ETH buys) on a simulated chain.
 name: Safety audit
 
 on:
@@ -43,6 +44,14 @@ jobs:
       - name: Report rebuild results
         if: always()
         run: scripts/report.sh "Rebuild from source" rebuild.txt
+
+      - name: 1b. Invest guard tests (weekly BTC/ETH buys on a simulated chain)
+        if: always()
+        run: node scripts/invest_tests.js 2>&1 | tee invest.txt
+
+      - name: Report invest guard results
+        if: always()
+        run: scripts/report.sh "Invest guard tests" invest.txt
 
       - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1
 
