@@ -190,6 +190,8 @@
         create: ['Create your lock', 'Your wallet will ask you to approve a contract interaction with:', s.to, 'This sets up your empty lock using Arbitrum\'s standard contract creator. No money moves yet. The network fee is a few cents of ETH.'],
         deposit: ['Add money to your lock', 'Your wallet will show a transfer to your lock:', s.recipient, s.text],
         release: ['Withdraw to your wallet', 'Your wallet will ask you to approve a contract interaction with your lock:', s.to, s.text],
+        approve: ['Allow this week\'s swap', 'Your wallet will ask you to let this address use your ' + (s.to === TOKENS.USDT.address ? 'USDT' : 'USDC') + '. It is Uniswap\'s swap router:', s.spender, s.text],
+        buy: ['Buy BTC and ETH', 'Your wallet will ask you to approve a contract interaction with Uniswap\'s swap router:', s.to, s.text],
       }[s.action];
       $('cfTitle').textContent = lines[0]; $('cfLead').textContent = lines[1];
       if (s.action === 'deposit' && s.lock) lines[3] += ' ' + opensText(s.lock);
@@ -297,13 +299,14 @@
   }
 
   // ------------------------------------------------------------------ screens
-  const TABS = ['home', 'new', 'coach', 'setup', 'safety', 'menu', 'lock', 'badges'];
+  const TABS = ['home', 'new', 'coach', 'invest', 'setup', 'safety', 'menu', 'lock', 'badges'];
   document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => go(b.dataset.tab)));
   let page = 'home', depth = 0;
   function show(t) {
     TABS.forEach((x) => { $('tab-' + x).hidden = x !== t; });
     page = t; document.body.dataset.page = t; window.scrollTo(0, 0); onScroll();
     if (t === 'badges') renderBadges();
+    if (t === 'invest') renderInvest();
   }
   // every screen is a history step, so the phone's back gesture and the back arrow both go back one screen
   function go(t) {
@@ -339,7 +342,7 @@
     $('menuWallet').textContent = viewer() ? short(viewer()) + (account ? '' : ' (view only)') : 'Not connected';
     $('gasHint').hidden = !(WALLET.ETH !== undefined && WALLET.ETH < ethers.parseEther('0.0002'));
     for (const o of $('lkToken').options) o.textContent = o.value + (WALLET[o.value] !== undefined ? ' (you have ' + num(fmt(WALLET[o.value])) + ')' : '');
-    renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones(); renderFun(); renderMine();
+    renderLocks(); renderToday(); renderCoach(); updateSummary(); checkMilestones(); renderFun(); renderMine(); if (page === 'invest') renderInvest();
     const tgt = $('cTarget'); const cur = store.get('plan.target');
     tgt.innerHTML = '<option value="">Pick automatically</option>' + LOCKS.filter((l) => l.kind === 'goal').map((l) => '<option value="' + l.addr + '"' + (l.addr === cur ? ' selected' : '') + '>' + esc((l.name ? l.name + ' · ' : '') + num(fmt(l.goal)) + ' ' + l.sym + ' goal · ' + short(l.addr)) + '</option>').join('');
   }
@@ -808,6 +811,7 @@
     ['myGoal', 'mySpend', 'myDca'].forEach((id) => { $(id).hidden = !m.on; });
     if (!m.on) { $('sweepAlert').hidden = true; return; }
     renderGoalCard(m); renderSpend(m); renderDca(m); renderSweep(m);
+    if (IV().on && !(onBinanceUsd() > 0)) $('myDca').hidden = true; // all on-chain now: the Binance card has nothing to show
   }
 
   // ---- Got paid: type the amount once; save / invest / spend come from the Claude plan in My setup
@@ -828,7 +832,7 @@
     const sub = (t) => '<div class="split-sub">' + t + '</div>';
     out.innerHTML = bar +
       line('--accent', 'To save', x.save) + sub(L ? 'Lock it in your ' + money(fmt(L.goal)).replace('.00', '') + ' goal with the button below.' : account ? 'Send it to your Tangem wallet as USDC on Arbitrum One. Make a goal lock to lock it here.' : 'Send it to your Tangem wallet as USDC on Arbitrum One, or connect your wallet to lock it here.') +
-      line('--mint', 'To invest', x.invest) + sub('Keep it in Binance Spot for ' + money(btc) + ' BTC + ' + money(cents(x.invest - btc)) + ' ETH. Keep Simple Earn OFF.') +
+      line('--mint', 'To invest', x.invest) + sub(IV().on ? 'Keep it as ' + IV().pay + ' in your wallet for your weekly buys in Invest (' + money(IV().weekly) + ' a week).' : 'Keep it in Binance Spot for ' + money(btc) + ' BTC + ' + money(cents(x.invest - btc)) + ' ETH. Keep Simple Earn OFF.') +
       line('--amber', 'To spend', x.spend) + sub('Move it to the Binance Funding wallet for Claude, food delivery and fun.');
     if (L && x.save > 0) { lock.hidden = false; lock.textContent = T('Lock ' + money(x.save)); }
   }
@@ -855,9 +859,9 @@
     const m = MY(), amt = gpAmount(); if (!amt) return toast('Type an amount first.');
     const x = splitOf(amt, MODES[m.mode]), t = Date.now(), btc = cents(x.invest * m.btc / 100), eth = cents(x.invest - btc);
     const pl = paidLog(); pl.push({ t, usd: amt, ...x }); store.setJson('my.paid', pl.slice(-200));
-    const l = dcaLog(); if (btc > 0) l.push({ a: 'BTC', usd: btc, t }); if (eth > 0) l.push({ a: 'ETH', usd: eth, t: t + 1 }); store.setJson('my.dca', l.slice(-500));
+    if (!IV().on) { const l = dcaLog(); if (btc > 0) l.push({ a: 'BTC', usd: btc, t }); if (eth > 0) l.push({ a: 'ETH', usd: eth, t: t + 1 }); store.setJson('my.dca', l.slice(-500)); }
     $('gpAmount').value = ''; renderCoach(); renderMine(); renderToday();
-    toast('Logged ' + money(amt) + '. ' + money(x.invest) + ' added to your BTC and ETH.');
+    toast(IV().on ? 'Logged ' + money(amt) + '. Keep ' + money(x.invest) + ' for your weekly buys.' : 'Logged ' + money(amt) + '. ' + money(x.invest) + ' added to your BTC and ETH.');
   });
 
   // ---- one click handler for every button in the cards above
@@ -1135,6 +1139,115 @@
   $('levelRow').addEventListener('click', () => go('badges'));
   function renderFun() { renderCharts(); monthLine(); renderFx(); renderLevel(); if (page === 'badges') renderBadges(); checkBadges(); }
 
+  // ------------------------------------------------------------------ invest: a weekly buy of BTC, ETH and SOL, without Binance
+  // BTC and ETH are bought on Arbitrum through Uniswap by the invest guard (invest.js), straight into your wallet.
+  // SOL lives on Solana, so it is bought there with Jupiter Recurring and only logged here.
+  const investor = TVI.makeInvestor(ethers, {
+    providers, need: 2, tokens: TOKENS, chainId: CHAIN_ID, maxBaseFee: ethers.parseUnits('2', 'gwei'),
+    getAccount: () => account,
+    getSigner: async () => { if (!eip) throw new TV.Refused('Connect your wallet first.'); return new ethers.BrowserProvider(eip).getSigner(account); },
+    onAsk: confirmScreen,
+  });
+  const JUP_URL = 'https://jup.ag/recurring';
+  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const pct = (k, d) => { const v = store.get(k, ''); const n = v === '' ? d : Number(v); return Number.isFinite(n) && n >= 0 && n <= 100 ? n : d; };
+  const IV = () => {
+    const m = MY(), btc = pct('inv.btc', m.btc), eth = pct('inv.eth', 100 - m.btc), sol = pct('inv.sol', 0);
+    const own = moneyIn(store.get('inv.weekly', ''));
+    return { on: store.get('inv.on', '0') === '1', pay: store.get('inv.pay', 'USDC') === 'USDT' ? 'USDT' : 'USDC', day: Number(store.get('inv.day', '1')) % 7,
+      weekly: own || weekly(m).total, own: !!own, btc, eth, sol, mixOk: Math.abs(btc + eth + sol - 100) < 0.01 };
+  };
+  // the week's dollars per coin; cents always add up to the weekly amount (SOL takes any rounding cent)
+  function ivParts(v) {
+    const c = Math.round(v.weekly * 100), b = Math.round(c * v.btc / 100), e = Math.round(c * v.eth / 100);
+    return { BTC: b / 100, ETH: e / 100, SOL: v.sol > 0 ? (c - b - e) / 100 : 0 };
+  }
+  const ivLog = () => store.json('inv.log', []).filter((e) => e && e.coin && moneyIn(e.usd));
+  // the most recent buy day at midnight, local time
+  function ivWeekStart(v, now = new Date()) { const d = new Date(now); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() - v.day + 7) % 7)); return d; }
+  const ivDone = (v, coin) => ivLog().some((e) => e.t >= ivWeekStart(v).getTime() && (coin ? e.coin === coin : e.coin !== 'SOL'));
+  let ivPrices = {}, ivHeld = {}, ivPriceT = 0;
+  async function ivLoadPrices() {
+    if (Date.now() - ivPriceT < 120000) return; ivPriceT = Date.now();
+    try { ivPrices = await investor.prices(); if (viewer()) ivHeld = await investor.holdings(viewer()); } catch {}
+    if (page === 'invest') renderInvest();
+  }
+  function renderInvest() {
+    const v = IV(), x = ivParts(v), chain = cents(x.BTC + x.ETH), done = ivDone(v), solDone = ivDone(v, 'SOL');
+    const next = ivWeekStart(v); next.setDate(next.getDate() + 7);
+    const due = !done && chain > 0;
+    const bal = WALLET[v.pay] !== undefined ? fmt(WALLET[v.pay]) : null;
+    const row = (name, usd, how) => '<div class="split-line" style="--dot:var(--mint)"><b>' + name + '</b><span>' + money(usd) + '</span></div><div class="split-sub">' + how + '</div>';
+    $('ivWeek').innerHTML = '<div class="section-head"><h2>This week\'s buy</h2><span class="chip">' + (done ? 'Done this week' : chain > 0 ? 'Due' : 'Not set') + '</span></div>' +
+      '<p class="small muted">' + money(v.weekly) + ' every ' + DAYS[v.day] + (v.own ? '' : ' (the invest part of Got paid)') + '. Next week starts ' + dayStr(next) + '.</p>' +
+      (v.mixOk ? '' : '<div class="small warn">Your BTC, ETH and SOL shares add up to ' + num(v.btc + v.eth + v.sol) + '%, not 100%. Fix them in My weekly plan.</div>') +
+      (x.BTC > 0 ? row('BTC', x.BTC, 'Bought as WBTC on Arbitrum, into your wallet.') : '') +
+      (x.ETH > 0 ? row('ETH', x.ETH, 'Real ETH on Arbitrum, into your wallet.') : '') +
+      (x.SOL > 0 ? row('SOL', x.SOL, solDone ? 'Logged this week.' : 'Bought on Solana with Jupiter Recurring. Log it here when it buys.') : '') +
+      (chain > 0 ? '<div class="row"><button class="btn brass" id="ivBuy"' + (v.mixOk ? '' : ' disabled') + '>' + (done ? 'Buy again' : 'Buy BTC + ETH') + ' for ' + money(chain) + '</button></div>' +
+        '<p class="small muted">Paid with ' + v.pay + (bal !== null ? ' (you have ' + num(bal) + ')' : '') + '. Up to two taps in your wallet: allow this exact amount, then the swap. ' + (account ? '' : 'Connect your wallet first.') + '</p>' : '') +
+      (x.SOL > 0 ? '<div class="row"><a class="btn ghost small" href="' + JUP_URL + '" target="_blank" rel="noopener">Open Jupiter</a><button class="btn ghost small" id="ivSolLog">I bought ' + money(x.SOL) + ' SOL</button></div>' : '');
+    if ($('ivBuy')) $('ivBuy').onclick = (ev) => ivBuy(ev.currentTarget);
+    if ($('ivSolLog')) $('ivSolLog').onclick = () => { const l = ivLog(); l.push({ t: Date.now(), coin: 'SOL', usd: ivParts(IV()).SOL }); store.setJson('inv.log', l.slice(-500)); toast('Logged your SOL buy.'); renderInvest(); remindersChanged(); };
+
+    // what you hold
+    const log = ivLog(), coins = ['BTC', 'ETH', 'SOL'].filter((c) => log.some((e) => e.coin === c) || x[c] > 0);
+    const lines = coins.map((c) => {
+      const es = log.filter((e) => e.coin === c), usd = cents(es.reduce((s, e) => s + e.usd, 0)), amt = es.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+      const avg = amt > 0 ? usd / amt : 0, now = ivPrices[c], val = now && amt ? cents(amt * now) : 0;
+      return '<div class="irow"><span>' + c + (amt ? ' · ' + num(amt, c === 'BTC' ? 8 : 6) : '') + '</span><b>' + money(usd) + ' put in' +
+        (val ? ' · worth ' + money(val) + ' <span class="' + (val >= usd ? 'ok-text' : 'warn') + '">(' + (val >= usd ? '+' : '') + num(100 * (val - usd) / usd, 1) + '%)</span>' : '') + '</b></div>' +
+        (avg ? '<div class="small muted" style="padding-bottom:8px">Average buy price ' + money(avg) + (now ? ' · now ' + money(now) : '') + '</div>' : '');
+    }).join('');
+    const held = ivHeld.BTC !== undefined ? '<p class="small muted">In your wallet now: ' + num(ivHeld.BTC, 8) + ' WBTC · ' + num(ivHeld.ETH, 6) + ' ETH (some ETH is for fees).</p>' : '';
+    $('ivCoins').innerHTML = '<div class="section-head"><h2>Your coins</h2></div>' + (log.length ? lines : '<p class="muted">Your buys will show up here.</p>') + held;
+
+    const rec = log.slice(-10).reverse();
+    $('ivLog').hidden = !rec.length;
+    $('ivLog').innerHTML = '<div class="section-head"><h2>Buys</h2></div><ol class="mylog">' + rec.map((e) => '<li><span>' + new Date(e.t).toLocaleDateString(DATELOC, { month: 'short', day: 'numeric' }) + ' · ' + e.coin +
+      (e.hash ? ' · <a href="https://arbiscan.io/tx/' + esc(e.hash) + '" target="_blank" rel="noopener">receipt</a>' : '') + '</span><b>' + money(e.usd) + '</b>' +
+      (e.hash ? '' : '<button class="x" data-iv-del="' + e.t + '" aria-label="Remove">×</button>') + '</li>').join('') + '</ol>';
+    $('ivLog').querySelectorAll('[data-iv-del]').forEach((b) => (b.onclick = () => { store.setJson('inv.log', ivLog().filter((e) => String(e.t) !== b.dataset.ivDel || e.hash)); renderInvest(); }));
+    ivLoadPrices();
+  }
+  async function ivBuy(btn) {
+    if (!SELF.ok) return toast('Safety check failed. Do not use this copy of the app.');
+    const v = IV(), x = ivParts(v);
+    if (!v.mixOk) return toast('Your shares must add up to 100%.');
+    await run(btn, async () => {
+      await ensureArbitrum();
+      const r = await investor.buy({ pay: v.pay, parts: { BTC: x.BTC, ETH: x.ETH } });
+      const l = ivLog(), t = Date.now();
+      r.legs.forEach((g, i) => l.push({ t: t + i, coin: g.coin, usd: g.usd, amount: g.amount, hash: r.hash }));
+      store.setJson('inv.log', l.slice(-500)); ivPriceT = 0;
+      toast('Bought! ' + r.legs.map((g) => num(Number(g.amount), g.coin === 'BTC' ? 8 : 6) + ' ' + (g.coin === 'BTC' ? 'WBTC' : 'ETH')).join(' and ') + ' are in your wallet.', 9000);
+      remindersChanged();
+    });
+    renderInvest();
+  }
+  // ---- My weekly plan
+  const IVFIELDS = { ivWeekly: 'inv.weekly', ivBtc: 'inv.btc', ivEth: 'inv.eth', ivSol: 'inv.sol' };
+  function ivSettingsChanged() {
+    for (const [id, k] of Object.entries(IVFIELDS)) store.set(k, $(id).value.trim());
+    store.set('inv.pay', $('ivPay').value); store.set('inv.day', $('ivDay').value); store.set('inv.on', $('ivOn').checked ? '1' : '0');
+    ivNotes(); renderInvest(); renderCoach(); renderMine(); remindersChanged();
+  }
+  function ivNotes() {
+    const v = IV();
+    $('ivWeeklyNote').textContent = v.own ? '' : 'Empty = the invest part of Got paid, ' + money(weekly(MY()).total) + ' a week.';
+    $('ivMixNote').textContent = v.mixOk ? 'Adds up to 100%.' : 'These add up to ' + num(v.btc + v.eth + v.sol) + '%. Make them add up to 100%.';
+    $('ivMixNote').className = 'small ' + (v.mixOk ? 'muted' : 'warn');
+  }
+  function ivBoot() {
+    const v = IV();
+    $('ivDay').innerHTML = DAYS.map((d, i) => '<option value="' + i + '">' + d + '</option>').join('');
+    $('ivWeekly').value = store.get('inv.weekly', ''); $('ivBtc').value = String(v.btc); $('ivEth').value = String(v.eth); $('ivSol').value = String(v.sol);
+    $('ivPay').value = v.pay; $('ivDay').value = String(v.day); $('ivOn').checked = v.on;
+    Object.keys(IVFIELDS).forEach((id) => $(id).addEventListener('input', ivSettingsChanged));
+    ['ivPay', 'ivDay', 'ivOn'].forEach((id) => $(id).addEventListener('change', ivSettingsChanged));
+    ivNotes();
+  }
+
   // ------------------------------------------------------------------ coach: lessons
   const LESSONS = [
     ['Pay yourself first', 'Lock your savings the day you get paid, before you spend anything. Saving what is left at the end of the month usually means saving nothing.'],
@@ -1220,8 +1333,16 @@
         if (before.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T('Tomorrow: ' + name + ' ' + what), body: T('It holds ' + num(fmt(l.balance)) + ' ' + l.sym + '.'), schedule: { at: before, allowWhileIdle: true } });
         if (open.getTime() > now + 60000) list.push({ id: 2000 + n++, title: T(name.charAt(0).toUpperCase() + name.slice(1) + ' is open'), body: T('You can withdraw ' + num(fmt(l.balance)) + ' ' + l.sym + ' in TimeVault, or leave it and keep saving.'), schedule: { at: open, allowWhileIdle: true } });
       }
+      const v = IV(), x = ivParts(v), chain = cents(x.BTC + x.ETH);
+      if (v.on && v.weekly > 0) { // weekly buy reminders for the next 8 weeks, at 10:00 on the buy day
+        for (let i = 0; i < 9; i++) {
+          const at = ivWeekStart(v); at.setDate(at.getDate() + 7 * i); at.setHours(10, 0, 0, 0);
+          if (at.getTime() <= now + 60000 || (i === 0 && ivDone(v))) continue;
+          list.push({ id: 3000 + i, title: T('Weekly buy: ' + money(v.weekly)), body: T((chain > 0 ? 'Open Invest and tap Buy BTC + ETH for ' + money(chain) + '.' : '') + (x.SOL > 0 ? ' Log your ' + money(x.SOL) + ' SOL from Jupiter.' : '')), schedule: { at, allowWhileIdle: true } });
+        }
+      }
       if (list.length) await LN.schedule({ notifications: list });
-      notifyNote('Reminders on. You will get a reminder before each lock opens.');
+      notifyNote('Reminders on. You will get a reminder before each lock opens' + (v.on ? ' and on your weekly buy day.' : '.'));
     } catch (e) { notifyNote('Could not set notifications: ' + nice(e)); }
   }
   let remT;
@@ -1240,7 +1361,7 @@
   $('dialTicks').innerHTML = Array.from({ length: 60 }, (_, i) => { const a = i / 60 * 2 * Math.PI, r1 = i % 5 ? 50 : 48, r2 = 54; return '<line' + (i % 5 ? '' : ' class="major"') + ' x1="' + (60 + r1 * Math.sin(a)).toFixed(2) + '" y1="' + (60 - r1 * Math.cos(a)).toFixed(2) + '" x2="' + (60 + r2 * Math.sin(a)).toFixed(2) + '" y2="' + (60 - r2 * Math.cos(a)).toFixed(2) + '"/>'; }).join('');
   if (NATIVE) $('testsLink').href = TESTS_URL;
   $('wcId').value = store.get('wcid');
-  myBoot();
+  myBoot(); ivBoot();
   renderLessons(); codeFingerprints(); applyType();
   window.history.replaceState({ tv: 'home', d: 0 }, ''); show('home');
   setAccount('');

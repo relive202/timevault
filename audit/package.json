@@ -4,6 +4,7 @@
   "description": "Pinned tools for the TimeVault safety audit (see .github/workflows/audit.yml).",
   "dependencies": {
     "@openzeppelin/contracts": "4.9.6",
-    "solc": "0.8.24"
+    "solc": "0.8.24",
+    "ethers": "6.13.4"
   }
 }
