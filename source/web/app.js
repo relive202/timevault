@@ -778,29 +778,54 @@
     if (!box.hidden) box.innerHTML = '<b>Move your BTC and ETH to Tangem.</b><span>About ' + money(v) + ' is sitting on Binance. Don\'t keep large amounts on an exchange: withdraw it to your Tangem wallet.</span><button class="btn small" data-my="swept">I moved it to Tangem</button>';
   }
 
-  // ---- spending pot in the Binance Funding wallet: one record per month, so the 1st of each month starts fresh by itself
-  const spendKey = () => 'my.spend.' + monthKey();
-  const spendNow = () => { const s = store.json(spendKey(), null); return s && Array.isArray(s.e) ? s : { sub: false, e: [] }; };
-  function spendSave(s) {
-    store.setJson(spendKey(), s);
-    const keep = new Set(Array.from({ length: 13 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); return 'my.spend.' + monthKey(d); }));
+  // ---- spending tracker: one record per month, so the 1st of each month starts fresh by itself.
+  // Type what you spent in your own currency (or $) with a short label and the day; it is converted at the rate you set.
+  // The month's spending money is the spend part of what you logged on Got paid this month (or your usual income),
+  // minus the Claude subscription, which is always set aside first.
+  const spendKey = (d = new Date()) => 'my.spend.' + monthKey(d);
+  const spendGet = (d) => { const s = store.json(spendKey(d), null); return s && Array.isArray(s.e) ? s : { sub: false, e: [] }; };
+  const spendNow = () => spendGet();
+  function spendSave(s, d) {
+    store.setJson(spendKey(d), s);
+    const keep = new Set(Array.from({ length: 13 }, (_, i) => { const x = new Date(); x.setDate(1); x.setMonth(x.getMonth() - i); return 'my.spend.' + monthKey(x); }));
     try { Object.keys(localStorage).filter((k) => k.startsWith('tv3.my.spend.') && !keep.has(k.slice(4))).forEach((k) => localStorage.removeItem(k)); } catch {}
   }
-  function capBar(name, cat, used, cap, warnAt) {
+  const isFood = (c) => /food|deliver/i.test(c || ''), isFun = (c) => /^fun\b|outing/i.test(c || '');
+  const spentIn = (s, f = () => true) => cents(s.e.filter((e) => moneyIn(e.usd) && f(e.c)).reduce((a, e) => a + e.usd, 0));
+  function spendBudget(m) { // what this month's spending money is, and where that number comes from
+    const got = cents(thisMonth().reduce((a, e) => a + (e.spend || 0), 0));
+    return got > 0 ? { usd: got, from: 'From Got paid this month' } : { usd: monthly(m).spend, from: 'From your usual income' };
+  }
+  function capBar(name, used, cap, warnAt) {
     const pct = cap > 0 ? Math.min(100, Math.round(100 * used / cap)) : 0, cls = used >= cap ? ' red' : used >= warnAt ? ' amber' : '';
-    const quick = [5, 10, 15].map((v) => '<button class="chip" data-my="add" data-c="' + cat + '" data-v="' + v + '">+$' + v + '</button>').join('');
     return '<div class="capbox"><div class="prog-top"><b>' + name + '</b><span>' + money(used) + ' of ' + money(cap).replace('.00', '') + '</span></div><div class="bar' + cls + '"><i style="width:' + pct + '%"></i></div>' +
-      (used >= cap ? '<div class="small warn">Cap reached. No more ' + (cat === 'food' ? 'delivery' : 'fun spending') + ' this month.</div>' : used >= warnAt ? '<div class="small caution">' + money(cap - used) + ' left. Slow down.</div>' : '') +
-      '<div class="row">' + quick + '<input class="mini" id="add_' + cat + '" inputmode="decimal" placeholder="$"><button class="chip" data-my="addOwn" data-c="' + cat + '">Add</button></div></div>';
+      (used >= cap ? '<div class="small warn">Cap reached. No more ' + (name === 'Food delivery' ? 'delivery' : 'fun spending') + ' this month.</div>' : used >= warnAt ? '<div class="small caution">' + money(cap - used) + ' left. Slow down.</div>' : '') + '</div>';
   }
   function renderSpend(m) {
-    const s = spendNow(), sub = MODES[m.mode].sub, sum = (c) => cents(s.e.filter((e) => e.c === c).reduce((a, e) => a + e.usd, 0));
-    const food = sum('food'), fun = sum('fun'), cap = sub + m.food + m.fun, used = cents((s.sub ? sub : 0) + food + fun);
-    $('mySpend').innerHTML = '<div class="section-head"><h2>Spending money</h2><span class="small muted">' + new Date().toLocaleDateString(DATELOC, { month: 'long' }) + ' · ' + money(Math.max(0, cap - used)) + ' left of ' + money(cap).replace('.00', '') + '</span></div>' +
+    const s = spendNow(), sub = MODES[m.mode].sub, b = spendBudget(m), spent = spentIn(s), left = cents(b.usd - sub - spent);
+    const f = FX(), code = f && f.code ? f.code : 'LYD', rate = f && f.rate > 0 ? f.rate : '';
+    const pct = b.usd - sub > 0 ? Math.min(100, Math.max(0, Math.round(100 * (spent / (b.usd - sub))))) : 100;
+    const now = new Date(), daysLeft = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+    const last = new Date(now.getFullYear(), now.getMonth() - 1, 1), lastSpent = spentIn(spendGet(last));
+    const prevLabel = store.get('my.spendLabel', 'food');
+    const rows = s.e.map((e, i) => ({ e, i })).filter((x) => moneyIn(x.e.usd)).sort((a, z) => z.e.t - a.e.t);
+    const row = ({ e, i }) => '<li><span>' + new Date(e.t).toLocaleDateString(DATELOC, { month: 'short', day: 'numeric' }) + ' · ' + esc(e.c || 'spent') + (e.loc ? ' · ' + num(e.loc) + ' ' + esc(e.code || '') : '') + '</span><b>' + money(e.usd) + '</b><button class="x" data-my="delSpend" data-i="' + i + '" aria-label="Remove">×</button></li>';
+    $('mySpend').innerHTML = '<div class="section-head"><h2>Spending money</h2><span class="small muted">' + now.toLocaleDateString(DATELOC, { month: 'long' }) + ' · ' + money(Math.max(0, left)) + ' left</span></div>' +
+      '<div class="srow"><span>' + b.from + '</span><b>' + money(b.usd) + '</b></div>' +
+      '<div class="srow"><span>Claude subscription, set aside</span><b>−' + money(sub) + '</b></div>' +
+      '<div class="srow"><span>Spent so far</span><b>−' + money(spent) + '</b></div>' +
+      '<div class="prog-top"><b>' + (left >= 0 ? money(left) + ' left to spend' : money(-left) + ' over') + '</b><span>' + pct + '% used</span></div><div class="bar' + (left < 0 ? ' red' : pct >= 75 ? ' amber' : '') + '"><i style="width:' + pct + '%"></i></div>' +
+      (left < 0 ? '<div class="small warn">You spent more than this month\'s spending money. Don\'t take it from savings.</div>' : daysLeft <= 5 && left > 0 ? '<div class="note">The month ends soon and ' + money(left) + ' is left. Move some of it to save or invest.</div>' : '') +
       '<label class="check"><input type="checkbox" data-my="sub"' + (s.sub ? ' checked' : '') + '><span><b>Claude subscription</b> ' + money(sub).replace('.00', '') + (s.sub ? ' · paid' : ' · not paid yet') + '</span></label>' +
-      capBar('Food delivery', 'food', food, m.food, m.food * 0.7) + capBar('Fun and outings', 'fun', fun, m.fun, m.fun * 0.7) +
-      (s.e.length ? '<button class="link-btn small-link" data-my="undo">Undo last (' + money(s.e[s.e.length - 1].usd) + ' ' + (s.e[s.e.length - 1].c === 'food' ? 'delivery' : 'fun') + ')</button>' : '') +
-      '<p class="small muted">From your Binance Funding wallet. Starts fresh on the 1st of each month.</p>';
+      '<div class="grid8"><b>Log what you spent</b>' +
+      '<div class="inline"><input id="spAmt" inputmode="decimal" placeholder="Amount"><select id="spCur" style="max-width:96px"><option value="loc"' + (store.get('my.spendCur', 'loc') === 'usd' ? '' : ' selected') + '>' + esc(code) + '</option><option value="usd"' + (store.get('my.spendCur', 'loc') === 'usd' ? ' selected' : '') + '>$</option></select></div>' +
+      '<div class="inline"><input id="spLabel" placeholder="What for, e.g. food" value="' + esc(prevLabel) + '" maxlength="30"><input id="spDate" type="date" value="' + ymd(now) + '" max="' + ymd(now) + '" style="max-width:160px"></div>' +
+      '<div class="inline"><label for="spRate" class="small muted" style="align-self:center;white-space:nowrap">1 USD = </label><input id="spRate" inputmode="decimal" placeholder="e.g. 10" value="' + esc(rate) + '" style="max-width:110px"><span class="small muted" style="align-self:center">' + esc(code) + '</span><button class="btn small" data-my="addSpend">Add</button></div>' +
+      '</div>' +
+      (rows.length ? '<ol class="mylog">' + rows.map(row).join('') + '</ol>' : '<p class="small muted">Nothing logged this month yet.</p>') +
+      capBar('Food delivery', spentIn(s, isFood), m.food, m.food * 0.7) + capBar('Fun and outings', spentIn(s, isFun), m.fun, m.fun * 0.7) +
+      (lastSpent > 0 ? '<div class="small muted">' + last.toLocaleDateString(DATELOC, { month: 'long' }) + ': ' + money(lastSpent) + ' spent.</div>' : '') +
+      '<p class="small muted">Labels with "food" or "delivery" count toward your food delivery cap. Starts fresh on the 1st of each month.</p>';
   }
 
   function renderMine() {
@@ -864,12 +889,25 @@
   document.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-my]'); if (!b || b.tagName === 'INPUT') return;
     const m = MY(), act = b.dataset.my, now = Date.now();
-    if (act === 'add' || act === 'addOwn') {
-      const v = act === 'add' ? Number(b.dataset.v) : moneyIn($('add_' + b.dataset.c).value); if (!v) return toast('Type an amount first.');
-      const s = spendNow(); s.e.push({ c: b.dataset.c, usd: v, t: now }); spendSave(s);
-      const cap = b.dataset.c === 'food' ? m.food : m.fun, used = s.e.filter((e) => e.c === b.dataset.c).reduce((a, e) => a + e.usd, 0);
-      if (used >= cap) toast(b.dataset.c === 'food' ? 'Delivery cap reached. No more delivery this month.' : 'Fun cap reached for this month.', 7000);
-    } else if (act === 'undo') { const s = spendNow(); s.e.pop(); spendSave(s); }
+    if (act === 'addSpend') {
+      const raw = Number(String($('spAmt').value).replace(/,/g, '').replace('$', '').trim()), cur = $('spCur').value === 'usd' ? 'usd' : 'loc';
+      if (!(raw > 0) || raw >= 1e9) return toast('Type an amount first.');
+      const day = fromYmd($('spDate').value) || new Date(); if (day > new Date()) return toast('Pick today or an earlier day.');
+      const label = ($('spLabel').value.trim().toLowerCase() || 'food').slice(0, 30);
+      const e = { c: label, t: day.getTime() + 12 * 3600e3 };
+      if (cur === 'loc') {
+        const rate = Number(String($('spRate').value).replace(/,/g, '').trim()), f = FX(), code = f && f.code ? f.code : 'LYD';
+        if (!(rate > 0) || rate > 1e7) return toast('Type the rate first: how many ' + code + ' for 1 USD.');
+        if (!f || f.rate !== rate) { store.setJson('fx', { code, rate, at: Math.floor(Date.now() / 1000) }); renderFx(); }
+        Object.assign(e, { usd: cents(raw / rate), loc: raw, code });
+      } else e.usd = cents(raw);
+      if (!(e.usd > 0)) return toast('That is less than one cent.');
+      store.set('my.spendLabel', label); store.set('my.spendCur', cur);
+      const s = spendGet(day); s.e.push(e); spendSave(s, day);
+      const sameMonth = monthKey(day) === monthKey();
+      toast('Logged ' + money(e.usd) + (e.loc ? ' (' + num(e.loc) + ' ' + e.code + ')' : '') + (sameMonth ? '.' : ' in ' + day.toLocaleDateString(DATELOC, { month: 'long' }) + '.'));
+      if (sameMonth && isFood(label) && spentIn(s, isFood) >= m.food) toast('Delivery cap reached. No more delivery this month.', 7000);
+    } else if (act === 'delSpend') { const s = spendNow(); s.e.splice(Number(b.dataset.i), 1); spendSave(s); }
     else if (act === 'logOne') { const v = moneyIn($('dcaUsd').value); if (!v) return toast('Type an amount first.'); const l = dcaLog(); l.push({ a: $('dcaAsset').value === 'ETH' ? 'ETH' : 'BTC', usd: v, t: now }); store.setJson('my.dca', l.slice(-500)); }
     else if (act === 'delDca') { store.setJson('my.dca', dcaLog().filter((e) => String(e.t) !== b.dataset.t)); }
     else if (act === 'shown') { const v = moneyIn($('bnShown').value); store.setJson('my.bnShown', v ? { usd: v, t: now } : null); }
