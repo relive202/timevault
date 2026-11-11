@@ -639,5 +639,29 @@ const P2 = [
     [/^Streak: (\d+) months? in a row\.$/, "السلسلة: $1 أشهر متتالية."],
     [/^(Claude (?:Max|Pro) \(\$\d+\)): save ([\d.]+)%, invest ([\d.]+)%, spend ([\d.]+)%\. Change it in My setup below\.$/, "$1: ادخار $2%، استثمار $3%، صرف $4%. غيّرها من إعدادي بالأسفل."],
     [/^(Claude (?:Max|Pro) \(\$\d+\)): save ([\d.]+)%, invest ([\d.]+)%, spend ([\d.]+)%\.$/, "$1: ادخار $2%، استثمار $3%، صرف $4%."]);
+  const D5 = {
+ "From Got paid this month": "من وصلني مال هذا الشهر",
+ "From your usual income": "من دخلك المعتاد",
+ "Claude subscription, set aside": "اشتراك Claude، محجوز",
+ "Spent so far": "صرفت حتى الآن",
+ "Log what you spent": "سجّل ما صرفته",
+ "Amount": "المبلغ",
+ "What for, e.g. food": "على ماذا، مثلًا food",
+ "1 USD =": "1 دولار =",
+ "You spent more than this month's spending money. Don't take it from savings.": "صرفت أكثر من مصروف هذا الشهر. لا تأخذ من مدخراتك.",
+ "Labels with \"food\" or \"delivery\" count toward your food delivery cap. Starts fresh on the 1st of each month.": "ما تكتب عليه \"food\" أو \"delivery\" يُحسب من حد توصيل الطعام. يبدأ من جديد في أول كل شهر.",
+ "Pick today or an earlier day.": "اختر اليوم أو يومًا قبله.",
+ "That is less than one cent.": "هذا أقل من سنت واحد."
+  };
+  Object.assign(d, D5);
+  P2.unshift([/^(.+) · (\$[\d,.]+) left$/, "$1 · متبقٍ $2"],
+    [/^(\$[\d,.]+) left to spend$/, "متبقٍ $1 للصرف"],
+    [/^(\$[\d,.]+) over$/, "تجاوزت بـ $1"],
+    [/^(\d+)% used$/, "استُخدم $1%"],
+    [/^(.+): (\$[\d,.]+) spent\.$/, "$1: صرفت $2."],
+    [/^The month ends soon and (\$[\d,.]+) is left\. Move some of it to save or invest\.$/, "الشهر يقترب من نهايته وبقي $1. انقل جزءًا منه إلى الادخار أو الاستثمار."],
+    [/^Logged (\$[\d,.]+)(?: \(([\d,.]+ [A-Z]{3})\))?\.$/, "تم تسجيل $1 $2."],
+    [/^Logged (\$[\d,.]+)(?: \(([\d,.]+ [A-Z]{3})\))? in (.+)\.$/, "تم تسجيل $1 $2 في $3."],
+    [/^Type the rate first: how many ([A-Z]{3}) for 1 USD\.$/, "اكتب السعر أولًا: كم $1 مقابل 1 دولار."]);
   return { d, p: P2 };
 })();
